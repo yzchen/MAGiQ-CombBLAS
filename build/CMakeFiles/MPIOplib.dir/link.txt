@@ -1,0 +1,2 @@
+/usr/bin/ar qc libMPIOplib.a  CMakeFiles/MPIOplib.dir/MPIOp.o
+/usr/bin/ranlib libMPIOplib.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmmiolib.a  CMakeFiles/mmiolib.dir/mmio.o
+/usr/bin/ranlib libmmiolib.a

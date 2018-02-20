@@ -1,0 +1,2 @@
+/usr/bin/ar qc libGraphGenlib.a  CMakeFiles/GraphGenlib.dir/btrd_binomial_distribution.o CMakeFiles/GraphGenlib.dir/splittable_mrg.o CMakeFiles/GraphGenlib.dir/mrg_transitions.o CMakeFiles/GraphGenlib.dir/graph_generator.o CMakeFiles/GraphGenlib.dir/permutation_gen.o CMakeFiles/GraphGenlib.dir/make_graph.o CMakeFiles/GraphGenlib.dir/utils.o CMakeFiles/GraphGenlib.dir/scramble_edges.o
+/usr/bin/ranlib libGraphGenlib.a

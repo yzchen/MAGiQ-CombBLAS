@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/cheny0l/work/db245/CombBLAS_beta_16_1/MemoryPool.cpp
+MemoryPool.h
+/home/cheny0l/work/db245/CombBLAS_beta_16_1/MemoryPool.h
+
+/home/cheny0l/work/db245/CombBLAS_beta_16_1/MemoryPool.h
+iostream
+-
+list
+-
+new
+-
+fstream
+-
+

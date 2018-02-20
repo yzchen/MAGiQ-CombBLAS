@@ -1,0 +1,1 @@
+/usr/bin/mpicxx   -std=c++11 -std=c++14 -fopenmp -DNDEBUG -w -DGRAPH_GENERATOR_SEQ -O2 -DMPICH_IGNORE_CXX_SEEK   CMakeFiles/MultTest.dir/MultTest.o  -o MultTest -rdynamic ../libCommGridlib.a ../libMPITypelib.a ../libMemoryPoollib.a ../libHashlib.a ../libmmiolib.a 

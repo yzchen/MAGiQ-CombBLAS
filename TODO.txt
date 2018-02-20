@@ -1,0 +1,5 @@
+- Implement move constructors for FullyDistSpVec and FullyDistVec (like the old stealFrom functions)
+- Name Sparse SpMV "SpMSpV"
+- Name BFSFriends versions to SpMV_NoSR(...) and SpMSpV_NoSR(...)
+- Implement SpMM and SpMV using CSB
+- Provide conversion to/from CSB and DCSC
