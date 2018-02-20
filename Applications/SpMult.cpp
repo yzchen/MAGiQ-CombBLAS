@@ -51,7 +51,9 @@ int main(int argc, char *argv[]) {
         double t1 = MPI_Wtime();
         PSpMat<ElementType>::MPI_DCCols C = Mult_AnXBn_DoubleBuff<PTDOUBLEDOUBLE, ElementType, PSpMat<ElementType>::DCCols>(A, B);
         double t2 = MPI_Wtime();
-        printf("multiplication takes %.6lf s\n", (t2 - t1));
+        if(myrank == 0) {
+            cout << "multiplication takes " << t2 - t1 << " s" << endl;            
+        }
 
         C.PrintInfo();
     }
@@ -59,4 +61,3 @@ int main(int argc, char *argv[]) {
     MPI_Finalize();
     return 0;
 }
-
