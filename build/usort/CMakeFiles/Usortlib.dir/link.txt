@@ -1,2 +1,0 @@
-/usr/bin/ar qc libUsortlib.a  CMakeFiles/Usortlib.dir/src/parUtils.o CMakeFiles/Usortlib.dir/src/binUtils.o
-/usr/bin/ranlib libUsortlib.a

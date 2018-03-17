@@ -1,2 +1,0 @@
-/usr/bin/ar qc libMPITypelib.a  CMakeFiles/MPITypelib.dir/MPIType.o
-/usr/bin/ranlib libMPITypelib.a

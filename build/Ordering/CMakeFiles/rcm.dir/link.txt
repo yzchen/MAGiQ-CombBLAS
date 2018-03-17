@@ -1,1 +1,0 @@
-/usr/bin/mpicxx   -std=c++11 -std=c++14 -fopenmp -DNDEBUG -w -DGRAPH_GENERATOR_SEQ -O2 -DMPICH_IGNORE_CXX_SEEK   CMakeFiles/rcm.dir/RCM.o  -o rcm -rdynamic ../libCommGridlib.a ../libMPITypelib.a ../libMemoryPoollib.a ../graph500-1.2/generator/libGraphGenlib.a ../libHashlib.a ../libmmiolib.a ../libMPIOplib.a 
