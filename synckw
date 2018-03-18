@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo "you need run this command in project home directory to sync files"
+
+rsync -r .  cheny0l@10.68.58.4:/home/cheny0l/work/db245/CombBLAS_beta_16_1/
