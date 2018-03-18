@@ -39,8 +39,10 @@ int main(int argc, char *argv[]) {
         string Aname(argv[1]);
         string Bname(argv[2]);
 
+        MPI_Barrier(MPI_COMM_WORLD);
+
         typedef PlusTimesSRing<ElementType, ElementType> PTDOUBLEDOUBLE;
-        PSpMat<ElementType>::MPI_DCCols A, B;
+        PSpMat<ElementType>::MPI_DCCols A(MPI_COMM_WORLD), B(MPI_COMM_WORLD);
 
         A.ReadDistribute(Aname, 0);
         A.PrintInfo();

@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 
         MPI_Barrier(MPI_COMM_WORLD);
 
-        PSpMat<ElementType>::MPI_DCCols A;
+        PSpMat<ElementType>::MPI_DCCols A(MPI_COMM_WORLD);
 
         A.ReadDistribute(Mname, 0);
         A.PrintInfo();
