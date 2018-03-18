@@ -20,7 +20,7 @@
 #endif
 #include <stdint.h>
 
-#include "../CombBLAS.h"
+#include "../include/CombBLAS.h"
 #include "Glue.h"   
 
 namespace combblas {

@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <ctime>
-#include "../CombBLAS.h"
+#include "../include/CombBLAS.h"
 
 struct DetSymmetricize;
 

@@ -12,7 +12,7 @@
 #include <parallel/algorithm>
 #include <parallel/numeric>
 #include <memory>
-#include "../CombBLAS.h"
+#include "../include/CombBLAS.h"
 
 namespace combblas {
 

@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <vector>
 #include <sstream>
-#include "../CombBLAS.h"
+#include "../include/CombBLAS.h"
 #include "../Applications/TwitterEdge.h"
 
 using namespace std;

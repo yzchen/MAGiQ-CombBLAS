@@ -72,7 +72,7 @@ double bu_rotate;
 int cblas_splits;
 
 
-#include "../CombBLAS.h"
+#include "../include/CombBLAS.h"
 
 using namespace combblas;
 using namespace std;

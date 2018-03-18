@@ -26,7 +26,7 @@
  THE SOFTWARE.
  */
 
-#include "../../CombBLAS.h"
+#include "../../include/CombBLAS.h"
 #include <mpi.h>
 #include <sys/time.h>
 #include <iostream>

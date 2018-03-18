@@ -8,7 +8,7 @@
 int cblas_splits = 1;
 #endif
 
-#include "../CombBLAS.h"
+#include "../include/CombBLAS.h"
 #include <mpi.h>
 #include <sys/time.h>
 #include <iostream>

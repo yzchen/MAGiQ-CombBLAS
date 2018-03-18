@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <vector>
 #include <sstream>
-#include "../CombBLAS.h"
+#include "../include/CombBLAS.h"
 
 using namespace std;
 using namespace combblas;

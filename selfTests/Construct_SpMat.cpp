@@ -4,9 +4,9 @@
 #include <algorithm>
 #include <vector>
 #include <sstream>
-#include "../CombBLAS.h"
-#include "../FullyDistSpVec.h"
-#include "../FullyDistVec.h"
+#include "../include/CombBLAS.h"
+#include "../include/FullyDistSpVec.h"
+#include "../include/FullyDistVec.h"
 
 using namespace std;
 using namespace combblas;

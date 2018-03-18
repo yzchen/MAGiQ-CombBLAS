@@ -3,3 +3,5 @@
 ._*
 build/
 output.txt
+.idea
+cmake-build-debug

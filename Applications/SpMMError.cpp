@@ -7,7 +7,7 @@
 #include <string>
 #include <sstream>
 #include <stdint.h>
-#include "../CombBLAS.h"
+#include "../include/CombBLAS.h"
 
 using namespace combblas;
 

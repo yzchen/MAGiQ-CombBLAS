@@ -13,7 +13,7 @@
 #include <sstream>
 
 
-#include "../CombBLAS.h"
+#include "../include/CombBLAS.h"
 #include "Glue.h"
 #include "CCGrid.h"
 
