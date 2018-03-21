@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 
         FullyDistVec<int, ElementType> rowsumsB(fullWorld);
 
-        A.Reduce(rowsumsB, Row, std::plus<ElementType>() , 0);
+        B.Reduce(rowsumsB, Row, std::plus<ElementType>() , 0);
 
         std::cout << "B rowsums : ";
         rowsumsB.DebugPrint();

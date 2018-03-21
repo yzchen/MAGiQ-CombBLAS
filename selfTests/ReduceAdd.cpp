@@ -49,11 +49,11 @@ int main(int argc, char *argv[]) {
         A.ReadDistribute(Mname, 0);
         A.PrintInfo();
 
-        FullyDistVec< int, ElementType> rowsums_control(fullWorld);
+        FullyDistVec< int, ElementType> rowsums(fullWorld);
 
-        A.Reduce(rowsums_control, Row, std::plus<ElementType>() , 0);
+        A.Reduce(rowsums, Row, std::plus<ElementType>() , 0);
 
-        rowsums_control.ParallelWrite(Vname, 1);
+        rowsums.ParallelWrite(Vname, 1);
     }
 
     MPI_Finalize();

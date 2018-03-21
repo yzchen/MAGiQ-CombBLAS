@@ -37,6 +37,20 @@ In addition, `TESTDATA` is in the project home directory, previous it's in `buil
 
 External test data is in `../fuad/data`
 
+### Generate matrix market by yourself
+
+I wrote a script to generate a matrix file, it locates in `TESTDATA` folder, and you should first go to that folder
+
+`cd TESTDATA`
+
+Then run the command :
+
+`julia create_mm.jl m n nnz`
+
+you should specify `m`, `n` and `nnz`, and you will get a txt file named as `gen_m_n_nnz.txt`.
+
+We can generate any dimensions for test, it is convenient.
+
 ### Task 0 : reduce add
 
 Basically call the internal `Reduce` function is fine, some problems and issues should be considered :
@@ -65,4 +79,18 @@ Basically call the internal `Reduce` function is fine, some problems and issues 
 
     ![construct_mat](./imgs/report2/construct_mat.png)
 
-    The results are same whether I set `sumDuplicate` or not (*It's strange*).
+    (Basically the construction from code is correct, you set `sumDuplicate` and get `sum` of duplicate values)
+
+When I ran test on `lubm2560` and `lubm10240` dataset, error occurred,
+
+![lubm_error](./imgs/report2/lubm_error.png)
+
+But I got result without errors with `lubm320` data,
+
+![lubm320_done](./imgs/report2/lubm320_done.png)
+
+I doubt if is the size problem, of course a debug about `Reduce` function is needed.
+
+### Config project in CLion
+
+you just need gcc and openmpi in your system, and system supports cmake, then you can just open a project in CLion.
