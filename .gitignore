@@ -6,3 +6,6 @@ output.txt
 .idea
 cmake-build-debug
 ._*
+logs/
+TESTDATA/*
+!TESTDATA/create_mm.jl

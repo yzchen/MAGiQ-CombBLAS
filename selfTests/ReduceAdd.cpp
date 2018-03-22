@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
         A.ReadDistribute(Mname, 0);
         A.PrintInfo();
 
-        FullyDistVec< int, ElementType> rowsums(fullWorld);
+        FullyDistVec<int, ElementType> rowsums(fullWorld);
 
         A.Reduce(rowsums, Row, std::plus<ElementType>() , 0);
 

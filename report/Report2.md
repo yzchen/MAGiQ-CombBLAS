@@ -1,6 +1,6 @@
 ## Report 2 : Basic functions implementation in Comb_BLAS
 
-#### Task description
+### Task description
 
 Please do the following task before moving on to the tasks below:
 
@@ -81,6 +81,10 @@ Basically call the internal `Reduce` function is fine, some problems and issues 
 
     (Basically the construction from code is correct, you set `sumDuplicate` and get `sum` of duplicate values)
 
+### ReduceAdd on lubm data
+
+#### Without setting mpi #procs
+
 When I ran test on `lubm2560` and `lubm10240` dataset, error occurred,
 
 ![lubm_error](./imgs/report2/lubm_error.png)
@@ -89,8 +93,18 @@ But I got result without errors with `lubm320` data,
 
 ![lubm320_done](./imgs/report2/lubm320_done.png)
 
+dimension (#rows = #columns) of three data :
+
+|lubm320|lubm2560|lubm10240|
+|:-----:|:------:|:-------:|
+|10487737|84151528|336506397|
+
 I doubt if is the size problem, of course a debug about `Reduce` function is needed.
 
-### Config project in CLion
+#### Setting mpi #procs = 16
 
-you just need gcc and openmpi in your system, and system supports cmake, then you can just open a project in CLion.
+![lubm320_done_np16](./imgs/report2/lubm320_done_np16.png)
+
+![lubm_error_np16](./imgs/report2/lubm_error_np16.png)
+
+The problem here is about `double free or corruption`, without setting mpi, the error is `address not mapped`
