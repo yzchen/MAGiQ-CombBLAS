@@ -962,7 +962,7 @@ void SpParMat<IT,NT,DER>::Reduce(FullyDistVec<GIT,VT> & rvec, Dim dim, _BinaryOp
 					{
 						nziters.push_back(spSeq->begnz(curfinger));
 					}
-					for(int i=0; i< rowneighs; ++i)		// step by step to save memory
+    					for(int i=0; i< rowneighs; ++i)		// step by step to save memory
 					{
 						VT * sendbuf = new VT[loclens[i]];
 						std::fill(sendbuf, sendbuf+loclens[i], id);	// fill with identity

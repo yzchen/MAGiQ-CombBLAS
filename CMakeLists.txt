@@ -8,7 +8,7 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 add_definitions(-DTHREADED)
 
 INCLUDE(TestCXXAcceptsFlag.cmake)
-set(CMAKE_CXX_FLAGS -std=c++11 -fopenmp -fPIC -O0 -g3 -ggdb)
+set(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -std=c++14 -fopenmp -fPIC -O0 -g3 -ggdb")
 CHECK_CXX_ACCEPTS_FLAG("-std=c++11 -std=c++14" C14)
 
 if (NOT C14)

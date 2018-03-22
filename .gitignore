@@ -9,3 +9,4 @@ cmake-build-debug
 logs/
 TESTDATA/*
 !TESTDATA/create_mm.jl
+!TESTDATA/scale_test.sh

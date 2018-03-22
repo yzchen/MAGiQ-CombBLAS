@@ -1,12 +1,8 @@
-#include <sys/time.h>
 #include <iostream>
 #include <functional>
 #include <algorithm>
-#include <vector>
 #include <sstream>
 #include "../include/CombBLAS.h"
-#include "../include/FullyDistSpVec.h"
-#include "../include/FullyDistVec.h"
 
 using namespace std;
 using namespace combblas;
@@ -46,12 +42,23 @@ int main(int argc, char *argv[]) {
 
         PSpMat<ElementType>::MPI_DCCols A(MPI_COMM_WORLD);
 
+        double t1 = MPI_Wtime();
         A.ReadDistribute(Mname, 0);
+        double t2 = MPI_Wtime();
+        if(myrank == 0) {
+            cout << "read file takes " << t2 - t1 << " s" << endl;
+        }
         A.PrintInfo();
 
         FullyDistVec<int, ElementType> rowsums(fullWorld);
 
+        // 0 used for append when resizing vector, usually useless
+        double t3 = MPI_Wtime();
         A.Reduce(rowsums, Row, std::plus<ElementType>() , 0);
+        double t4 = MPI_Wtime();
+        if(myrank == 0) {
+            cout << "reduce-add takes " << t4 - t3 << " s" << endl;
+        }
 
         rowsums.ParallelWrite(Vname, 1);
     }

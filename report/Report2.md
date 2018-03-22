@@ -57,6 +57,8 @@ Basically call the internal `Reduce` function is fine, some problems and issues 
 
 * In matrix market format, index should start from 1 not 0
 
+    ---> Why this matters? Because there is a `delete []` in the `Reduce`, if real data starts from 0, there will be an index is outside the array bound, which is terrible.
+
 * **?** Duplicate edges between same vertex pair are not supported
 
     ---> I created a simple matrix market format file that has duplicate edge (`TESTDATA/duplicate_edges.txt`), file content :
@@ -107,4 +109,8 @@ I doubt if is the size problem, of course a debug about `Reduce` function is nee
 
 ![lubm_error_np16](./imgs/report2/lubm_error_np16.png)
 
-The problem here is about `double free or corruption`, without setting mpi, the error is `address not mapped`
+The problem here is about `double free or corruption`, without setting mpi, the error is `address not mapped`.
+
+All errors are because the start index is 0 not 1, I generated some matrixes myself and passed the test for both cases.
+
+`scale_test.sh` in `TESTDATA` can automatically generate different nnz matrix for testing, I fixed dimension with `80000000 * 80000000`, change nnz from `150000000` to `300000000`, everything is okay. Then I generated an example with the same size with largest lubm data and same nnz.
