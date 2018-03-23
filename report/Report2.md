@@ -113,4 +113,54 @@ The problem here is about `double free or corruption`, without setting mpi, the 
 
 All errors are because the start index is 0 not 1, I generated some matrixes myself and passed the test for both cases.
 
-`scale_test.sh` in `TESTDATA` can automatically generate different nnz matrix for testing, I fixed dimension with `80000000 * 80000000`, change nnz from `150000000` to `300000000`, everything is okay. Then I generated an example with the same size with largest lubm data and same nnz.
+`scale_test.sh` in `TESTDATA` can automatically generate different nnz matrix for testing, I fixed dimension with `80000000 * 80000000`, change nnz from `150000000` to `300000000`, everything is okay. Then I generated an example with the same size with largest lubm data and same nnz. Following picture shows the result.
+
+![generated_data_done](./imgs/report2/generated_data_done.png)
+
+### Task 1-4 : utility functions
+
+Result together:
+
+![task1-4](./imgs/report2/task1-4.png)
+
+`SaveGethered` function can store sparse matrix to a file with tripple format.
+
+#### Set element
+
+There are two methods to achieve this,
+
+* Construct a 1*1 matrix based on the parameter `v`, and then use `SpAsgn` function to assign a block to matrix. This algorithm has some problem when I set the length of index vectors to `1`, but it can work when I set them more than `1`. I don't know why.
+
+* Based on the index `i, j` construct two vectors, both vectors only have `1` value which is `i/j`; construct a 1*1 matrix based on the parameter `v`, but its dimension is same as the matrix. Then call `Prune` to clear given position, and then add two matrices, this is the method I adopted.
+
+One thing should be concerned, before construct 1×1 matrix, before pruning, before adding, values of index should decrease `1`.
+
+`ri.Apply(bind2nd(minus<int>(), 1));`
+
+![setElement](./imgs/report2/setElement.png)
+
+#### Multiply a scalar
+
+Use the `Apply` function,
+
+`Apply(bind2nd(multiplies<ElementType>(), s));`
+
+Before multiplication:
+
+![mmul_scalar_origin](./imgs/report2/mmul_scalar_origin.png)
+
+After multiplication:
+
+![mmul_scalar](./imgs/report2/mmul_scalar.png)
+
+### Diagonalize
+
+First use `std::logical_or` to reduce all rows of input matrix, and then construct a sparse matrix with same dimension with input matrix, call `set_element` to set the diagonal of the matrix.
+
+![diagonalize](./imgs/report2/diagonalize.png)
+
+### Transpose
+
+Just call internal `Transpose` function
+
+![transpose](./imgs/report2/transpose.png)
