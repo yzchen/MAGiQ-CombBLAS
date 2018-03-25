@@ -159,6 +159,21 @@ First use `std::logical_or` to reduce all rows of input matrix, and then constru
 
 ![diagonalize](./imgs/report2/diagonalize.png)
 
+Try to use `SpAsgn` to assgin a vector to diagonal of matrix.
+
+Problems about `SpAsgn`:
+
+![spasgn](./imgs/report2/spasgn.png)
+
+Input index vector `riv` and `civ` are same, so it should add two values at `(2, 2)` and `(9, 9)` with value `100000` and `999999`, but result is not what we want, `SpAsgn` use the all combinations of `riv` and `civ` to assign values. **?** I don't know why they design this function like this.
+
+The reason is this action needs a `Prune` first, `Prune` is implemented by `SAT`, `S(m,m,ri,ri,1)`, `T(n,n,ci,ci,1)`. If `ri = (2, 9) = ci`, then this multiplication just does selection, so `4` values will be selected, their positions are `(2,2), (2,9), (9,2), (9,9)`.
+Then `A * logical_not(SAT)` will Prune values in these `4` positions.
+
+I think this `SpAsgn` is useful in undirected graph operations.
+
+A simple way to assgin vector to matrix diagonal is just construction... `D(dim, dim, *rvec, *qvec, diag)`, `*rvec = *qvec` both contains values from `1` to `dimOf(A)`.
+
 ### Transpose
 
 Just call internal `Transpose` function

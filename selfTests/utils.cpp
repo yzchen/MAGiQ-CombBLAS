@@ -49,12 +49,18 @@ PSpMat<ElementType>::MPI_DCCols diagonalize(const PSpMat<ElementType>::MPI_DCCol
     M.Reduce(diag, Row, std::logical_or<ElementType>() , 0);
 
     FullyDistVec<int, int> *rvec = new FullyDistVec<int, int>(diag.commGrid);
+    rvec->iota(dim, 0);
     FullyDistVec<int, int> *qvec = new FullyDistVec<int, int>(diag.commGrid);
-    PSpMat<ElementType>::MPI_DCCols D(dim, dim, *rvec, *qvec, 0);
+    qvec->iota(dim, 0);
+    PSpMat<ElementType>::MPI_DCCols D(dim, dim, *rvec, *qvec, diag);
 
-    for (int i = 1; i <= dim; ++i) {
-        set_element(D, i, i, diag.GetElement(i - 1));
-    }
+    // TODO : need to use SpAsgn function
+    // not use SpAsgn
+    // just use SpParMat construction function
+//    FullyDistVec<int, ElementType> ri(M.getcommgrid());
+//    for (int i = 1; i <= dim; ++i) {
+//        set_element(D, i, i, diag.GetElement(i - 1));
+//    }
 
     return D;
 }

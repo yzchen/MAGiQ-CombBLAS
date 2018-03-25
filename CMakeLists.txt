@@ -36,12 +36,12 @@ ADD_LIBRARY( MemoryPoollib src/MemoryPool.cpp)
 ADD_LIBRARY( Hashlib src/hash.cpp)
 ADD_LIBRARY( mmiolib src/mmio.c)
 
-# ADD_SUBDIRECTORY( ReleaseTests )
+#ADD_SUBDIRECTORY( ReleaseTests )
 ADD_SUBDIRECTORY( selfTests )
-# ADD_SUBDIRECTORY( Applications ) 
-# ADD_SUBDIRECTORY( usort ) 
+# ADD_SUBDIRECTORY( Applications )
+# ADD_SUBDIRECTORY( usort )
 # ADD_SUBDIRECTORY( graph500-1.2/generator )
-# ADD_SUBDIRECTORY( Ordering ) 
+# ADD_SUBDIRECTORY( Ordering )
 # ADD_SUBDIRECTORY( Applications/SpMSpV-IPDPS2017 )
 
 

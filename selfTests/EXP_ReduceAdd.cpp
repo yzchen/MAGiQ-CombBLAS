@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
         // 0 used for append when resizing vector, usually useless
         double t3 = MPI_Wtime();
-        A.Reduce(rowsums, Row, std::plus<ElementType>() , 0);
+        A.Reduce(rowsums, Column, std::plus<ElementType>() , 0);
         double t4 = MPI_Wtime();
         if(myrank == 0) {
             cout << "reduce-add takes " << t4 - t3 << " s" << endl;
