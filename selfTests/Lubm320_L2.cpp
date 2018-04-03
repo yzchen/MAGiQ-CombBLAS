@@ -209,8 +209,8 @@ int main(int argc, char *argv[]) {
 
         MPI_Barrier(MPI_COMM_WORLD);
 
-        string Mname("/home/cheny0l/work/db245/fuad/data/lubm320/encoded.mm");
-//        string Mname("/project/k1285/fuad/data/lubm320/encoded.mm");
+//        string Mname("/home/cheny0l/work/db245/fuad/data/lubm320/encoded.mm");
+        string Mname("/project/k1285/fuad/data/lubm320/encoded.mm");
         PSpMat<ElementType>::MPI_DCCols G(MPI_COMM_WORLD);
 
         double t1 = MPI_Wtime();

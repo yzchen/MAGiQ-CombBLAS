@@ -42,14 +42,6 @@ bool isNotZero(ElementType t) {
     return t != 0;
 }
 
-ElementType my_or(ElementType a, ElementType b) {
-    if (a != 0 &&  b != 0 && a == b) {
-        return static_cast<ElementType>(1);
-    } else {
-        return static_cast<ElementType>(0);
-    }
-}
-
 ElementType selectSecond(ElementType a, ElementType b) {
     return b;
 }
@@ -201,52 +193,12 @@ void printReducedInfo(PSpMat::MPI_DCCols &M){
     }
 }
 
-static double total_dim_apply_time = 0.0;
-
-ElementType rdf_multiply(ElementType a, ElementType b) {
-    if (a != 0 &&  b != 0 && a == b) {
-        return static_cast<ElementType>(1);
-    } else {
-        return static_cast<ElementType>(0);
-    }
-}
-
-void multDimApplyPrune(int step, PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementType> &v, Dim dim, bool isRDF) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    double t1 = MPI_Wtime();
-    if (isRDF) {
-        A.DimApply(dim, v, rdf_multiply);
-    } else {
-        A.DimApply(dim, v, std::multiplies<ElementType>());
-    }
-    double t2 = MPI_Wtime();
-
-    if (myrank == 0) {
-        total_dim_apply_time += (t2 - t1);
-        cout << "    dim-apply takes: " << (t2 - t1) << " s" << endl;
-    }
-
-    double t3 = MPI_Wtime();
-    A.Prune(isZero);
-    double t4 = MPI_Wtime();
-
-    if (myrank == 0) {
-        total_prune_time += (t4 - t3);
-        cout << "    prune takes: " << (t4 - t3) << " s         --- end of step " << step << "\n" << endl;
-    }
-
-    printReducedInfo(A);
-}
-
-void lubm320_L7(PSpMat::MPI_DCCols &G) {
+void lubm10240_L2(PSpMat::MPI_DCCols &G) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
     FullyDistVec<IndexType, ElementType> nonisov(G.getcommgrid());
     permute(G, nonisov);
-//    nonisov.ParallelWrite("nonisov.txt", false);
 
     double t1_trans = MPI_Wtime();
     auto tG = transpose(G);
@@ -260,123 +212,44 @@ void lubm320_L7(PSpMat::MPI_DCCols &G) {
 
     double t_cons1 = MPI_Wtime();
 
-    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(107)))[0];
-    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(124)))[0];
-    IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(2079)))[0];
-
     int nrow = G.getnrow(), ncol = G.getncol();
+    std::vector<int> riv(1, 79);
+    std::vector<int> civ(1, 79);
+    std::vector<int> viv(1, 6);
 
-    std::vector<int> riv1(1, ind2);
-    std::vector<int> viv1(1, 1);
+    FullyDistVec<int, ElementType> ri(riv, G.getcommgrid());
+    FullyDistVec<int, ElementType> ci(civ, G.getcommgrid());
+    FullyDistVec<int, ElementType> vi(viv, G.getcommgrid());
 
-    FullyDistVec<int, ElementType> ri1(riv1, G.getcommgrid());
-    FullyDistVec<int, ElementType> vi1(viv1, G.getcommgrid());
-
-    PSpMat::MPI_DCCols l_14(nrow, ncol, ri1, ri1, vi1);
-
-
-    std::vector<int> riv2(1, ind3);
-    std::vector<int> viv2(1, 1);
-
-    FullyDistVec<int, ElementType> ri2(riv2, G.getcommgrid());
-    FullyDistVec<int, ElementType> vi2(viv2, G.getcommgrid());
-
-    PSpMat::MPI_DCCols l_25(nrow, ncol, ri2, ri2, vi2);
+    PSpMat::MPI_DCCols r_10(nrow, ncol, ri, ci, vi);
+    r_10(nonisov, nonisov, true);
 
     double t_cons2 = MPI_Wtime();
     if (myrank == 0) {
         cout << "    construct single element matrix takes : " << (t_cons2 - t_cons1) << "\n" << endl;
     }
 
-    FullyDistVec<IndexType, ElementType> r_30(G.getnrow(), 0);
-    r_30.SetElement(ind1, 8);
-    r_30.ParallelWrite("r_30", false);
-
     // start count time
-    double total_computing_1 = MPI_Wtime();
+    double t1 = MPI_Wtime();
 
     // ==> step 1
-    auto m_30(G);
-    multDimApplyPrune(1, m_30, r_30, Column, true);
+    PSpMat::MPI_DCCols m_10(MPI_COMM_WORLD);
+    multPrune<RDFINTINT>(G, r_10, m_10, false, true);
+
+    auto dm_10 = diagonalize(m_10);
+    mmul_scalar(dm_10, 3);
 
     // ==> step 2
-    FullyDistVec<int, ElementType> diag(G.getcommgrid());
-    m_30.Reduce(diag, Row, std::logical_or<ElementType>() , 0);
-    diag.Apply(bind2nd(multiplies<ElementType>(), 2));
+    PSpMat::MPI_DCCols m_21(MPI_COMM_WORLD);
+    multPrune<RDFINTINT>(tG, dm_10, m_21, true, true);
 
-    double t_dim1 = MPI_Wtime();
-    PSpMat::MPI_DCCols m_43(tG);
-    m_43.DimApply(Column, diag, my_or);
-    m_43.Prune(isZero);
-    m_43.PrintInfo();
-    double t_dim2 = MPI_Wtime();
-    if (myrank == 0) {
-        cout << "    dim apply : " << (t_dim2 - t_dim1) << " s" << endl;
-    }
-
-    auto dm_43 = diagonalize(m_43);
-    mmul_scalar(dm_43, 8);
+    auto dm_21 = diagonalize(m_21, true);
 
     // ==> step 3
-    PSpMat::MPI_DCCols m_14(MPI_COMM_WORLD);
-    multPrune<RDFINTINT>(tG, dm_43, m_14);
-
-    // ==> step 4
-    multPrune<PTINTINT>(l_14, m_14, m_14);
-
-    auto dm_14 = diagonalize(m_14, true);
-    mmul_scalar(dm_14, 11);
-
-    // ==> step 5
-    PSpMat::MPI_DCCols m_54(MPI_COMM_WORLD);
-    multPrune<RDFINTINT>(G, dm_14, m_54);
-
-    auto dm_54 = diagonalize(m_54);
-    mmul_scalar(dm_54, 8);
-
-    // ==> step 6
-    PSpMat::MPI_DCCols m_25(MPI_COMM_WORLD);
-    multPrune<RDFINTINT>(tG, dm_54, m_25);
-
-    // ==> step 7
-    multPrune<PTINTINT>(l_25, m_25, m_25);
-
-    auto dm_25 = diagonalize(m_25, true);
-    mmul_scalar(dm_25, 7);
-
-    // ==> step 8
-    PSpMat::MPI_DCCols m_65(MPI_COMM_WORLD);
-    multPrune<RDFINTINT>(G, dm_25, m_65);
-
-    auto dm_43_1 = diagonalize(m_43, true);
-
-    // ==> step 9
-    multPrune<PTINTINT>(dm_43_1, m_65, m_65);
-
-    auto dm_65 = diagonalize(m_65);
-
-    // ==> step 10
-    multPrune<PTINTINT>(m_43, dm_65, m_43);
-
-    auto dm_65_1 = diagonalize(m_65, true);
-
-    // ==> step 11
-    multPrune<PTINTINT>(dm_65_1, m_54, m_54);
-
-    auto dm_54_1 = diagonalize(m_54, true);
-
-    // ==> step 12
-    multPrune<PTINTINT>(dm_54_1, m_43, m_43);
-
-    auto dm_43_2 = diagonalize(m_43, true);
-
-    // ==> step 13
-    multPrune<PTINTINT>(dm_43_2, m_30, m_30);
+    multPrune<PTINTINT>(dm_21, m_10, m_10, true, false);
 
     // end count time
-    double total_computing_2 = MPI_Wtime();
-
-    printReducedInfo(m_30);
+    double t2 = MPI_Wtime();
 
     if(myrank == 0) {
         cout << "total mmul_scalar time : " << total_mmul_scalar_time << " s" << endl;
@@ -385,10 +258,10 @@ void lubm320_L7(PSpMat::MPI_DCCols &G) {
         cout << "total reduce time : " << total_reduce_time << " s" << endl;
         cout << "total cons_diag time : " << total_construct_diag_time << " s" << endl;
         cout << "total mult time : " << total_mult_time << " s" << endl;
-        cout << "query7 totally takes : " << total_computing_2 - total_computing_1 << " s" << endl;
+        cout << "query7 totally takes : " << t2 - t1 << " s" << endl;
     }
-}
 
+}
 
 int main(int argc, char *argv[]) {
     int nprocs, myrank;
@@ -398,7 +271,7 @@ int main(int argc, char *argv[]) {
 
     if (argc < 1) {
         if (myrank == 0) {
-            cout << "Usage: ./prune_mat" << endl;
+            cout << "Usage: ./lubm10240_l2" << endl;
         }
         MPI_Finalize();
         return -1;
@@ -410,13 +283,13 @@ int main(int argc, char *argv[]) {
 
         MPI_Barrier(MPI_COMM_WORLD);
 
-//        string Mname("/home/cheny0l/work/db245/fuad/data/lubm320/encoded.mm");
-        string Mname("/project/k1285/fuad/data/lubm320/encoded.mm");
+//        string Mname("/home/cheny0l/work/db245/fuad/data/lubm10240/encoded.mm");
+        string Mname("/project/k1285/fuad/data/lubm10240/encoded.mm");
         PSpMat::MPI_DCCols G(MPI_COMM_WORLD);
 
         double t1 = MPI_Wtime();
 
-        G.ParallelReadMM(Mname, true, maximum<ElementType>());
+        G.ParallelReadMM(Mname, true, selectSecond);
         G.PrintInfo();
 
         double t2 = MPI_Wtime();
@@ -426,13 +299,11 @@ int main(int argc, char *argv[]) {
         qvec = new FullyDistVec<int, int>(fullWorld);
         qvec->iota(G.getnrow(), 0);
 
-        float imG = G.LoadImbalance();
         if (myrank == 0) {
             cout << "read file takes : " << (t2 - t1) << " s" << endl;
-            cout << "imbalcance of G : " << imG << endl;
         }
 
-        lubm320_L7(G);
+        lubm10240_L2(G);
     }
 
     MPI_Finalize();
