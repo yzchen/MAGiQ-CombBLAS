@@ -47,37 +47,51 @@ int main(int argc, char *argv[]) {
         std::vector<int> viv(vis, vis + sizeof(vis) / sizeof(int));
 
         FullyDistVec<int, ElementType> ri(riv, fullWorld);
-        std::cout << "ri : ";
+        if(myrank == 0) {
+            std::cout << "ri : ";
+        }
         ri.DebugPrint();
         FullyDistVec<int, ElementType> ci(civ, fullWorld);
-        std::cout << "ci : ";
+        if(myrank == 0) {
+            std::cout << "ci : ";
+        }
         ci.DebugPrint();
         FullyDistVec<int, ElementType> vi(viv, fullWorld);
-        std::cout << "vi : ";
+        if(myrank == 0) {
+            std::cout << "vi : ";
+        }
         vi.DebugPrint();
 
         PSpMat<ElementType>::MPI_DCCols A(8, 8, ri, ci, vi);
 
-        std::cout << "\nA is constructed with sumDuplicate = false" << std::endl;
+        if(myrank == 0) {
+            std::cout << "\nA is constructed with sumDuplicate = false" << std::endl;
+        }
         A.PrintInfo();
 
         FullyDistVec<int, ElementType> rowsumsA(fullWorld);
 
         A.Reduce(rowsumsA, Row, std::plus<ElementType>() , 0);
 
-        std::cout << "A rowsums : ";
+        if(myrank == 0) {
+            std::cout << "A rowsums : ";
+        }
         rowsumsA.DebugPrint();
 
         PSpMat<ElementType>::MPI_DCCols B(8, 8, ri, ci, vi, true);
 
-        std::cout << "\nB is constructed with sumDuplicate = true" << std::endl;
+        if(myrank == 0) {
+            std::cout << "\nB is constructed with sumDuplicate = true" << std::endl;
+        }
         B.PrintInfo();
 
         FullyDistVec<int, ElementType> rowsumsB(fullWorld);
 
         B.Reduce(rowsumsB, Row, std::plus<ElementType>() , 0);
 
-        std::cout << "B rowsums : ";
+        if(myrank == 0) {
+            std::cout << "B rowsums : ";
+        }
         rowsumsB.DebugPrint();
     }
 
