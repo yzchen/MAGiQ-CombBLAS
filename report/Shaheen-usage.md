@@ -181,6 +181,8 @@ and then use the CombBLAS function to do the processing, then everything is fine
 
 *One small problem is some warnings.*
 
+Of course you cannot submit job under module `PrgEnv-cray`, each time you login you need to swap compile module.
+
 #### Slurm interactive mode
 
 `srun --pty bash -i`

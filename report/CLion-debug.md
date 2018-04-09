@@ -52,7 +52,7 @@ Original data in `TESTDATA/gen_10_10_10.txt`:
 `m = 10; n = 10; nnz = 10`
 
 |row|col|val|
-|:-:|:-:|:-:|
+|:---:|:---:|:---:|
 |7	|5	|31|
 |1	|8	|19|
 |8	|5  |67|
@@ -89,7 +89,7 @@ In debugging, the values of above four terms are:
 - how can we know a value's position in matrix under this storage setting:
 
     |val|col(`jc`)|row(`ir`)|
-    |:-:|:-:|:-:|
+    |:---:|:---:|:---:|
     |32	|0	|7  |
     |14	|1	|0  |
     |38	|2  |2  |
