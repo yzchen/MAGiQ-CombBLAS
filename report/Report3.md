@@ -32,7 +32,7 @@ m_(2, 5) = G.T() × m_(5, 4).D()*8
 m_(2, 5) = {1@(2080, 2080)} * m_(2, 5)
 m_(6, 5) = G × m_(2, 5).T().D()*7
 m_(6, 5) = m_(4, 3).T().D() * m_(6, 5)
-m_(4, 3) = m_(4, 3) × m_(6, 5).D()
+m_(4, 3) = m_(4, 3) * m_(6, 5).D()
 m_(5, 4) = m_(6, 5).T().D() * m_(5, 4)
 m_(4, 3) = m_(5, 4).T().D() * m_(4, 3)
 m_(3, 0) = m_(4, 3).T().D() * m_(3, 0)
@@ -159,6 +159,8 @@ This is an actual query.
 
 *There are two types of multiplications here, first one is semiring multiplication, 
 second is normal one. If the formula contains a scalar, then use normal multiplication, else use semiring one.*
+In section `Task Description`, I denote them as different symbols, 
+normal multiplication is `*`, semiring multiplication is `×`.
 
 A problem occurs when I construct a sparse matrix and multiply it with matrix from file, 
 result will always be zero.
@@ -199,7 +201,7 @@ I went to original version of CombBLAS, and use test `MultiTiming.cpp` in `Relea
 `TESTDADA/gen_2_2_3.txt` and `TESTDADA/gen_2_2_B.txt`, result is still wrong.
 
 **This problem is because of the matrix format, every line should have three values, and all of them should be 
-split with a single space(or tab), multiple space will result strange strings.**
+split with a single space(or single tab), multiple space will result strange strings.**
 
 **Every Matrix operation(including self-defined semiring multiplication) is correct if I load matrix from file.**
 
