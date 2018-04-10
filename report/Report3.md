@@ -157,6 +157,9 @@ output matrix is `TESTDATA/test_rdf_semiring.del`
 
 This is an actual query.
 
+*There are two types of multiplications here, first one is semiring multiplication, 
+second is normal one. If the formula contains a scalar, then use normal multiplication, else use semiring one.*
+
 A problem occurs when I construct a sparse matrix and multiply it with matrix from file, 
 result will always be zero.
 
@@ -191,3 +194,39 @@ For semiring multiplication, reading from file gave me correct result, but const
 returned all zeros.
 
 I'm trying to find out why normal multiplication has a problem......
+
+I went to original version of CombBLAS, and use test `MultiTiming.cpp` in `ReleaseTests` and test for 
+`TESTDADA/gen_2_2_3.txt` and `TESTDADA/gen_2_2_B.txt`, result is still wrong.
+
+**This problem is because of the matrix format, every line should have three values, and all of them should be 
+split with a single space(or tab), multiple space will result strange strings.**
+
+**Every Matrix operation(including self-defined semiring multiplication) is correct if I load matrix from file.**
+
+About difference between reading from file and constructing in code, **there is no difference, but I mistoke ri, ci, vi 
+vectors, so I got wrong results.**
+
+![correct-mults](./imgs/report3/correct-mults.png)
+
+Now everything is fine.
+
+After solving these silly problems, query2 is coarsely finished, the result is same as the paper.
+But I think there are a lot of intermediate matrix that should be optimized.
+
+I made all functions into one file `Query2.cpp`, and can run it by `selfTests/query2`, parameters are inside the code 
+so don't need to provide them.
+
+Actual running command : `mpirun -np 16 selfTests/query2` under `build` folder.
+
+![query2](./imgs/report3/query2.png)
+
+### Query 7
+
+Similar to query 2, just has more steps.
+
+Actual running command : `mpirun -np 16 selfTests/query7` under `build` folder.
+
+![query7](./imgs/report3/query7.png)
+
+Intermediate results are definitely same as the paper, and the final output matrix are under `build` folder,
+query2's result matrix is `m_10.txt`, query7's result is `m_30.txt`.

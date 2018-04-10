@@ -9,6 +9,7 @@ ADD_EXECUTABLE( test_asgn Test_Asgn.cpp)
 ADD_EXECUTABLE( exp_reduceadd EXP_ReduceAdd.cpp)
 ADD_EXECUTABLE( prune_mat PruneTest.cpp )
 ADD_EXECUTABLE( query2 Query2.cpp)
+ADD_EXECUTABLE( query7 Query7.cpp)
 
 TARGET_LINK_LIBRARIES( spmult CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 TARGET_LINK_LIBRARIES( semiringmult CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
@@ -19,3 +20,4 @@ TARGET_LINK_LIBRARIES( test_asgn CommGridlib MPITypelib MemoryPoollib Hashlib mm
 TARGET_LINK_LIBRARIES( exp_reduceadd CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 TARGET_LINK_LIBRARIES( prune_mat CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 TARGET_LINK_LIBRARIES( query2 CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
+TARGET_LINK_LIBRARIES( query7 CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)

@@ -18,7 +18,7 @@ x = trunc.(Int64, x)
 x = vcat([m n], x)
 
 y = rand(nnz, 1)
-y *= 100
+y *= 10
 
 y = trunc.(Int64, y)
 y = vcat(nnz, y)
