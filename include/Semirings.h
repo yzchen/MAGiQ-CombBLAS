@@ -267,7 +267,7 @@ namespace combblas {
         static MPI_Op mpi_op() { return MPI_SUM; };
 
         static T_promote add(const T_promote &arg1, const T_promote &arg2) {
-            if (arg1 | arg2)
+            if (arg1 || arg2)
                 return static_cast<T_promote>(1);
             else
                 return static_cast<T_promote>(0);
@@ -275,9 +275,9 @@ namespace combblas {
 
         static T_promote multiply(const T1 &arg1, const T2 &arg2) {
             if (arg1 != 0 && arg2 != 0 && arg1 == arg2)
-                return static_cast<T_promote >(1);
+                return static_cast<T_promote>(1);
             else
-                return static_cast<T_promote >(0);
+                return static_cast<T_promote>(0);
         }
 
         static void axpy(T1 a, const T2 &x, T_promote &y) {

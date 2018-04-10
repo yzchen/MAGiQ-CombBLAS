@@ -17,7 +17,7 @@ public:
     typedef SpParMat<int, NT, DCCols> MPI_DCCols;
 };
 
-#define ElementType double
+#define ElementType int
 
 
 int main(int argc, char *argv[]) {
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
         MPI_Barrier(MPI_COMM_WORLD);
 
-        typedef PlusTimesSRing<ElementType, ElementType> PTDOUBLEDOUBLE;
+        typedef PlusTimesSRing<ElementType, ElementType> PTINTINT;
         PSpMat<ElementType>::MPI_DCCols A(MPI_COMM_WORLD), B(MPI_COMM_WORLD);
 
         A.ReadDistribute(Aname, 0);
@@ -51,13 +51,15 @@ int main(int argc, char *argv[]) {
         B.PrintInfo();
 
         double t1 = MPI_Wtime();
-        PSpMat<ElementType>::MPI_DCCols C = Mult_AnXBn_DoubleBuff<PTDOUBLEDOUBLE, ElementType, PSpMat<ElementType>::DCCols>(A, B);
+        PSpMat<ElementType>::MPI_DCCols C = Mult_AnXBn_DoubleBuff<PTINTINT, ElementType, PSpMat<ElementType>::DCCols>(A, B);
+        MPI_Barrier(MPI_COMM_WORLD);
         double t2 = MPI_Wtime();
         if(myrank == 0) {
             cout << "multiplication takes " << t2 - t1 << " s" << endl;
         }
 
         C.PrintInfo();
+        C.SaveGathered("spmult.out");
     }
 
     MPI_Finalize();

@@ -65,8 +65,10 @@ PSpMat<ElementType>::MPI_DCCols diagonalize(const PSpMat<ElementType>::MPI_DCCol
     return D;
 }
 
-void transpose(PSpMat<ElementType>::MPI_DCCols &M) {
-   M.Transpose();
+PSpMat<ElementType>::MPI_DCCols transpose(PSpMat<ElementType>::MPI_DCCols &M) {
+    PSpMat<ElementType>::MPI_DCCols N(M);
+    N.Transpose();
+    return N;
 }
 
 int main(int argc, char *argv[]) {
@@ -132,8 +134,7 @@ int main(int argc, char *argv[]) {
         D.SaveGathered("diagonalize_A.out");
 
         // 4. test transpose
-        PSpMat<ElementType>::MPI_DCCols A4 = A;
-        transpose(A4);
+        PSpMat<ElementType>::MPI_DCCols A4 = transpose(A);
         if(myrank == 0) {
             std::cout << "\nafter transpose : ";
             std::cout<<endl;
@@ -146,4 +147,3 @@ int main(int argc, char *argv[]) {
     MPI_Finalize();
     return 0;
 }
-

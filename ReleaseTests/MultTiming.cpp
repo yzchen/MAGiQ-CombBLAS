@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 			SpParHelper::Print(tinfo.str());
 			SpParHelper::Print("Warmed up for DoubleBuff\n");
 			C.PrintInfo();
-		}	
+		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		MPI_Pcontrol(1,"SpGEMM_DoubleBuff");
 		double t1 = MPI_Wtime(); 	// initilize (wall-clock) timer
@@ -82,6 +82,7 @@ int main(int argc, char* argv[])
 		{// force the calling of C's destructor
 			PSpMat<ElementType>::MPI_DCCols C = Mult_AnXBn_Synch<PTDOUBLEDOUBLE, ElementType, PSpMat<ElementType>::DCCols >(A, B);
 			C.PrintInfo();
+			C.SaveGathered("./MultTiming1.out");
 		}
 		SpParHelper::Print("Warmed up for Synch\n");
 		MPI_Barrier(MPI_COMM_WORLD);

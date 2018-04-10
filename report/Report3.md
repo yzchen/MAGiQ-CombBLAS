@@ -122,13 +122,13 @@ This is a test to prune elements with value `2` :
 
 I constructed a simple example, which has :
 
-A : 
+A (read from `TESTDADA/gen_2_2_3.txt`): 
 
 [3 2]
 
 [1 0]
 
-B :
+B (read from `TESTDADA/gen_2_2_B.txt`):
 
 [2 1]
 
@@ -156,3 +156,38 @@ output matrix is `TESTDATA/test_rdf_semiring.del`
 ### Query 2
 
 This is an actual query.
+
+A problem occurs when I construct a sparse matrix and multiply it with matrix from file, 
+result will always be zero.
+
+For example, 
+
+A (read from `TESTDADA/gen_2_2_3.txt`): 
+
+[3 2]
+
+[1 0]
+
+B (from construction):
+
+[0 0]
+
+[0 2]
+
+Result matrix should have `1` non-zeros, but after pruning, nothing left.
+
+![construct-mult](./imgs/report3/construct-mult.png)
+
+Actually, I don't know why but when I test small matrix multiplication, result is not correct.
+I used `TESTDADA/gen_2_2_3.txt` and `TESTDADA/gen_2_2_B.txt` as input and use `Mult_AnXBn_DoubleBuff` as 
+the multiplication function, `Mult_AnXBn_Synch` is same actually.
+
+![four-compares](./imgs/report3/four-compares.png)
+
+For normal multiplication, result should have `4` non-zeros, but only gets `2`, but no difference whether 
+raeding from file or constructing from code.
+
+For semiring multiplication, reading from file gave me correct result, but constructing from code always
+returned all zeros.
+
+I'm trying to find out why normal multiplication has a problem......

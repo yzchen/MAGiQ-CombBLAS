@@ -73,12 +73,16 @@ int main(int argc, char *argv[]) {
 
         A.PrintInfo();
 
+        PSpMat<ElementType>::MPI_DCCols B(A);
+
         A.Prune(isTwo);
 
         if (myrank == 0) {
             cout << "After prune 2 : " << endl;
         }
         A.PrintInfo();
+        
+        B.PrintInfo();
     }
 
     MPI_Finalize();
