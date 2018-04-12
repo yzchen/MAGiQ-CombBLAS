@@ -222,6 +222,17 @@ Actual running command : `mpirun -np 16 selfTests/query2` under `build` folder.
 
 ![query2](./imgs/report3/query2.png)
 
+New output :
+
+1 process :
+
+![query2-2](./imgs/report3/query2-2.png)
+
+16 processes :
+
+![query2-1](./imgs/report3/query2-1.png)
+
+
 ### Query 7
 
 Similar to query 2, just has more steps.
@@ -232,3 +243,16 @@ Actual running command : `mpirun -np 16 selfTests/query7` under `build` folder.
 
 Intermediate results are definitely same as the paper, and the final output matrix are under `build` folder,
 query2's result matrix is `m_10.txt`, query7's result is `m_30.txt`.
+
+**Replace `ReadDistribute` with `ParallelReadMM` will make the file reading time from `40 seconds` to `3 seconds`.
+But you need `%%MatrixMarket matrix coordinate real general` as the first line of the data file, if not, `ParallelReadMM` will fail.**
+
+New output :
+
+1 process :
+
+![query7-2](./imgs/report3/query7-2.png)
+
+16 processes :
+
+![query7-1](./imgs/report3/query7-1.png)

@@ -43,8 +43,8 @@ int main(int argc, char *argv[]) {
         PSpMat<ElementType>::MPI_DCCols A(MPI_COMM_WORLD);
 
         double t1 = MPI_Wtime();
-        A.ReadDistribute(Mname, 0);
-//        A.ParallelReadMM(Mname, true, std::plus<ElementType>());
+//        A.ReadDistribute(Mname, 0);
+        A.ParallelReadMM(Mname, true, maximum<ElementType>());
         double t2 = MPI_Wtime();
         if(myrank == 0) {
             cout << "read file takes " << t2 - t1 << " s" << endl;
