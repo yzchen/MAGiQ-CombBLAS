@@ -60,7 +60,7 @@ You can write mpi program, but can not use `mpicc` / `mpirun` commands.
 
     and remove `linuxbrew/bin` in your system `PATH`
 
-Although linuxbrew is very nice solution, 
+Although linuxbrew is very nice solution,
 but the problem is that it will install a lot libraries in home directory and many of them can be found in system directory.
 
 #### Shaheen mpi test program
@@ -90,17 +90,21 @@ submit.sh :
 srun hello.mpi
 ```
 
+**ntasks means number of CPUs, shaheen has 6174 nodes, each node has 2 cpus(each node has 128GB memory), each cpu has 16 processors.**
+
 by setting `ntasks=4`, you will get a 4-cpus to run this mpi program.
+
+`mem-per-cpu = 100` means `100MB` memory per cpu.
 
 Then run `sbatch submit.sh` will submit this job and can check the result in `res.txt` file.
 
 #### Run CombBLAS test on Shaheen
 
-##### 1. compile 
+##### 1. compile
 
 As `mpicc` is just wrapper of `cc` with some flags, basically I can add those flags myself if cray has them.
-So I replace `mpicc/mpicxx` compiler with simple `cc/c++` and ran `cmake ..` in `build` folder, 
-but I got errors, it said that cray doesn't have `c++14`. 
+So I replace `mpicc/mpicxx` compiler with simple `cc/c++` and ran `cmake ..` in `build` folder,
+but I got errors, it said that cray doesn't have `c++14`.
 
 Initially, I checked in module `PrgEnv-cray`.
 
@@ -114,13 +118,13 @@ And then I change module from `PrgEnv-cray` to `PrgEnv-gnu`,
 
 ![c14-gnu](./imgs/shaheen-usage/c14-gnu.png)
 
-So I used `PrgEnv-gnu` for next compiling, 
+So I used `PrgEnv-gnu` for next compiling,
 
 ![c14-cmake-gnu](./imgs/shaheen-usage/c14-cmake-gnu.png)
 
-Next problem is to link mpi library. 
+Next problem is to link mpi library.
 It's strange that if I just compile a simple mpi example, just `cc` is enough.
-But if I ran `make`, got error 
+But if I ran `make`, got error
 
 ![no-mpi](./imgs/shaheen-usage/no-mpi.png)
 
@@ -134,7 +138,7 @@ SET(CMAKE_CXX_FLAGS "-I/opt/cray/pe/mpt/7.7.0/gni/mpich-gnu/5.1/include -L/opt/c
 SET(CMAKE_C_FLAGS "/opt/cray/pe/mpt/7.7.0/gni/mpich-gnu/5.1/include -L/opt/cray/pe/mpt/7.7.0/gni/mpich-gnu/5.1/lib -DNDEBUG -Drestrict=__restrict__ -w -DGRAPH_GENERATOR_SEQ -O2 -DMPICH_IGNORE_CXX_SEEK")
 ```
 
-I specified `mpich` by `-I` and `-L` parameters. 
+I specified `mpich` by `-I` and `-L` parameters.
 However, this method is not suggested by shaheen, but it's a solution.
 
 ##### 2. run combBLAS example
@@ -154,29 +158,29 @@ First prepare a submit shell (I used simplest example here, need no arguments):
 srun selfTests/constructmat
 ```
 
-result : 
+result :
 
 ![res-mpi](./imgs/shaheen-usage/res-mpi.png)
 
-The example can actually run on shaheen, but the output seems different from local machine. 
+The example can actually run on shaheen, but the output seems different from local machine.
 Result vector is split and distributed on total 4 processes.
 
 If set `ntasks=1` :
 
 ![one-process](./imgs/shaheen-usage/one-process.png)
 
-This output has no problem. 
+This output has no problem.
 
-By looking at two results, I found they are not the same, 
+By looking at two results, I found they are not the same,
 4-process version got `24` while 1-process version got `6`, and `6` is right answer.
 Because in 4-process, it distributed all input vector on 4 machines,
-`max` can always give the right answer but `sum` won't. 
+`max` can always give the right answer but `sum` won't.
 
 Second, I ran an example with input parameter (`reduceadd`) :
 
 ![reduceadd-shaheen](./imgs/shaheen-usage/reduceadd-shaheen.png)
 
-Result is absolutely correct. So if we just read file as input 
+Result is absolutely correct. So if we just read file as input
 and then use the CombBLAS function to do the processing, then everything is fine.
 
 *One small problem is some warnings.*
@@ -187,5 +191,5 @@ Of course you cannot submit job under module `PrgEnv-cray`, each time you login 
 
 `srun --pty bash -i`
 
-Above command can lead you into interactive mode, but I don't know what to do next, 
+Above command can lead you into interactive mode, but I don't know what to do next,
 I will find out how to deal with interactive job.

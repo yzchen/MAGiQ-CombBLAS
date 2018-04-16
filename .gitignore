@@ -1,7 +1,9 @@
 .DS_Store
 ._.DS_Store
 ._*
-build/
+build/*
+!build/auto-run.sh
+!build/shaheen-run.sh
 output.txt
 .idea
 cmake-build-debug

@@ -62,9 +62,6 @@ void printReducedInfo(PSpMat<ElementType>::MPI_DCCols &M){
     double t1 = MPI_Wtime();
 
     int nnz1 = M.getnnz();
-    if (myrank == 0) {
-        cout << nnz1;
-    }
 
     FullyDistVec<int, ElementType> rowsums1(M.getcommgrid());
     M.Reduce(rowsums1, Row, std::plus<ElementType>() , 0);
@@ -72,15 +69,40 @@ void printReducedInfo(PSpMat<ElementType>::MPI_DCCols &M){
     M.Reduce(colsums1, Column, std::plus<ElementType>() , 0);
     int nnzrows1 = rowsums1.Count(isNotZero);
     int nnzcols1 = colsums1.Count(isNotZero);
-    if (myrank == 0) {
-        cout << " [ " << nnzrows1 << ", " << nnzcols1 << " ]" << endl;
-    }
 
     double t2 = MPI_Wtime();
     if (myrank == 0) {
         total_enum_time += (t2 -t1);
-        cout << "enum takes " << (t2 - t1) << " s" << endl;
+        cout << "    enum takes " << (t2 - t1) << " s" << endl;
     }
+
+    if (myrank == 0) {
+        cout << nnz1 << " [ " << nnzrows1 << ", " << nnzcols1 << " ]" << endl;
+    }
+}
+
+template  <typename  SR>
+void multPrune(PSpMat<ElementType>::MPI_DCCols &A, PSpMat<ElementType>::MPI_DCCols &B, PSpMat<ElementType>::MPI_DCCols &C, bool clearA = false, bool clearB = false) {
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    double t1 = MPI_Wtime();
+    C = PSpGEMM<SR>(A, B, clearA, clearB);
+    double t2 = MPI_Wtime();
+
+    if (myrank == 0) {
+        cout << "    multiplication takes: " << (t2 - t1) << endl;
+    }
+
+    double t3 = MPI_Wtime();
+    C.Prune(isZero);
+    double t4 = MPI_Wtime();
+
+    if (myrank == 0) {
+        cout << "    prune takes: " << (t4 - t3) << endl;
+    }
+
+    printReducedInfo(C);
 }
 
 void lubm320_L7(PSpMat<ElementType>::MPI_DCCols &G) {
@@ -102,29 +124,23 @@ void lubm320_L7(PSpMat<ElementType>::MPI_DCCols &G) {
     PSpMat<ElementType>::MPI_DCCols r_30(nrow, ncol, ri, ci, vi);
 
     // ==> step 1
-    auto m_30 = PSpGEMM<RDFINTINT>(G, r_30);
-    m_30.Prune(isZero);
-
-    printReducedInfo(m_30);
+    PSpMat<ElementType>::MPI_DCCols m_30(MPI_COMM_WORLD);
+    multPrune<RDFINTINT>(G, r_30, m_30);
 
     auto tG = transpose(G);
     auto dm_30 = diagonalize(m_30);
     mmul_scalar(dm_30, 2);
 
     // ==> step 2
-    auto m_43 = PSpGEMM<RDFINTINT>(tG, dm_30);
-    m_43.Prune(isZero);
-
-    printReducedInfo(m_43);
+    PSpMat<ElementType>::MPI_DCCols m_43(MPI_COMM_WORLD);
+    multPrune<RDFINTINT>(tG, dm_30, m_43);
 
     auto dm_43 = diagonalize(m_43);
     mmul_scalar(dm_43, 8);
 
     // ==> step 3
-    auto m_14 = PSpGEMM<RDFINTINT>(tG, dm_43);
-    m_14.Prune(isZero);
-
-    printReducedInfo(m_14);
+    PSpMat<ElementType>::MPI_DCCols m_14(MPI_COMM_WORLD);
+    multPrune<RDFINTINT>(tG, dm_43, m_14);
 
     int nrow1 = m_14.getnrow(), ncol1 = m_14.getncol();
     std::vector<int> riv1(1, 124);
@@ -138,29 +154,22 @@ void lubm320_L7(PSpMat<ElementType>::MPI_DCCols &G) {
     PSpMat<ElementType>::MPI_DCCols l_14(nrow1, ncol1, ri1, ci1, vi1);
 
     // ==> step 4
-    m_14 = PSpGEMM<PTINTINT>(l_14, m_14);
-    m_14.Prune(isZero);
-
-    printReducedInfo(m_14);
+    multPrune<PTINTINT>(l_14, m_14, m_14);
 
     auto tm_14 = transpose(m_14);
     auto dm_14 = diagonalize(tm_14);
     mmul_scalar(dm_14, 11);
 
     // ==> step 5
-    auto m_54 = PSpGEMM<RDFINTINT>(G, dm_14);
-    m_54.Prune(isZero);
-
-    printReducedInfo(m_54);
+    PSpMat<ElementType>::MPI_DCCols m_54(MPI_COMM_WORLD);
+    multPrune<RDFINTINT>(G, dm_14, m_54);
 
     auto dm_54 = diagonalize(m_54);
     mmul_scalar(dm_54, 8);
 
     // ==> step 6
-    auto m_25 = PSpGEMM<RDFINTINT>(tG, dm_54);
-    m_25.Prune(isZero);
-
-    printReducedInfo(m_25);
+    PSpMat<ElementType>::MPI_DCCols m_25(MPI_COMM_WORLD);
+    multPrune<RDFINTINT>(tG, dm_54, m_25);
 
     int nrow2 = m_25.getnrow(), ncol2 = m_25.getncol();
     std::vector<int> riv2(1, 2079);
@@ -174,64 +183,44 @@ void lubm320_L7(PSpMat<ElementType>::MPI_DCCols &G) {
     PSpMat<ElementType>::MPI_DCCols l_25(nrow2, ncol2, ri2, ci2, vi2);
 
     // ==> step 7
-    m_25 = PSpGEMM<PTINTINT>(l_25, m_25);
-    m_25.Prune(isZero);
-
-    printReducedInfo(m_25);
+    multPrune<PTINTINT>(l_25, m_25, m_25);
 
     auto tm_25 = transpose(m_25);
     auto dm_25 = diagonalize(tm_25);
     mmul_scalar(dm_25, 7);
 
     // ==> step 8
-    auto m_65 = PSpGEMM<RDFINTINT>(G, dm_25);
-    m_65.Prune(isZero);
-
-    printReducedInfo(m_65);
+    PSpMat<ElementType>::MPI_DCCols m_65(MPI_COMM_WORLD);
+    multPrune<RDFINTINT>(G, dm_25, m_65);
 
     auto tm_43 = transpose(m_43);
     auto dm_43_1 = diagonalize(tm_43);
 
     // ==> step 9
-    m_65 = PSpGEMM<PTINTINT>(dm_43_1, m_65);
-    m_65.Prune(isZero);
-
-    printReducedInfo(m_65);
+    multPrune<PTINTINT>(dm_43_1, m_65, m_65);
 
     auto dm_65 = diagonalize(m_65);
 
     // ==> step 10
-    m_43 = PSpGEMM<PTINTINT>(m_43, dm_65);
-    m_43.Prune(isZero);
-
-    printReducedInfo(m_43);
+    multPrune<PTINTINT>(m_43, dm_65, m_43);
 
     auto tm_65 = transpose(m_65);
     auto dm_65_1 = diagonalize(tm_65);
 
     // ==> step 11
-    m_54 = PSpGEMM<PTINTINT>(dm_65_1, m_54);
-    m_54.Prune(isZero);
-
-    printReducedInfo(m_54);
+    multPrune<PTINTINT>(dm_65_1, m_54, m_54);
 
     auto tm_54 = transpose(m_54);
     auto dm_54_1 = diagonalize(tm_54);
 
     // ==> step 12
-    m_43 = PSpGEMM<PTINTINT>(dm_54_1, m_43);
-    m_43.Prune(isZero);
-
-    printReducedInfo(m_43);
+    multPrune<PTINTINT>(dm_54_1, m_43, m_43);
 
     auto tm_43_1 = transpose(m_43);
     auto dm_43_2 = diagonalize(tm_43_1);
 
     // ==> step 13
-    m_30 = PSpGEMM<PTINTINT>(dm_43_2, m_30);
-    m_30.Prune(isZero);
-
-    printReducedInfo(m_30);
+    multPrune<PTINTINT>(dm_43_2, m_30, m_30);
 
     // end count time
     double total_computing_2 = MPI_Wtime();

@@ -1,6 +1,7 @@
 # Top level directory has the include files
 
 ADD_EXECUTABLE( spmult SpMult.cpp )
+ADD_EXECUTABLE( timing OperationsTiming.cpp )
 ADD_EXECUTABLE( semiringmult SemiringMult.cpp )
 ADD_EXECUTABLE( reduceadd ReduceAdd.cpp )
 ADD_EXECUTABLE( utils utils.cpp)
@@ -12,6 +13,7 @@ ADD_EXECUTABLE( lubm320_l2 Lubm320_L2.cpp)
 ADD_EXECUTABLE( lubm320_l7 Lubm320_L7.cpp)
 
 TARGET_LINK_LIBRARIES( spmult CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
+TARGET_LINK_LIBRARIES( timing CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 TARGET_LINK_LIBRARIES( semiringmult CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 TARGET_LINK_LIBRARIES( reduceadd CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 TARGET_LINK_LIBRARIES( utils CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
