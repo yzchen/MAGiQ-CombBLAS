@@ -44,22 +44,54 @@ int main(int argc, char *argv[]) {
         typedef PlusTimesSRing<ElementType, ElementType> PTINTINT;
         PSpMat<ElementType>::MPI_DCCols A(MPI_COMM_WORLD), B(MPI_COMM_WORLD);
 
-        A.ReadDistribute(Aname, 0);
+        double t1 = MPI_Wtime();
+
+//        A.ReadDistribute(Aname, 0);
+        A.ParallelReadMM(Aname, true, maximum<double>());
         A.PrintInfo();
 
-        B.ReadDistribute(Bname, 0);
-        B.PrintInfo();
-
-        double t1 = MPI_Wtime();
-        PSpMat<ElementType>::MPI_DCCols C = Mult_AnXBn_DoubleBuff<PTINTINT, ElementType, PSpMat<ElementType>::DCCols>(A, B);
-        MPI_Barrier(MPI_COMM_WORLD);
         double t2 = MPI_Wtime();
-        if(myrank == 0) {
-            cout << "multiplication takes " << t2 - t1 << " s" << endl;
+
+        if (myrank == 0) {
+            cout << "read file takes : " << (t2 - t1) << " s" << endl;
         }
 
-        C.PrintInfo();
-        C.SaveGathered("spmult.out");
+        double t3 = MPI_Wtime();
+
+//        B.ReadDistribute(Bname, 0);
+        B.ParallelReadMM(Bname, true, maximum<double>());
+        B.PrintInfo();
+
+        double t4 = MPI_Wtime();
+
+        if (myrank == 0) {
+            cout << "read file takes : " << (t4 - t3) << " s" << endl;
+        }
+
+        double t5 = MPI_Wtime();
+        PSpMat<ElementType>::MPI_DCCols C = Mult_AnXBn_DoubleBuff<PTINTINT, ElementType, PSpMat<ElementType>::DCCols>(A, B);
+        MPI_Barrier(MPI_COMM_WORLD);
+        double t6 = MPI_Wtime();
+        if(myrank == 0) {
+            cout << "multiplication takes " << t6 - t5 << " s" << endl;
+        }
+
+        double t7 = MPI_Wtime();
+        PSpMat<ElementType>::MPI_DCCols D = PSpGEMM<PTINTINT>(A,B);
+        MPI_Barrier(MPI_COMM_WORLD);
+        double t8 = MPI_Wtime();
+        if(myrank == 0) {
+            cout << "multiplication takes " << t8 - t7 << " s" << endl;
+        }
+
+//        double t9 = MPI_Wtime();
+//        PSpMat<ElementType>::MPI_DCCols E = SpGEMM<PTINTINT>(A,B,2,1,1,1,1,1,1);
+//        MPI_Barrier(MPI_COMM_WORLD);
+//        double t10 = MPI_Wtime();
+//        if(myrank == 0) {
+//            cout << "multiplication takes " << t10 - t9 << " s" << endl;
+//        }
+
     }
 
     MPI_Finalize();

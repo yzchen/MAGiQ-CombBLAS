@@ -102,7 +102,7 @@ void lubm320_L2(PSpMat<ElementType>::MPI_DCCols &G) {
     PSpMat<ElementType>::MPI_DCCols r_10(nrow, ncol, ri, ci, vi);
 
     // ==> step 1
-    auto m_10 = Mult_AnXBn_DoubleBuff<RDFINTINT, ElementType, PSpMat<ElementType>::DCCols>(G, r_10);
+    auto m_10 = PSpGEMM<RDFINTINT>(G, r_10);
     m_10.Prune(isZero);
 
     printReducedInfo(m_10);
@@ -112,7 +112,7 @@ void lubm320_L2(PSpMat<ElementType>::MPI_DCCols &G) {
     mmul_scalar(dm_10, 3);
 
     // ==> step 2
-    auto m_21 = Mult_AnXBn_DoubleBuff<RDFINTINT, ElementType, PSpMat<ElementType>::DCCols>(tG, dm_10);
+    auto m_21 = PSpGEMM<RDFINTINT>(tG, dm_10);
     m_21.Prune(isZero);
 
     printReducedInfo(m_21);
@@ -121,7 +121,7 @@ void lubm320_L2(PSpMat<ElementType>::MPI_DCCols &G) {
     auto dm_21 = diagonalize(tm_21);
 
     // ==> step 3
-    m_10 = Mult_AnXBn_DoubleBuff<PTINTINT, ElementType, PSpMat<ElementType>::DCCols>(dm_21, m_10);
+    m_10 = PSpGEMM<PTINTINT>(dm_21, m_10);
     m_10.Prune(isZero);
 
     printReducedInfo(m_10);
