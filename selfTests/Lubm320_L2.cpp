@@ -40,8 +40,23 @@ PSpMat<ElementType>::MPI_DCCols diagonalize(const PSpMat<ElementType>::MPI_DCCol
 }
 
 PSpMat<ElementType>::MPI_DCCols transpose(PSpMat<ElementType>::MPI_DCCols &M) {
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    double t1 = MPI_Wtime();
     PSpMat<ElementType>::MPI_DCCols N(M);
+    double t2 = MPI_Wtime();
+    if (myrank == 0) {
+        cout << "       trans 1st step takes " << (t2 - t1) << " s" << endl;
+    }
+
+    double t3 = MPI_Wtime();
     N.Transpose();
+    double t4 = MPI_Wtime();
+    if (myrank == 0) {
+        cout << "       trans 2nd step takes " << (t4 - t3) << " s" << endl;
+    }
+
     return N;
 }
 
@@ -91,7 +106,7 @@ void multPrune(PSpMat<ElementType>::MPI_DCCols &A, PSpMat<ElementType>::MPI_DCCo
     double t2 = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "    multiplication takes: " << (t2 - t1) << endl;
+        cout << "    multiplication takes: " << (t2 - t1) << " s" << endl;
     }
 
     double t3 = MPI_Wtime();
@@ -99,7 +114,7 @@ void multPrune(PSpMat<ElementType>::MPI_DCCols &A, PSpMat<ElementType>::MPI_DCCo
     double t4 = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "    prune takes: " << (t4 - t3) << endl;
+        cout << "    prune takes: " << (t4 - t3) << " s" << endl;
     }
 
     printReducedInfo(C);
@@ -127,16 +142,38 @@ void lubm320_L2(PSpMat<ElementType>::MPI_DCCols &G) {
     PSpMat<ElementType>::MPI_DCCols m_10(MPI_COMM_WORLD);
     multPrune<RDFINTINT>(G, r_10, m_10, false, true);
 
+    double t1_trans = MPI_Wtime();
     auto tG = transpose(G);
+    double t2_trans = MPI_Wtime();
+    if (myrank == 0) {
+        cout << "    transpose 1 takes : " << (t2_trans - t1_trans) << " s" <<endl;
+    }
+
+    double t1_diag = MPI_Wtime();
     auto dm_10 = diagonalize(m_10);
+    double t2_diag = MPI_Wtime();
+    if (myrank == 0) {
+        cout << "    diagonalize 1 takes : " << (t2_diag - t1_diag) << " s" <<endl;
+    }
     mmul_scalar(dm_10, 3);
 
     // ==> step 2
     PSpMat<ElementType>::MPI_DCCols m_21(MPI_COMM_WORLD);
     multPrune<RDFINTINT>(tG, dm_10, m_21, true, true);
 
+    double t3_trans = MPI_Wtime();
     auto tm_21 = transpose(m_21);
+    double t4_trans = MPI_Wtime();
+    if (myrank == 0) {
+        cout << "    transpose 2 takes : " << (t4_trans - t3_trans) << " s" <<endl;
+    }
+
+    double t3_diag = MPI_Wtime();
     auto dm_21 = diagonalize(tm_21);
+    double t4_diag = MPI_Wtime();
+    if (myrank == 0) {
+        cout << "    diagonalize 2 takes : " << (t4_diag - t3_diag) << " s" <<endl;
+    }
 
     // ==> step 3
     multPrune<PTINTINT>(dm_21, m_10, m_10, true, false);
@@ -176,7 +213,7 @@ int main(int argc, char *argv[]) {
 
         double t1 = MPI_Wtime();
 
-        G.ParallelReadMM(Mname, true, maximum<double>());
+        G.ParallelReadMM(Mname, true, maximum<ElementType>());
         G.PrintInfo();
 
         double t2 = MPI_Wtime();
