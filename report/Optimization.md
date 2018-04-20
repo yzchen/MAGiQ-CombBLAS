@@ -52,11 +52,17 @@ I think the reason is communication cost, for this data, when we increase number
 
 ### time counting for lubm320_L2
 
-![lubm320-L2-detail-timing](./imgs/optimization/lubm320-L2-detail-timing.png)
+~~Based on time scalability above, I chose `Mult_AnXBn_DoubleBuff` to do multiplication.
+Following results are all based on this assumption.~~
 
-Total query time is `8.7` seconds but `multiplication` and `prune` don't cost much, **main cost is `transpose` step**.
+First I used `PspGEMM` as multiplication function,
 
-If we don't count `transpose` and `diagnonalize` time, then actually query time is similar to the time on the paper.
+![lubm320-L2-detail-timing](imgs/optimization/lubm320-l2-1-p.png)
+
+Total query time is  dominated by **`transpose` step**, but `multiplication` and `prune` don't cost much.
+
+If we don't count `transpose` and `diagnonalize` time, then actually query time is similar to the time on the paper
+(It also holds for query 7).
 
 I think this is reasonable, because multiplication for real query is not very complicated, some matrix only contains exactly `1` entry.
 But when do transpose, usually need to transpose a complex matrix.
@@ -76,3 +82,21 @@ Only 2 steps here, I profiled these two steps.
 ![detail-transpose](./imgs/optimization/detail-transpose.png)
 
 So the second step `N.Transpose()` costs much, and `Transpose` is internal function.
+
+### PspGEMM v.s. Mult_AnXBn_DoubleBuff
+
+For query 2 : 
+
+PspGEMM | Mult_AnXBn_DoubleBuff
+:-------------------------:|:-------------------------:
+![1-p](./imgs/optimization/lubm320-l2-1-p.png "PspGEMM-1")|![1](./imgs/optimization/lubm320-l2-1.png "Mult_AnXBn_DoubleBuff-1")
+![4-p](./imgs/optimization/lubm320-l2-4-p.png "PspGEMM-4")|![4](./imgs/optimization/lubm320-l2-4.png "Mult_AnXBn_DoubleBuff-4")
+![16-p](./imgs/optimization/lubm320-l2-16-p.png "PspGEMM-16")|![1](./imgs/optimization/lubm320-l2-16.png "Mult_AnXBn_DoubleBuff-16")
+
+For query 7 :
+
+PspGEMM | Mult_AnXBn_DoubleBuff
+:-------------------------:|:-------------------------:
+![1-p](./imgs/optimization/lubm320-l7-1-p.png "PspGEMM-1")|![1](./imgs/optimization/lubm320-l7-1.png "Mult_AnXBn_DoubleBuff-1")
+![4-p](./imgs/optimization/lubm320-l7-4-p.png "PspGEMM-4")|![4](./imgs/optimization/lubm320-l7-4.png "Mult_AnXBn_DoubleBuff-4")
+![16-p](./imgs/optimization/lubm320-l7-16-p.png "PspGEMM-16")|![1](./imgs/optimization/lubm320-l7-16.png "Mult_AnXBn_DoubleBuff-16")

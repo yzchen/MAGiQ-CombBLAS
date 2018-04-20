@@ -54,6 +54,7 @@ bool isNotZero(ElementType t) {
 }
 
 static double total_enum_time = 0.0;
+static double total_mult_time = 0.0;
 
 void printReducedInfo(PSpMat<ElementType>::MPI_DCCols &M){
     int myrank;
@@ -87,10 +88,12 @@ void multPrune(PSpMat<ElementType>::MPI_DCCols &A, PSpMat<ElementType>::MPI_DCCo
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
     double t1 = MPI_Wtime();
-    C = PSpGEMM<SR>(A, B, clearA, clearB);
+    C = Mult_AnXBn_DoubleBuff<SR, ElementType, PSpMat<ElementType>::DCCols>(A, B, clearA, clearB);
+//    C = PSpGEMM<SR>(A, B, clearA, clearB);
     double t2 = MPI_Wtime();
 
     if (myrank == 0) {
+        total_mult_time += (t2 -t1);
         cout << "    multiplication takes: " << (t2 - t1) << " s" << endl;
     }
 
@@ -226,8 +229,9 @@ void lubm320_L7(PSpMat<ElementType>::MPI_DCCols &G) {
     double total_computing_2 = MPI_Wtime();
 
     if(myrank == 0) {
-        cout << "query 7 totally takes " << total_computing_2 - total_computing_1 << " s" << endl;
-        cout << "total enum time : " << total_enum_time << " s" <<endl;
+        cout << "query 7 totally takes : " << total_computing_2 - total_computing_1 << " s" << endl;
+        cout << "total mult time : " << total_mult_time << " s" << endl;
+        cout << "total enum time : " << total_enum_time << " s" << endl;
     }
 }
 
