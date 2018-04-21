@@ -100,3 +100,30 @@ PspGEMM | Mult_AnXBn_DoubleBuff
 ![1-p](./imgs/optimization/lubm320-l7-1-p.png "PspGEMM-1")|![1](./imgs/optimization/lubm320-l7-1.png "Mult_AnXBn_DoubleBuff-1")
 ![4-p](./imgs/optimization/lubm320-l7-4-p.png "PspGEMM-4")|![4](./imgs/optimization/lubm320-l7-4.png "Mult_AnXBn_DoubleBuff-4")
 ![16-p](./imgs/optimization/lubm320-l7-16-p.png "PspGEMM-16")|![1](./imgs/optimization/lubm320-l7-16.png "Mult_AnXBn_DoubleBuff-16")
+
+### Different #nodes on Shaheen
+
+Use `Mult_AnXBn_DoubleBuff`
+
+lubm10240_l2 :
+
+|#nodes|total_query_time (s)|
+|:----:|:------------------:|
+1|      330.158 
+4|      118.146 
+16|     132.597 
+64|     88.5528 
+256|    64.5638 
+1024|   35.4126 
+
+lubm10240_l7 :
+
+|#nodes|total_query_time (s)|
+|:----:|:------------------:|
+4|      381.628 
+16|     423.329 
+64|     284.113 
+256|    214.657 
+1024|   122.162 
+
+
