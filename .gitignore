@@ -4,6 +4,7 @@
 build/*
 !build/auto-run.sh
 !build/shaheen-run.sh
+!build/10240-l2.sh
 output.txt
 .idea
 cmake-build-debug
