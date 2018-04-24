@@ -126,4 +126,56 @@ lubm10240_l7 :
 256|    214.657 
 1024|   122.162 
 
+### Some thoughts
 
+- Large #nodes will result in large imbalance value, that will influence performance
+
+- Can find some scalability for somehow small data (1000 * 1000, 10000 non-zeros)
+
+![scalability_small_data](./imgs/optimization/scalability_small_data.png)
+
+|#cpus|imbalance|mult-time(s)|
+|:---:|:-------:|:----------:|
+|1|1|0.016266|
+|4|1.0252|0.005008|
+|16|1.0544|0.001853|
+
+- Small data's imbalance value will increase slower than large data (lubm320)
+
+|#cpus|imbalance|mult-tims(s)|
+|:---:|:-------:|:----------:|
+|1|1|34.983744|
+|4|2.66022|22.347176|
+|16|5.13761|12.170530|
+
+- If I change index type from `int` to `int64_t`, then read file time will go from `120 secs` to `315 secs`, for `int64_t`, I will run out of memory in local machine
+
+### Permutation
+
+Permutation will surely decrease imbalance value, and then reduce multiplication time
+
+```
+FullyDistVec<IndexType, ElementType> * ColSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
+FullyDistVec<IndexType, ElementType> * RowSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
+G.Reduce(*ColSums, Column, plus<ElementType>(), static_cast<ElementType>(0));
+G.Reduce(*RowSums, Row, plus<ElementType>(), static_cast<ElementType>(0));
+ColSums->EWiseApply(*RowSums, plus<ElementType>());
+
+nonisov = ColSums->FindInds(bind2nd(greater<ElementType>(), 0));
+
+nonisov.RandPerm();
+
+G(nonisov, nonisov, true);
+```
+
+How much can permutation can improve ?
+
+imbalance value :
+
+![permute-320](./imgs/optimization/permute-320.png)
+
+multiplication time :
+
+![permute-mult](./imgs/optimization/permute-mult.png)
+
+So it's a huge improvement!

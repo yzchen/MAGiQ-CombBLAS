@@ -10,8 +10,8 @@ using namespace combblas;
 template<class NT>
 class PSpMat {
 public:
-    typedef SpDCCols<int, NT> DCCols;
-    typedef SpParMat<int, NT, DCCols> MPI_DCCols;
+    typedef SpDCCols<int64_t, NT> DCCols;
+    typedef SpParMat<int64_t, NT, DCCols> MPI_DCCols;
 };
 
 #define ElementType int
@@ -68,7 +68,6 @@ bool isNotZero(ElementType t) {
     return t != 0;
 }
 
-static double total_enum_time = 0.0;
 static double total_mult_time = 0.0;
 
 void printReducedInfo(PSpMat<ElementType>::MPI_DCCols &M){
@@ -88,12 +87,11 @@ void printReducedInfo(PSpMat<ElementType>::MPI_DCCols &M){
 
     double t2 = MPI_Wtime();
     if (myrank == 0) {
-        total_enum_time += (t2 -t1);
         cout << "    enum takes " << (t2 - t1) << " s" << endl;
     }
 
     if (myrank == 0) {
-        cout << nnz1 << " [ " << nnzrows1 << ", " << nnzcols1 << " ]" << endl;
+        cout << nnz1 << " [ " << nnzrows1 << ", " << nnzcols1 << " ]\n" << endl;
     }
 }
 
@@ -103,8 +101,8 @@ void multPrune(PSpMat<ElementType>::MPI_DCCols &A, PSpMat<ElementType>::MPI_DCCo
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
     double t1 = MPI_Wtime();
-//    C = Mult_AnXBn_DoubleBuff<SR, ElementType, PSpMat<ElementType>::DCCols>(A, B, clearA, clearB);
-    C = PSpGEMM<SR>(A, B, clearA, clearB);
+    C = Mult_AnXBn_DoubleBuff<SR, ElementType, PSpMat<ElementType>::DCCols>(A, B, clearA, clearB);
+//    C = PSpGEMM<SR>(A, B, clearA, clearB);
     double t2 = MPI_Wtime();
 
     if (myrank == 0) {
@@ -127,6 +125,13 @@ void lubm320_L2(PSpMat<ElementType>::MPI_DCCols &G) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    double t1_trans = MPI_Wtime();
+    auto tG = transpose(G);
+    double t2_trans = MPI_Wtime();
+    if (myrank == 0) {
+        cout << "    transpose G takes : " << (t2_trans - t1_trans) << " s\n" <<endl;
+    }
+
     // start count time
     double t1 = MPI_Wtime();
 
@@ -144,13 +149,6 @@ void lubm320_L2(PSpMat<ElementType>::MPI_DCCols &G) {
     // ==> step 1
     PSpMat<ElementType>::MPI_DCCols m_10(MPI_COMM_WORLD);
     multPrune<RDFINTINT>(G, r_10, m_10, false, true);
-
-    double t1_trans = MPI_Wtime();
-    auto tG = transpose(G);
-    double t2_trans = MPI_Wtime();
-    if (myrank == 0) {
-        cout << "    transpose 1 takes : " << (t2_trans - t1_trans) << " s" <<endl;
-    }
 
     double t1_diag = MPI_Wtime();
     auto dm_10 = diagonalize(m_10);
@@ -185,9 +183,8 @@ void lubm320_L2(PSpMat<ElementType>::MPI_DCCols &G) {
     double t2 = MPI_Wtime();
 
     if(myrank == 0) {
-        cout << "query 2 takes : " << t2 - t1 << " s" << endl;
         cout << "total mult time : " << total_mult_time << " s" << endl;
-        cout << "total enum time : " << total_enum_time << " s" << endl;
+        cout << "query 2 takes : " << t2 - t1 << " s" << endl;
     }
 
 }

@@ -9,7 +9,7 @@
 
 using namespace std;
 using namespace combblas;
-#define ITERATIONS 1
+#define ITERATIONS 10
 
 // Simple helper class for declarations: Just the numerical type is templated 
 // The index type and the sequential matrix type stays the same for the whole code
@@ -18,8 +18,8 @@ template <class NT>
 class PSpMat 
 { 
 public: 
-	typedef SpDCCols < int, NT > DCCols;
-	typedef SpParMat < int, NT, DCCols > MPI_DCCols;
+	typedef SpDCCols < int64_t, NT > DCCols;
+	typedef SpParMat < int64_t, NT, DCCols > MPI_DCCols;
 };
 
 #define ElementType double
@@ -50,8 +50,16 @@ int main(int argc, char* argv[])
 		
 		A.ReadDistribute(Aname, 0);
 		A.PrintInfo();
+		float imA = A.LoadImbalance();
+
 		B.ReadDistribute(Bname, 0);
 		B.PrintInfo();
+		float imB = B.LoadImbalance();
+
+		if (myrank == 0) {
+		    cout << "imA : " << imA << "  imB : " << imB << endl;
+		}
+
 		SpParHelper::Print("Data read\n");
 
 		{ // force the calling of C's destructor

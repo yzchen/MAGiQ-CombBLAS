@@ -14,8 +14,8 @@ using namespace combblas;
 template<class NT>
 class PSpMat {
 public:
-    typedef SpDCCols<int, NT> DCCols;
-    typedef SpParMat<int, NT, DCCols> MPI_DCCols;
+    typedef SpDCCols<int64_t, NT> DCCols;
+    typedef SpParMat<int64_t, NT, DCCols> MPI_DCCols;
 };
 
 #define ElementType int

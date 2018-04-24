@@ -1,10 +1,5 @@
 #!/bin/bash
 
-rm -f time.csv
-touch time.csv
-echo "read,transpose,diagonalize,mmul_scalar,mult1,mult2,mult3,mult4" > time.csv
-
-./selfTests/timing
-mpirun -np 4 ./selfTests/timing
-mpirun -np 9 ./selfTests/timing
-mpirun -np 16 ./selfTests/timing
+./selfTests/lubm10240_l7 | tee lubm10240_l7_node1.log
+mpirun -np 4 ./selfTests/lubm10240_l7 | tee lubm10240_l7_node4.log
+mpirun -np 16 ./selfTests/lubm10240_l7 | tee lubm10240_l7_node16.log
