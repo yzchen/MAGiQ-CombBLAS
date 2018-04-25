@@ -201,12 +201,52 @@ void printReducedInfo(PSpMat::MPI_DCCols &M){
     }
 }
 
+static double total_dim_apply_time = 0.0;
+
+ElementType rdf_multiply(ElementType a, ElementType b) {
+    if (a != 0 &&  b != 0 && a == b) {
+        return static_cast<ElementType>(1);
+    } else {
+        return static_cast<ElementType>(0);
+    }
+}
+
+void multDimApplyPrune(int step, PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementType> &v, Dim dim, bool isRDF) {
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    double t1 = MPI_Wtime();
+    if (isRDF) {
+        A.DimApply(dim, v, rdf_multiply);
+    } else {
+        A.DimApply(dim, v, std::multiplies<ElementType>());
+    }
+    double t2 = MPI_Wtime();
+
+    if (myrank == 0) {
+        total_dim_apply_time += (t2 - t1);
+        cout << "    dim-apply takes: " << (t2 - t1) << " s" << endl;
+    }
+
+    double t3 = MPI_Wtime();
+    A.Prune(isZero);
+    double t4 = MPI_Wtime();
+
+    if (myrank == 0) {
+        total_prune_time += (t4 - t3);
+        cout << "    prune takes: " << (t4 - t3) << " s         --- end of step " << step << "\n" << endl;
+    }
+
+    printReducedInfo(A);
+}
+
 void lubm320_L7(PSpMat::MPI_DCCols &G) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
     FullyDistVec<IndexType, ElementType> nonisov(G.getcommgrid());
     permute(G, nonisov);
+//    nonisov.ParallelWrite("nonisov.txt", false);
 
     double t1_trans = MPI_Wtime();
     auto tG = transpose(G);
@@ -220,71 +260,59 @@ void lubm320_L7(PSpMat::MPI_DCCols &G) {
 
     double t_cons1 = MPI_Wtime();
 
+    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(107)))[0];
+    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(124)))[0];
+    IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(2079)))[0];
+
     int nrow = G.getnrow(), ncol = G.getncol();
-    std::vector<int> riv(1, 107);
-    std::vector<int> civ(1, 107);
-    std::vector<int> viv(1, 8);
 
-    FullyDistVec<int, ElementType> ri(riv, G.getcommgrid());
-    FullyDistVec<int, ElementType> ci(civ, G.getcommgrid());
-    FullyDistVec<int, ElementType> vi(viv, G.getcommgrid());
-
-    PSpMat::MPI_DCCols r_30(nrow, ncol, ri, ci, vi);
-    r_30(nonisov, nonisov, true);
-
-    std::vector<int> riv1(1, 124);
-    std::vector<int> civ1(1, 124);
+    std::vector<int> riv1(1, ind2);
     std::vector<int> viv1(1, 1);
 
     FullyDistVec<int, ElementType> ri1(riv1, G.getcommgrid());
-    FullyDistVec<int, ElementType> ci1(civ1, G.getcommgrid());
     FullyDistVec<int, ElementType> vi1(viv1, G.getcommgrid());
 
-    PSpMat::MPI_DCCols l_14(nrow, ncol, ri1, ci1, vi1);
-    l_14(nonisov, nonisov, true);
+    PSpMat::MPI_DCCols l_14(nrow, ncol, ri1, ri1, vi1);
 
-    std::vector<int> riv2(1, 2079);
-    std::vector<int> civ2(1, 2079);
+
+    std::vector<int> riv2(1, ind3);
     std::vector<int> viv2(1, 1);
 
     FullyDistVec<int, ElementType> ri2(riv2, G.getcommgrid());
-    FullyDistVec<int, ElementType> ci2(civ2, G.getcommgrid());
     FullyDistVec<int, ElementType> vi2(viv2, G.getcommgrid());
 
-    PSpMat::MPI_DCCols l_25(nrow, ncol, ri2, ci2, vi2);
-    l_25(nonisov, nonisov, true);
+    PSpMat::MPI_DCCols l_25(nrow, ncol, ri2, ri2, vi2);
 
     double t_cons2 = MPI_Wtime();
     if (myrank == 0) {
         cout << "    construct single element matrix takes : " << (t_cons2 - t_cons1) << "\n" << endl;
     }
 
+    FullyDistVec<IndexType, ElementType> r_30(G.getnrow(), 0);
+    r_30.SetElement(ind1, 8);
+    r_30.ParallelWrite("r_30", false);
+
     // start count time
     double total_computing_1 = MPI_Wtime();
 
-
     // ==> step 1
-    PSpMat::MPI_DCCols m_30(MPI_COMM_WORLD);
-    multPrune<RDFINTINT>(G, r_30, m_30);
-
-    FullyDistVec< int, ElementType> diag(G.getcommgrid());
-    G.Reduce(diag, Row, std::logical_or<ElementType>() , 0);
-    diag.Apply(bind2nd(multiplies<ElementType>(), 2));
-
-    auto dm_30 = diagonalize(m_30);
-    mmul_scalar(dm_30, 2);
+    auto m_30(G);
+    multDimApplyPrune(1, m_30, r_30, Column, true);
 
     // ==> step 2
+    FullyDistVec<int, ElementType> diag(G.getcommgrid());
+    m_30.Reduce(diag, Row, std::logical_or<ElementType>() , 0);
+    diag.Apply(bind2nd(multiplies<ElementType>(), 2));
+
     double t_dim1 = MPI_Wtime();
-    PSpMat::MPI_DCCols m_43_new(tG);
-    m_43_new.DimApply(Column, diag, my_or);
+    PSpMat::MPI_DCCols m_43(tG);
+    m_43.DimApply(Column, diag, my_or);
+    m_43.Prune(isZero);
+    m_43.PrintInfo();
     double t_dim2 = MPI_Wtime();
     if (myrank == 0) {
-        cout << "    dim apply : " << (t_dim2 - t_dim1) << endl;
+        cout << "    dim apply : " << (t_dim2 - t_dim1) << " s" << endl;
     }
-
-    PSpMat::MPI_DCCols m_43(MPI_COMM_WORLD);
-    multPrune<RDFINTINT>(tG, dm_30, m_43);
 
     auto dm_43 = diagonalize(m_43);
     mmul_scalar(dm_43, 8);
