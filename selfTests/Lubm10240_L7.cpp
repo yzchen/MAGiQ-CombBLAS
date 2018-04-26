@@ -229,6 +229,12 @@ void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &noniso
     }
 }
 
+PSpMat::MPI_DCCols transpose(const PSpMat::MPI_DCCols &M) {
+    PSpMat::MPI_DCCols N(M);
+    N.Transpose();
+    return N;
+}
+
 void diagonalizeV(const PSpMat::MPI_DCCols &M, FullyDistVec<IndexType, ElementType> &diag, Dim dim=Row, int scalar=1) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -279,12 +285,6 @@ void diagonalizeM(const PSpMat::MPI_DCCols &M, PSpMat::MPI_DCCols &D, Dim dim=Ro
         cout << "\tconstruct diag takes : " << (t4 - t3) << " s" << endl;
         cout << "\tmmul-scalar takes : " << (t6 - t5) << " s" << endl;
     }
-}
-
-PSpMat::MPI_DCCols transpose(PSpMat::MPI_DCCols &M) {
-    PSpMat::MPI_DCCols N(M);
-    N.Transpose();
-    return N;
 }
 
 template  <typename  SR>

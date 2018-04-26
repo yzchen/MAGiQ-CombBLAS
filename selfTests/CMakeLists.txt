@@ -14,6 +14,7 @@ ADD_EXECUTABLE( lubm320_l7 Lubm320_L7.cpp)
 ADD_EXECUTABLE(permute Permute_Test.cpp)
 ADD_EXECUTABLE( lubm10240_l2 Lubm10240_L2.cpp)
 ADD_EXECUTABLE( lubm10240_l7 Lubm10240_L7.cpp)
+ADD_EXECUTABLE( pair Pair_FullyDistVec.cpp)
 
 TARGET_LINK_LIBRARIES( spmult CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 TARGET_LINK_LIBRARIES( timing CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
@@ -29,3 +30,4 @@ TARGET_LINK_LIBRARIES( lubm320_l7 CommGridlib MPITypelib MemoryPoollib Hashlib m
 TARGET_LINK_LIBRARIES( lubm10240_l2 CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 TARGET_LINK_LIBRARIES( lubm10240_l7 CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 TARGET_LINK_LIBRARIES( permute CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
+TARGET_LINK_LIBRARIES( pair CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
