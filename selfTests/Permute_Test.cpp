@@ -78,7 +78,8 @@ int main(int argc, char *argv[]) {
 
         nonisov.RandPerm();
 
-        G(nonisov, nonisov, true);
+//        G(nonisov, nonisov, true);
+        auto G1 = G(nonisov, nonisov, false);
 
         float nimG = G.LoadImbalance();
         if (myrank == 0) {

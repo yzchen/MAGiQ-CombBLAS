@@ -10,6 +10,7 @@ output.txt
 cmake-build-debug
 ._*
 logs/
+!Shaheen-Results/logs
 TESTDATA/*
 !TESTDATA/create_mm.jl
 !TESTDATA/scale_test.sh

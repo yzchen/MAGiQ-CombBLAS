@@ -643,16 +643,16 @@ SpParMat< IT,NT,DER > & SpParMat< IT,NT,DER >::operator=(const SpParMat< IT,NT,D
 template <class IT, class NT, class DER>
 SpParMat< IT,NT,DER > & SpParMat< IT,NT,DER >::operator+=(const SpParMat< IT,NT,DER > & rhs)
 {
-	if(this != &rhs)		
+    if(*commGrid == *rhs.commGrid)
+    {
+        (*spSeq) += (*(rhs.spSeq));
+    }
+    else
+    {
+        std::cout << "Grids are not comparable for parallel addition (A+B)" << std::endl;
+    }
+    if(this != &rhs)
 	{
-		if(*commGrid == *rhs.commGrid)	
-		{
-			(*spSeq) += (*(rhs.spSeq));
-		}
-		else
-		{
-			std::cout << "Grids are not comparable for parallel addition (A+B)" << std::endl; 
-		}
 	}
 	else
 	{

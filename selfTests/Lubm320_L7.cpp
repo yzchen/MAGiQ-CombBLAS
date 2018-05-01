@@ -54,7 +54,7 @@ ElementType selectSecond(ElementType a, ElementType b) {
     return b;
 }
 
-void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &nonisov) {
+void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
