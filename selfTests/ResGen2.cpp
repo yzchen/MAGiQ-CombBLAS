@@ -22,8 +22,10 @@ public:
 typedef RDFRing<ElementType, ElementType> RDFINTINT;
 typedef PlusTimesSRing<ElementType, ElementType> PTINTINT;
 
+static double total_mult_time = 0.0;
 static double total_reduce_time = 0.0;
 static double total_prune_time = 0.0;
+static double total_construct_diag_time = 0.0;
 static double total_mmul_scalar_time = 0.0;
 static double total_dim_apply_time = 0.0;
 
@@ -111,7 +113,6 @@ void gatherMatrix(SpParMat<IndexType, ElementType, DER> &M, FullyDistVec<IndexTy
                             commGrid->GetRowWorld());
                 if (commGrid->GetRankInProcRow() == 0) {
                     for (int k = 0; k < rowcnt; ++k) {
-                        // my code, change it from saving to file to saving to fully dist vec
                         ri.SetElement(index, j + roffset);
                         ci.SetElement(index, ents[k].first);
                         index++;
@@ -268,6 +269,7 @@ void resGen2(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
     FullyDistVec<IndexType, IndexType> ri_21_2(m_21.getcommgrid(), m_21.getnnz(), 0);
     FullyDistVec<IndexType, IndexType> ci_21_1(m_21.getcommgrid(), m_21.getnnz(), 0);
 
+
     double t1_start = MPI_Wtime();
     gatherMatrix(m_10, ri_10_1, ci_10_0);
     gatherMatrix(m_21, ri_21_2, ci_21_1);
@@ -278,15 +280,12 @@ void resGen2(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
     }
 
     // magic number 12000000
-    FullyDistVec<IndexType, std::tuple<IndexType, IndexType, IndexType> > res(m_10.getcommgrid(), 12000000,
-                                                                              std::tuple<IndexType, IndexType, IndexType>());
+    FullyDistVec<IndexType, std::tuple<IndexType, IndexType, IndexType> > res(m_10.getcommgrid(), 12000000, std::tuple<IndexType, IndexType, IndexType>());
     int indRes = 0;
 
     double t2_start = MPI_Wtime();
-
- // very slow join, table with table
     for (int i = 0; i < ri_10_1.glen; ++i) {
-        if (myrank == 0) {
+        if (myrank == 0 && i % 10000 == 0) {
             cout << "iteration : " << i << endl;
         }
 
@@ -296,39 +295,6 @@ void resGen2(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
             res.SetElement(indRes, std::tuple<IndexType, IndexType, IndexType>(ci_10_0[i], ri_10_1[i], ri_21_2[ni[j]]));
         }
     }
-
-//    for (int i = 0; i < ri_10_1.glen; ++i) {
-//        if (myrank == 0) {
-//            cout << "iteration : " << i << endl;
-//        }
-//
-//        std::vector<IndexType> Ai;
-//        Ai.push_back(ri_10_1[i]);
-//        auto ni = m_21.SubsRefCol(Ai);
-//
-//        ni.PrintInfo();
-//
-//        FullyDistVec<IndexType, IndexType> rni(ni.getcommgrid(), ni.getnnz(), 0);
-//        FullyDistVec<IndexType, IndexType> cni(ni.getcommgrid(), ni.getnnz(), 0);
-//        gatherMatrix(ni, rni, cni);
-//        for (int j = 0; j < ni.getnnz(); ++j) {
-//            res.SetElement(indRes, std::tuple<IndexType, IndexType, IndexType>(ci_10_0[i], ri_10_1[i], rni[j]));
-//        }
-//    }
-
-//    for (int i = 0; i < ri_10_1.glen; ++i) {
-//        if (myrank == 0) {
-//            cout << "iteration : " << i << endl;
-//        }
-//
-//        for (auto it = m_21.seq().begcol(); it != m_21.seq().endcol(); it++) {
-////            res.SetElement(indRes, std::tuple<IndexType, IndexType, IndexType>(ci_10_0[i], ri_10_1[i],));
-//            if (myrank == 0) {
-//                cout << "non zeros : " << it.nnz() << endl;
-//            }
-//        }
-//    }
-
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -345,6 +311,7 @@ void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
 
     total_reduce_time = 0.0;
     total_prune_time = 0.0;
+    total_construct_diag_time = 0.0;
     total_mmul_scalar_time = 0.0;
     total_dim_apply_time = 0.0;
 
@@ -354,10 +321,10 @@ void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
 
     auto m_10(G), m_21(tG);
 
-    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(124)))[0];
+    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(79)))[0];
 
     FullyDistVec<IndexType, ElementType> r_10(commWorld, G.getnrow(), 0);
-    r_10.SetElement(ind1, 8);
+    r_10.SetElement(ind1, 6);
 
     // start count time
     double total_computing_1 = MPI_Wtime();
@@ -368,7 +335,7 @@ void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
         cout << "Query 2" << endl;
         cout << "###############################################################" << endl;
         cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(1,0) = G x {1@(124,124)}*8" << endl;
+        cout << "step 1 : m_(1,0) = G x {1@(79,79)}*6" << endl;
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_10, r_10, Column, true);
@@ -446,12 +413,12 @@ int main(int argc, char *argv[]) {
             cout << "Load Matrix" << endl;
             cout << "###############################################################" << endl;
             cout << "---------------------------------------------------------------" << endl;
-            cout << "starting reading lubm320 data......" << endl;
+            cout << "starting reading lubm10240 data......" << endl;
         }
 
         double t_pre1 = MPI_Wtime();
 
-        string Mname("/home/cheny0l/work/db245/fuad/data/lubm320/encoded.mm");
+        string Mname("/home/cheny0l/work/db245/fuad/data/lubm10240/encoded.mm");
 //        string Mname("/project/k1285/fuad/data/lubm10240/encoded.mm");
 
         double t1 = MPI_Wtime();
