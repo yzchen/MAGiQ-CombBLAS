@@ -2,6 +2,7 @@
 #include <functional>
 #include <algorithm>
 #include <sstream>
+#include <cmath>
 #include "../include/CombBLAS.h"
 
 using namespace std;
@@ -16,10 +17,31 @@ public:
     typedef SpParMat<IndexType, ElementType, DCCols> MPI_DCCols;
 };
 
+// M should have same rows and cols
 // fill I and J, they should have same size
 void get_indices_local(PSpMat::MPI_DCCols &M, vector<IndexType> &I, vector<IndexType> &J, vector<ElementType> &V) {
+    assert(M.getnrow() = M.getncol());
+
+    int nproc, myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+
+    int grid_size = int(sqrt(nproc));
+    int grid_length = M.getncol() / grid_size;
+
+//    if (myrank == 0) {
+//        cout << "grid_length : " << grid_length << endl;
+//    }
+
+    auto commGrid = M.getcommgrid();
+
     auto d0 = M.seq().GetInternal();
+
+    int colrank = commGrid->GetRankInProcCol();
+    int rowrank = commGrid->GetRankInProcRow();
+
     I.assign(d0->ir, d0->ir + d0->nz);
+    transform(I.begin(), I.end(), I.begin(), bind2nd(std::plus<int>(), colrank * grid_length));
     V.assign(d0->numx, d0->numx+d0->nz);
 
     for (int index = 0; index < d0->nzc; ++index) {
@@ -29,6 +51,7 @@ void get_indices_local(PSpMat::MPI_DCCols &M, vector<IndexType> &I, vector<Index
             J.push_back(d0->jc[index]);
         }
     }
+    transform(J.begin(), J.end(), J.begin(), bind2nd(std::plus<int>(), rowrank * grid_length));
 
     // if does not have same size, wrong
     assert(I.size() == J.size());
@@ -66,7 +89,7 @@ int main(int argc, char *argv[]) {
         if (myrank == 0) {
             cout << "read file takes " << t2 - t1 << " s" << endl;
         }
-        A.PrintInfo();
+//        A.PrintInfo();
 
         // get I and J
 //        auto d0 = A.seq().GetInternal();
