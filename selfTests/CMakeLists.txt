@@ -19,6 +19,7 @@
 #ADD_EXECUTABLE( collect CollectTest.cpp)
 #ADD_EXECUTABLE( resgen2 ResGen2.cpp)
 ADD_EXECUTABLE( getdcsc GetDCSCTest.cpp)
+ADD_EXECUTABLE( isect SpIntersectTest.cpp)
 
 #TARGET_LINK_LIBRARIES( spmult CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 #TARGET_LINK_LIBRARIES( timing CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
@@ -39,3 +40,4 @@ ADD_EXECUTABLE( getdcsc GetDCSCTest.cpp)
 #TARGET_LINK_LIBRARIES( collect CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 #TARGET_LINK_LIBRARIES( resgen2 CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 TARGET_LINK_LIBRARIES( getdcsc CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
+TARGET_LINK_LIBRARIES( isect CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
