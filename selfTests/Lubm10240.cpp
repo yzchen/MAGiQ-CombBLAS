@@ -31,7 +31,6 @@ static double total_mmul_scalar_time = 0.0;
 static double total_dim_apply_time = 0.0;
 
 // for constructing diag matrix
-static FullyDistVec<IndexType, ElementType> *nonisov;
 static FullyDistVec<IndexType, ElementType> *rvec;
 static FullyDistVec<IndexType, ElementType> *qvec;
 
@@ -203,7 +202,7 @@ void printReducedInfo(PSpMat::MPI_DCCols &M){
     }
 }
 
-void permute(PSpMat::MPI_DCCols &G) {
+void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -215,12 +214,11 @@ void permute(PSpMat::MPI_DCCols &G) {
     G.Reduce(*RowSums, Row, plus<ElementType>(), static_cast<ElementType>(0));
     ColSums->EWiseApply(*RowSums, plus<ElementType>());
 
-    nonisov = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
-    *nonisov = ColSums->FindInds(bind2nd(greater<ElementType>(), 0));
+    nonisov = ColSums->FindInds(bind2nd(greater<ElementType>(), 0));
 
-    nonisov->RandPerm();
+    nonisov.RandPerm();
 
-    G(*nonisov, *nonisov, true);
+    G(nonisov, nonisov, true);
     double t_perm2 = MPI_Wtime();
 
     float impG = G.LoadImbalance();
@@ -348,7 +346,7 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
 //    printReducedInfo(A);
 }
 
-void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, ElementType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -366,9 +364,9 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     auto m_50(G), m_35(G), m_13(tG), m_43(tG), m_24(tG), m_64(G);
 
-    IndexType ind1 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(22638)))[0];
-    IndexType ind2 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(24)))[0];
-    IndexType ind3 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(8622222)))[0];
+    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(22638)))[0];
+    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(24)))[0];
+    IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(8622222)))[0];
 
     FullyDistVec<IndexType, ElementType> r_50(commWorld, G.getnrow(), 0), l_13(commWorld, G.getnrow(), 0), l_24(commWorld, G.getnrow(), 0);
     r_50.SetElement(ind1, 6);
@@ -575,7 +573,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
 }
 
-void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, ElementType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -591,7 +589,7 @@ void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     auto m_10(G), m_21(tG);
 
-    IndexType ind1 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(79)))[0];
+    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(79)))[0];
 
     FullyDistVec<IndexType, ElementType> r_10(commWorld, G.getnrow(), 0);
     r_10.SetElement(ind1, 6);
@@ -658,7 +656,7 @@ void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
 }
 
-void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, ElementType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -676,9 +674,9 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     auto m_50(G), m_35(G), m_13(tG), m_43(tG), m_24(tG), m_64(G);
 
-    IndexType ind1 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(22638)))[0];
-    IndexType ind2 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(43)))[0];
-    IndexType ind3 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(8622222)))[0];
+    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(22638)))[0];
+    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(43)))[0];
+    IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(8622222)))[0];
 
     FullyDistVec<IndexType, ElementType> r_50(commWorld, G.getnrow(), 0), l_13(commWorld, G.getnrow(), 0), l_24(commWorld, G.getnrow(), 0);
     r_50.SetElement(ind1, 6);
@@ -885,7 +883,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
 }
 
-void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, ElementType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -901,8 +899,8 @@ void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     auto m_20(G), m_12(tG), m_32(tG), m_42(tG), m_52(tG);
 
-    IndexType ind1 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(11)))[0];
-    IndexType ind2 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(1345)))[0];
+    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(11)))[0];
+    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(1345)))[0];
 
     FullyDistVec<IndexType, ElementType> r_20(commWorld, G.getnrow(), 0), l_12(commWorld, G.getnrow(), 0);
     r_20.SetElement(ind1, 5);
@@ -1025,7 +1023,7 @@ void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
 }
 
-void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, ElementType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -1041,8 +1039,8 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     auto m_20(G), m_12(tG);
 
-    IndexType ind1 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(11)))[0];
-    IndexType ind2 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(357)))[0];
+    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(11)))[0];
+    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(357)))[0];
 
     FullyDistVec<IndexType, ElementType> r_20(commWorld, G.getnrow(), 0), l_12(commWorld, G.getnrow(), 0);
     r_20.SetElement(ind1, 11);
@@ -1123,7 +1121,7 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
 }
 
-void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, ElementType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -1139,9 +1137,9 @@ void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     auto m_30(G), m_43(tG), m_14(tG), m_24(tG);
 
-    IndexType ind1 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(1345)))[0];
-    IndexType ind2 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(22638)))[0];
-    IndexType ind3 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(40169)))[0];
+    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(1345)))[0];
+    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(22638)))[0];
+    IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(40169)))[0];
 
     FullyDistVec<IndexType, ElementType> r_30(commWorld, G.getnrow(), 0), l_14(commWorld, G.getnrow(), 0), l_24(commWorld, G.getnrow(), 0);
     r_30.SetElement(ind1, 6);
@@ -1281,7 +1279,7 @@ void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 // you have two choices
 // choice == 0 : use multPrune
 // choice == 1 : use multDimApplyPrune
-void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, int choice=1) {
+void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, ElementType> &nonisov, int choice=1) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -1293,9 +1291,9 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, int choice=1) {
 
     auto commWorld = G.getcommgrid();
 
-    IndexType ind1 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(1345)))[0];
-    IndexType ind2 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(43)))[0];
-    IndexType ind3 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(79)))[0];
+    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(1345)))[0];
+    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(43)))[0];
+    IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(79)))[0];
 
     // query execution
     if (choice == 0){   // multPrune
@@ -1771,8 +1769,8 @@ int main(int argc, char *argv[]) {
 
         double t_pre1 = MPI_Wtime();
 
-        string Mname("/home/cheny0l/work/db245/fuad/data/lubm10240/encoded.mm");
-//        string Mname("/project/k1285/fuad/data/lubm10240/encoded.mm");
+//        string Mname("/home/cheny0l/work/db245/fuad/data/lubm10240/encoded.mm");
+        string Mname("/project/k1285/fuad/data/lubm10240/encoded.mm");
 
         double t1 = MPI_Wtime();
         PSpMat::MPI_DCCols G(MPI_COMM_WORLD);
@@ -1792,7 +1790,8 @@ int main(int argc, char *argv[]) {
             cout << "\toriginal imbalance of G : " << imG << endl;
         }
 
-        permute(G);
+        FullyDistVec<IndexType, ElementType> nonisov;
+        permute(G, nonisov);
 
         double t1_trans = MPI_Wtime();
         auto tG = transpose(G);
@@ -1810,13 +1809,15 @@ int main(int argc, char *argv[]) {
         qvec->iota(G.getnrow(), 0);
 
         // query
-        lubm10240_l1(G, tG);
-        lubm10240_l2(G, tG);
-        lubm10240_l3(G, tG);
-        lubm10240_l4(G, tG);
-        lubm10240_l5(G, tG);
-        lubm10240_l6(G, tG);
-        lubm10240_l7(G, tG);
+	for (int time = 0; time < 5; time++) {
+        	lubm10240_l1(G, tG, nonisov);
+        	lubm10240_l2(G, tG, nonisov);
+        	lubm10240_l3(G, tG, nonisov);
+        	lubm10240_l4(G, tG, nonisov);
+        	lubm10240_l5(G, tG, nonisov);
+        	lubm10240_l6(G, tG, nonisov);
+        	lubm10240_l7(G, tG, nonisov);
+	}
     }
 
     MPI_Finalize();
