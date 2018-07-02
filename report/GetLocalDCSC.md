@@ -1,5 +1,7 @@
 ## Get Local DCSC Experiments
 
+if current process contains no data, it will have I,J vector with size 0.
+
 #### lubm10240 (nodes64, cores256)
 
 1. 

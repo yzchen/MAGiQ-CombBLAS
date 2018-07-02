@@ -20,7 +20,7 @@ public:
 
 // M should have same rows and cols
 // fill I and J, they should have same size
-void get_indices_local(PSpMat::MPI_DCCols &M, vector<IndexType> &I, vector<IndexType> &J, vector<ElementType> &V) {
+void get_indices_local(PSpMat::MPI_DCCols &M, vector<IndexType> &I, vector<IndexType> &J) {
     assert(M.getnrow() == M.getncol());
 
     auto commGrid = M.getcommgrid();
@@ -59,6 +59,8 @@ void get_indices_local(PSpMat::MPI_DCCols &M, vector<IndexType> &I, vector<Index
 
 //    cout << myrank << ", nz = " << d0->nz << endl;
 
+    cout << "offset of process " << myrank << ", roffset = " << roffset << ", coffset = " << coffset << endl;
+
     if (d0 != NULL) {
         double t1 = MPI_Wtime();
         I.assign(d0->ir, d0->ir + d0->nz);
@@ -66,13 +68,6 @@ void get_indices_local(PSpMat::MPI_DCCols &M, vector<IndexType> &I, vector<Index
         double t2 = MPI_Wtime();
         if (myrank == 0) {
             cout << myrank << ", construct I takes : " << (t2 - t1) << " s" << endl;
-        }
-
-        double t3 = MPI_Wtime();
-        V.assign(d0->numx, d0->numx + d0->nz);
-        double t4 = MPI_Wtime();
-        if (myrank == 0) {
-            cout << myrank << ", construct V takes : " << (t4 - t3) << " s" << endl;
         }
 
         double t5 = MPI_Wtime();
@@ -92,17 +87,17 @@ void get_indices_local(PSpMat::MPI_DCCols &M, vector<IndexType> &I, vector<Index
         // if does not have same size, wrong
         assert(I.size() == J.size());
 
-        // output to file
-        stringstream os;
-        os << "dcsc/" << myrank << ".txt";
 
-        double t7 = MPI_Wtime();
-        std::ofstream outFile(os.str());
-        for (int i = 0; i < I.size(); i++)
-            outFile << I[i] + 1 << "\t" << J[i] + 1 << "\t" << V[i] << "\n";
-        double t8 = MPI_Wtime();
-        cout << "output indices results for process " << myrank << " takes : " << (t8 - t7) << " s" << endl;
-        cout << "offset of process " << myrank << ", roffset = " << roffset << ", coffset = " << coffset << endl;
+        // output to file
+//        stringstream os;
+//        os << "dcsc/" << myrank << ".txt";
+//
+//        double t7 = MPI_Wtime();
+//        std::ofstream outFile(os.str());
+//        for (int i = 0; i < I.size(); i++)
+//            outFile << I[i] + 1 << "\t" << J[i] + 1 << "\n";
+//        double t8 = MPI_Wtime();
+//        cout << "output indices results for process " << myrank << " takes : " << (t8 - t7) << " s" << endl;
     }
 
 }
@@ -150,7 +145,7 @@ int main(int argc, char *argv[]) {
 ////        cout << "nz : " << d0->nz << "\t";
 ////        cout << "nzc : " << d0->nzc << endl;
 ////
-        vector<IndexType> I, J, V;
+        vector<IndexType> I, J;
 //        for (int index = 0; index < d0->nzc; ++index) {
 //            int times = d0->cp[index + 1] - d0->cp[index];
 //
@@ -161,7 +156,7 @@ int main(int argc, char *argv[]) {
 //
 //        cout << myrank << "\t" << I.size() << "\t" << J.size() << endl;
 
-        get_indices_local(A, I, J, V);
+        get_indices_local(A, I, J);
 
 //        cout << myrank << "\t" << I.size() << "\t" << J.size() << endl;
 //        cout << "myrank : " << myrank << "\t";
