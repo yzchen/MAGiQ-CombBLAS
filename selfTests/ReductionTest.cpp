@@ -126,7 +126,7 @@ void send_local_indices(PSpMat::MPI_DCCols &A, vector<IndexType> &I, vector<Inde
                 I.insert(I.end(), recv_I.begin(), recv_I.begin() + number_count);
                 J.insert(J.end(), recv_J.begin(), recv_J.begin() + number_count);
 
-                cout << "round " << p / 2 << ", " << myrank << " has " << I.size() << endl;
+                cout << "round " << p / 2 << " rank " << myrank << " has size of I " << I.size() << " and size of J  " << J.size() << endl;
             }
         }
     }
