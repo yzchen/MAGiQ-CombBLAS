@@ -2,6 +2,7 @@
 #include <functional>
 #include <algorithm>
 #include <sstream>
+#include <fstream>
 #include "../include/CombBLAS.h"
 
 #define IndexType uint32_t
@@ -156,8 +157,8 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
 }
 
 // M should have same rows and cols
-// indices size should be even, I and J are together
-void get_local_inices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
+// fill I and J, they should have same size
+void get_indices_local(PSpMat::MPI_DCCols &M, vector<IndexType> &I, vector<IndexType> &J) {
     assert(M.getnrow() == M.getncol());
 
     auto commGrid = M.getcommgrid();
@@ -189,78 +190,33 @@ void get_local_inices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
 
     if (d0 != NULL) {
 //        double t1 = MPI_Wtime();
-//        I.assign(d0->ir, d0->ir + d0->nz);
-//        transform(I.begin(), I.end(), I.begin(), bind2nd(std::plus<int>(), roffset));
+        I.assign(d0->ir, d0->ir + d0->nz);
+        transform(I.begin(), I.end(), I.begin(), bind2nd(std::plus<int>(), roffset));
 //        double t2 = MPI_Wtime();
 //        if (myrank == 0) {
 //            cout << myrank << ", construct I takes : " << (t2 - t1) << " s" << endl;
 //        }
 
 //        double t5 = MPI_Wtime();
-        int rind = 0;
-        for (int cind = 0; cind < d0->nzc; ++cind) {
-            int times = d0->cp[cind + 1] - d0->cp[cind];
+        for (int index = 0; index < d0->nzc; ++index) {
+            int times = d0->cp[index + 1] - d0->cp[index];
 
             for (int i = 0; i < times; ++i) {
-                indices.push_back(d0->ir[rind] + coffset);
-                indices.push_back(d0->jc[cind] + roffset);
-                rind++;
-//                J.push_back(d0->jc[cind]);
+                J.push_back(d0->jc[index]);
             }
         }
-//        transform(J.begin(), J.end(), J.begin(), bind2nd(std::plus<int>(), coffset));
+        transform(J.begin(), J.end(), J.begin(), bind2nd(std::plus<int>(), coffset));
 //        double t6 = MPI_Wtime();
 //        if (myrank == 0) {
 //            cout << myrank << ", construct J takes : " << (t6 - t5) << " s" << endl;
 //        }
 
-        cout << myrank << "   " << rind << "   " << indices.size() << endl;
         // if does not have same size, wrong
         assert(I.size() == J.size());
 
     }
 //    cout << myrank << " nz : " << I.size() << endl;
 
-}
-
-void send_local_index(shared_ptr<CommGrid> commGrid, vector<IndexType> &Indices){
-    int nprocs, myrank;
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    vector<vector<IndexType> > recs;
-
-    int number_count;
-    int max_count = 20;
-    // large max_count will generate error : bad_alloc
-//    int max_count = A.getlocalcols() * A.getlocalrows();
-
-    int colrank = commGrid->GetRankInProcRow();
-    int grid_cols = commGrid->GetGridCols();
-
-    if (colrank != 0) {
-        cout << myrank << " sender" << endl;
-        MPI_Send(&Indices, Indices.size(), MPIType<IndexType>(), 0, 0, commGrid->GetRowWorld());
-    } else {
-        cout << myrank << " receiver" << endl;
-        // first vector will be its self
-        recs.push_back(Indices);
-
-        for (int sender = 1; sender < grid_cols; sender++) {
-            vector<IndexType> recv_indices(max_count);
-            MPI_Status status;
-
-            MPI_Recv(recv_indices.data(), max_count, MPIType<IndexType>(), sender, 0,
-                     commGrid->GetRowWorld(), &status);
-            MPI_Get_count(&status, MPIType<IndexType>(), &number_count);
-
-//            cout << myrank << " number of numbers : " << number_count << endl;
-//            recv_indices.resize(number_count);
-            recs.push_back(vector<IndexType>(recv_indices.begin(), recv_indices.begin() + number_count));
-        }
-
-        cout << myrank << "   " << recs.size() << endl;
-    }
 }
 
 void send_local_indices(PSpMat::MPI_DCCols &A, vector<IndexType> &I, vector<IndexType> &J) {
@@ -271,7 +227,7 @@ void send_local_indices(PSpMat::MPI_DCCols &A, vector<IndexType> &I, vector<Inde
     auto commGrid = A.getcommgrid();
 
     int number_count;
-    int max_count = 20;
+    int max_count = 20000000;
     // large max_count will generate error : bad_alloc
 //    int max_count = A.getlocalcols() * A.getlocalrows();
 
@@ -331,53 +287,53 @@ void send_local_results(shared_ptr<CommGrid> commGrid, int res_size) {
         MPI_Send(&res_size, 1, MPIType<int>(), 0, 0, commGrid->GetColWorld());
     } else {    // myrank 0
         int recv_size;
-        for (int i = 1; i < grid_rows; i++){
+        for (int i = 1; i < grid_rows; i++) {
             MPI_Recv(&recv_size, 1, MPIType<int>(), i, 0,
                      commGrid->GetColWorld(), MPI_STATUS_IGNORE);
             res_size += recv_size;
-
-            cout << "final size : " << res_size << endl;
         }
+        cout << "final size : " << res_size << endl;
     }
 }
 
-//void join_l5(shared_ptr<CommGrid> commGrid, vector<vector<IndexType> > &Indices_20, vector<vector<IndexType> > &Indices_21){
-//    int myrank;
-//    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-//
-//    int colrank = commGrid->GetRankInProcRow();
-//
-//    if (colrank == 0) {
-//        cout << myrank << " " << Indices_20.size() << " " << Indices_21.size() << endl;
-//
-////        stringstream os;
-////        os << "l5resgen/" << myrank << ".txt";
-////
-////        double t7 = MPI_Wtime();
-////        std::ofstream outFile(os.str());
-////        for (int i = 0; i < I_20.size(); i++)
-////            outFile << I_20[i] << "\t" << J_20[i] << "\t" << I_21[i] << "\t" << J_21[i] << "\n";
-////        double t8 = MPI_Wtime();
-////        cout << "output indices results for process " << myrank << " takes : " << (t8 - t7) << " s" << endl;
-//
-//        vector<vector<int> > res;
-//        for (int ind_20 = 0, ind_21 = 0; ind_20 < I_20.size() && ind_21 < I_21.size(); ind_20++) {
-//            while( I_21[ind_21] < I_20[ind_20] ){
-//                ind_21++;
-//            }
-//
-//            if( I_21[ind_21] == I_20[ind_20] ){
-//                res.push_back(vector<int>{J_20[ind_20], J_21[ind_21], I_20[ind_20]});
-//            }
-//        }
-//
-//        cout << myrank << " size of res : " << res.size() << endl;
-//
-//        send_local_results(commGrid, res.size());
-//    }
-//}
+void join_l2(shared_ptr<CommGrid> commGrid, vector<IndexType> &I_10, vector<IndexType> &J_10, vector<IndexType> &I_12,
+             vector<IndexType> &J_12) {
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-void resGen(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_12) {
+    int colrank = commGrid->GetRankInProcRow();
+
+    if (colrank == 0) {
+        cout << myrank << " " << I_10.size() << " " << J_10.size() << " " << I_12.size() << " " << J_12.size() << endl;
+
+        stringstream os;
+        os << "l2resgen/" << myrank << ".txt";
+
+        double t7 = MPI_Wtime();
+        std::ofstream outFile(os.str());
+        for (int i = 0; i < I_10.size(); i++)
+            outFile << I_10[i] << "\t" << J_10[i] << "\t" << I_12[i] << "\t" << J_12[i] << "\n";
+        double t8 = MPI_Wtime();
+        cout << "output indices results for process " << myrank << " takes : " << (t8 - t7) << " s" << endl;
+
+        vector<vector<int> > res;
+        for (int ind_10 = 0, ind_12 = 0; ind_10 < I_10.size() && ind_12 < I_12.size(); ind_10++) {
+            while (I_12[ind_12] < I_10[ind_10]) {
+                ind_12++;
+            }
+
+            if (I_12[ind_12] == I_10[ind_10]) {
+                res.push_back(vector<int>{J_10[ind_10], I_10[ind_10], J_12[ind_12]});
+            }
+        }
+
+        cout << myrank << " size of res : " << res.size() << endl;
+
+        send_local_results(commGrid, res.size());
+    }
+}
+
+void resGen(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -386,43 +342,40 @@ void resGen(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_12) {
         cout << "begin result generation ......" << endl;
     }
 
-    // m_12 becoms m_21
-//    m_12.Transpose();
+    // m_21 becoms m_12
+    m_21.Transpose();
 
-    vector<IndexType> Indices_20;
-    get_local_inices(m_20, Indices_20);
-    send_local_index(m_20.getcommgrid(), Indices_20);
+    vector<IndexType> I_10, J_10;
+    get_indices_local(m_10, I_10, J_10);
+    send_local_indices(m_10, I_10, J_10);
 
-//    vector<IndexType> Indices_21;
-//    get_local_inices(m_12, Indices_21);
-//    send_local_index(m_12.getcommgrid(), Indices_21);
+    vector<IndexType> I_12, J_12;
+    get_indices_local(m_21, I_12, J_12);
+    send_local_indices(m_21, I_12, J_12);
 
     // real distributed join phase
-//    join_l5(m_20.getcommgrid(), Indices_20, Indices_21);
+    join_l2(m_10.getcommgrid(), I_10, J_10, I_12, J_12);
 }
 
-void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
+void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
     total_reduce_time = 0.0;
     total_prune_time = 0.0;
-//    total_construct_diag_time = 0.0;
     total_mmul_scalar_time = 0.0;
     total_dim_apply_time = 0.0;
 
     auto commWorld = G.getcommgrid();
 
-    FullyDistVec<IndexType, ElementType> dm_20(commWorld), dm_12(commWorld);
+    FullyDistVec<IndexType, ElementType> dm_10(commWorld), dm_21(commWorld);
 
-    auto m_20(G), m_12(tG);
+    auto m_10(G), m_21(tG);
 
-    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(11)))[0];
-    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(357)))[0];
+    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(79)))[0];
 
-    FullyDistVec<IndexType, ElementType> r_20(commWorld, G.getnrow(), 0), l_12(commWorld, G.getnrow(), 0);
-    r_20.SetElement(ind1, 11);
-    l_12.SetElement(ind2, 1);
+    FullyDistVec<IndexType, ElementType> r_10(commWorld, G.getnrow(), 0);
+    r_10.SetElement(ind1, 6);
 
     // start count time
     double total_computing_1 = MPI_Wtime();
@@ -430,13 +383,13 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
     // ==> step 1
     if (myrank == 0) {
         cout << "\n###############################################################" << endl;
-        cout << "Query 5" << endl;
+        cout << "Query 2" << endl;
         cout << "###############################################################" << endl;
         cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(2,0) = G x {1@(11,11)}*11" << endl;
+        cout << "step 1 : m_(1,0) = G x {1@(79,79)}*6" << endl;
     }
     double t1_start = MPI_Wtime();
-    multDimApplyPrune(m_20, r_20, Column, true);
+    multDimApplyPrune(m_10, r_10, Column, true);
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -446,11 +399,11 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : G.T() x m_(2,0).D()*6" << endl;
+        cout << "step 2 : m_(2,1) = G.T() * m_(1,0).D()*3" << endl;
     }
     double t2_start = MPI_Wtime();
-    diagonalizeV(m_20, dm_20, Row, 6);
-    multDimApplyPrune(m_12, dm_20, Column, true);
+    diagonalizeV(m_10, dm_10, Row, 3);
+    multDimApplyPrune(m_21, dm_10, Column, true);
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -460,10 +413,11 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(1,2) = {1@(357,357)} x m_(1,2)" << endl;
+        cout << "step 3 : m_(1,0) = m_(2,1).T().D() x m_(1,0)" << endl;
     }
     double t3_start = MPI_Wtime();
-    multDimApplyPrune(m_12, l_12, Row, false);
+    diagonalizeV(m_21, dm_21, Column);
+    multDimApplyPrune(m_10, dm_21, Row, false);
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -471,36 +425,21 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
         cout << "---------------------------------------------------------------" << endl;
     }
 
-    // ==> step 4
-    if (myrank == 0) {
-        cout << "step 4 : m_(2,0) = m_(1,2).T().D() x m_(2,0)" << endl;
-    }
-    double t4_start = MPI_Wtime();
-    diagonalizeV(m_12, dm_12, Column);
-    multDimApplyPrune(m_20, dm_12, Row, true);
-    double t4_end = MPI_Wtime();
-
-    if (myrank == 0) {
-        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-    }
-
     // end count time
     double total_computing_2 = MPI_Wtime();
 
-    printReducedInfo(m_20);
+    printReducedInfo(m_10);
 
     if (myrank == 0) {
-        cout << "query5 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl;
-        cout << "query5 prune time : " << total_prune_time << " s" << endl;
-        cout << "query5 diag_reduce time : " << total_reduce_time << " s" << endl;
-        cout << "query5 dim_apply time : " << total_dim_apply_time << " s" << endl;
-        cout << "query5 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl;
+        cout << "query2 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl;
+        cout << "query2 prune time : " << total_prune_time << " s" << endl;
+        cout << "query2 diag_reduce time : " << total_reduce_time << " s" << endl;
+        cout << "query2 dim_apply time : " << total_dim_apply_time << " s" << endl;
+        cout << "query2 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl;
     }
 
-    resGen(m_20, m_12);
+    resGen(m_10, m_21);
 }
-
 
 int main(int argc, char *argv[]) {
     int nprocs, myrank;
@@ -569,7 +508,7 @@ int main(int argc, char *argv[]) {
         qvec = new FullyDistVec<IndexType, ElementType>(commWorld);
         qvec->iota(G.getnrow(), 0);
 
-        lubm10240_l5(G, tG, nonisov);
+        lubm10240_l2(G, tG, nonisov);
 
 
     }
