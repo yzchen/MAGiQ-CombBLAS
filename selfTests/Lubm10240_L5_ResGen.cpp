@@ -157,7 +157,7 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
 
 // M should have same rows and cols
 // indices size should be even, I and J are together
-void get_local_inices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
+void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
     assert(M.getnrow() == M.getncol());
 
     auto commGrid = M.getcommgrid();
@@ -390,11 +390,11 @@ void resGen(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_12) {
 //    m_12.Transpose();
 
     vector<IndexType> Indices_20;
-    get_local_inices(m_20, Indices_20);
+    get_local_indices(m_20, Indices_20);
     send_local_index(m_20.getcommgrid(), Indices_20);
 
 //    vector<IndexType> Indices_21;
-//    get_local_inices(m_12, Indices_21);
+//    get_local_indices(m_12, Indices_21);
 //    send_local_index(m_12.getcommgrid(), Indices_21);
 
     // real distributed join phase

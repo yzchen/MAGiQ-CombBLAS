@@ -51,18 +51,43 @@ int main(int argc, char *argv[]) {
         A.PrintInfo();
 
         auto commGrid = A.getcommgrid();
-        int grcols = commGrid->GetGridCols();
-        int grrows = commGrid->GetGridRows();
+//        int grcols = commGrid->GetGridCols();
+//        int grrows = commGrid->GetGridRows();
+//        int colrank = commGrid->GetRankInProcCol();
+//        int rowrank = commGrid->GetRankInProcRow();
 
         int myprocrow = commGrid->GetRankInProcRow();
         int myproccol = commGrid->GetRankInProcCol();
         int myr = commGrid->GetRank();
 
         // grrows == grcols == sqrt(#processes)
-        cout << myrank << ", grcols = " << grcols << "  grrows = " << grrows << endl;
+//        cout << myrank << ", grcols = " << grcols << "  grrows = " << grrows << endl;
 
         // (myprocrow, myproccol) is the position of current process, myrank is same as mpi rank
-        cout << myrank << ", myproccol = " << myproccol << "  myprocrow = " << myprocrow << "   myrank = " << myr << endl;
+        cout << myrank << ", myprocrow = " << myprocrow << "  myproccol = " << myproccol << "   myrank = " << myr << endl;
+
+        int colrank = commGrid->GetRankInProcCol();
+        int rowrank = commGrid->GetRankInProcRow();
+
+//    int grid_size = int(sqrt(nproc));
+//    int grid_length = M.getncol() / grid_size;
+
+        int colneighs = commGrid->GetGridRows();
+        IndexType *locnrows = new IndexType[colneighs];  // number of rows is calculated by a reduction among the processor column
+        locnrows[colrank] = A.getlocalrows();
+        MPI_Allgather(MPI_IN_PLACE, 0, MPIType<IndexType>(), locnrows, 1, MPIType<IndexType>(), commGrid->GetColWorld());
+        IndexType roffset = std::accumulate(locnrows, locnrows + colrank, 0);
+        delete[] locnrows;
+
+        int rowneighs = commGrid->GetGridCols();
+        IndexType *locncols = new IndexType[rowneighs];  // number of rows is calculated by a reduction among the processor column
+        locncols[rowrank] = A.getlocalcols();
+        MPI_Allgather(MPI_IN_PLACE, 0, MPIType<IndexType>(), locncols, 1, MPIType<IndexType>(), commGrid->GetRowWorld());
+        IndexType coffset = std::accumulate(locncols, locncols + rowrank, 0);
+        delete[] locncols;
+
+        cout << myrank << " roffset : " << roffset << "     coffset : " << coffset << endl;
+
     }
 
     MPI_Finalize();

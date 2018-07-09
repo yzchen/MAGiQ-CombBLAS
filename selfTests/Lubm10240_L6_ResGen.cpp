@@ -177,7 +177,7 @@ void write_local_vector(vector<IndexType> &recs, string name, int step) {
 
 // M should have same rows and cols
 // indices size should be even, I and J are together
-void get_local_inices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
+void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
     assert(M.getnrow() == M.getncol());
 
     auto commGrid = M.getcommgrid();
@@ -254,17 +254,19 @@ void get_local_inices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
 
 }
 
-void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, int pair_size1, int pair_size2, int key1,
-                         int key2) {
-    int ssz1 = first.size(), ssz2 = second.size();
-    int i = 0, j = 0;
+// r1, r2 are not reachable
+void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, int l1, int l2, int r1, int r2, int pair_size1,
+                         int pair_size2, int key1, int key2) {
+//    cout << " l1 = " << l1 << ", r1 = " << r1 << ",         l2 = " << l2 << ", r2 = " << r2 << endl;
+//    int ssz1 = first.size(), ssz2 = second.size();
+    int i = l1, j = l2;
 
     vector<IndexType> res;
-    res.reserve(ssz1 + ssz2);
+    res.reserve((r1 - l1) + (r2 - l2));
 //    cout << ssz1 << " " << ssz2 << endl;
 
     auto it1 = first.begin(), it2 = second.begin();
-    while (i < ssz1 && j < ssz2) {
+    while (i < r1 && j < r2) {
         if (first[i + key1] <= second[j + key2]) {
             res.insert(res.end(), it1 + i, it1 + i + pair_size1);
             i += pair_size1;
@@ -276,17 +278,22 @@ void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, in
 //        cout << "size of res : " << res.size() << endl;
     }
 
-    while (i < ssz1) {
+//    cout << " j = " << j << endl;
+
+    while (i < r1) {
+//        cout << "in r1 loop" << endl;
         res.insert(res.end(), it1 + i, it1 + i + pair_size1);
         i += pair_size1;
     }
 
-    while (j < ssz2) {
+    while (j < r2) {
+//        cout << "in r2 loop" << endl;
         res.insert(res.end(), it2 + j, it2 + j + pair_size2);
         j += pair_size2;
     }
 
-    first.assign(res.begin(), res.end());
+    // first.assign(res.begin(), res.end());
+    copy_n(res.begin(), res.size(), first.begin() + l1);
 }
 
 
@@ -317,7 +324,7 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
             int receiver = colrank - ceil(p / 2);
             MPI_Send(local_indices.data(), number_count, MPIType<IndexType>(), receiver, 0,
                      commGrid->GetColWorld());
-//            cout << "round " << p / 2 << ", " << myrank << " sender " << number_count << endl;
+            cout << "round " << p / 2 << ", " << myrank << " sender " << number_count << endl;
         } else if (colrank % p == 0) { // this processor is a receiver in this round
             MPI_Status status;
             std::vector<IndexType> recv_I(max_count);
@@ -329,12 +336,14 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
 
                 // do something
                 MPI_Get_count(&status, MPI_INT, &number_count);
-//                cout << "round " << p / 2 << ", " << myrank << " receiver " << number_count << endl;
+                cout << "round " << p / 2 << ", " << myrank << " receiver " << number_count << endl;
 
                 recv_I.resize(number_count);
-                merge_local_vectors(local_indices, recv_I, 2, 2, 1, 1);
-//                cout << "round " << p / 2 << " rank " << myrank << " has size of indices " << local_indices.size()
-//                     << endl;
+                int original_sz = local_indices.size();
+                local_indices.resize(original_sz + number_count);
+                merge_local_vectors(local_indices, recv_I, 0, 0, original_sz, number_count, 2, 2, 1, 1);
+                cout << "round " << p / 2 << " rank " << myrank << " has size of indices " << local_indices.size()
+                     << endl;
             }
         }
     }
@@ -350,8 +359,8 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
     int rowrank = commGrid->GetRankInProcCol();
 
     if (rowrank == 0) {
-//        cout << myrank << " has size " << indices1.size() << " and " << indices2.size() << " pair size : " << pair_size1
-//             << endl;
+        cout << myrank << " has size " << indices1.size() << " and " << indices2.size() << " pair size : " << pair_size1
+             << endl;
         for (int i1 = 0, i2 = 0; i1 < indices1.size() && i2 < indices2.size(); i1 += pair_size1) {
             while (indices1[i1 + key1] > indices2[i2 + key2]) {
                 i2 += pair_size2;
@@ -366,35 +375,79 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
                         res.push_back(indices2[i2 + order[oi + 1]]);
                     }
                 }
-//                cout << myrank << " size of res join : " << res.size() << " i1, i2 : " << i1 << ", " << i2 << endl;
+                cout << myrank << " size of res join : " << res.size() << " i1, i2 : " << i1 << ", " << i2 << endl;
             }
         }
     }
 }
 
-void local_redistribution(shared_ptr<CommGrid> commGrid, PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
-                          int pivot_range, int pivot,
-                          vector<IndexType> &res) {
+// merge sort
+// left, right are number of tuples, not number of elements
+void local_sort_table(vector<IndexType> &range_table, int left, int right, int pair_size, int pivot) {
+    if (left < right) {
+        int mid = (left + right) / 2;
+//        cout << "mid = " << mid << endl;
+        local_sort_table(range_table, left, mid, pair_size, pivot);
+        local_sort_table(range_table, mid + 1, right, pair_size, pivot);
+
+        merge_local_vectors(range_table, range_table, left * pair_size, (mid + 1) * pair_size, (mid + 1) * pair_size,
+                            (right + 1) * pair_size, pair_size, pair_size, pivot, pivot);
+    }
+}
+
+// column based operation
+void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table, int pair_size,
+                          int pivot, vector<IndexType> &res) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-    int colrank = commGrid->GetRankInProcRow();
-    int rowrank = commGrid->GetRankInProcCol();
+    auto commGrid = M.getcommgrid();
 
-    // get range
+    // get column offset and broadcast them
+    int rowneighs = commGrid->GetGridCols();
+//    int colneighs = commGrid->GetGridRows();
+    IndexType coffset[rowneighs + 1];
+
+    int colrank = commGrid->GetRankInProcCol();
+    int rowrank = commGrid->GetRankInProcRow();
+
+//    IndexType *locnrows = new IndexType[colneighs];  // number of rows is calculated by a reduction among the processor column
+//    locnrows[colrank] = M.getlocalrows();
+//    MPI_Allgather(MPI_IN_PLACE, 0, MPIType<IndexType>(), locnrows, 1, MPIType<IndexType>(), commGrid->GetColWorld());
+//    IndexType ro = std::accumulate(locnrows, locnrows + colrank, 0);
+//    delete[] locnrows;
+
+    IndexType *locncols = new IndexType[rowneighs];  // number of rows is calculated by a reduction among the processor column
+    locncols[rowrank] = M.getlocalcols();
+    MPI_Allgather(MPI_IN_PLACE, 0, MPIType<IndexType>(), locncols, 1, MPIType<IndexType>(), commGrid->GetRowWorld());
+    coffset[rowrank] = std::accumulate(locncols, locncols + rowrank, 0);
+    MPI_Allgather(MPI_IN_PLACE, 0, MPIType<IndexType>(), coffset, 1, MPIType<IndexType>(), commGrid->GetRowWorld());
+    delete[] locncols;
+
+    //// magic number for flag
+    coffset[rowneighs] = UINT32_MAX;
+
     if (colrank == 0) {
-        // get offset
-        int rowneighs = commGrid->GetGridCols();
-        IndexType coffset[rowneighs];
-        IndexType *locncols = new IndexType[rowneighs];  // number of rows is calculated by a reduction among the processor column
-        locncols[rowrank] = M.getlocalcols();
-        MPI_Allgather(MPI_IN_PLACE, 0, MPIType<IndexType>(), locncols, 1, MPIType<IndexType>(),
-                      commGrid->GetRowWorld());
-        coffset[rowrank] = std::accumulate(locncols, locncols + rowrank, 0);
-        delete[] locncols;
+//        cout << myrank << " mycolumn : " << colrank << " base : " << ", " << co << endl;
 
-        MPI_Bcast(&coffset, 1, MPIType<IndexType>(), myrank, MPI_COMM_WORLD);
+        cout << myrank << "\t";
+        for (auto x : coffset) {
+            cout << x << "\t";
+        }
+        cout << endl;
+
+        cout << myrank << ", " << range_table.size() << endl;
+        local_sort_table(range_table, 0, range_table.size() / 3, pair_size, pivot);
+        cout << myrank << ", " << range_table.size() << endl;
+        write_local_vector(range_table, "res2", 3);
+
+        // split table into correct range and send to correct process
+        // test for first vector
+        auto n1 = find_if(range_table.begin(), range_table.end(), bind2nd(less<IndexType>(), coffset[1]));
+        cout << myrank << " first vec : " << n1 - range_table.begin() << endl;
+
     }
+
 
 }
 
@@ -411,31 +464,33 @@ void resGen(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_DCCo
     // m_30 becoms m_03
     m_30.Transpose();
     vector<IndexType> index_03;
-    get_local_inices(m_30, index_03);
+    get_local_indices(m_30, index_03);
     send_local_indices(m_30.getcommgrid(), index_03);
     write_local_vector(index_03, "m_30", 2);
 
 //    m_43.Transpose();
     vector<IndexType> index_43;
-    get_local_inices(m_43, index_43);
+    get_local_indices(m_43, index_43);
     send_local_indices(m_43.getcommgrid(), index_43);
     write_local_vector(index_43, "m_43", 2);
 
     vector<IndexType> order1 = {0, 0, 0, 1, 2, 0};
-    vector<IndexType> res1;
+    vector<IndexType> res1, res11;
     local_join(m_30.getcommgrid(), index_03, index_43, 2, 2, 1, 1, order1, res1);
     write_local_vector(res1, "res1", 3);
+
+    local_redistribution(m_14, res1, 3, 2, res11);
 
 //
 //    vector<IndexType> index_14;
 //    vector<IndexType> indices_14;
-//    get_local_inices(m_14, index_14);
+//    get_local_indices(m_14, index_14);
 //    send_local_indices(m_14.getcommgrid(), index_14);
 //    write_local_vector(index_14, "m_14");
 //
 //    vector<IndexType> index_24;
 //    vector<IndexType> indices_24;
-//    get_local_inices(m_24, index_24);
+//    get_local_indices(m_24, index_24);
 //    send_local_indices(m_24.getcommgrid(), index_24);
 //    write_local_vector(index_24, "m_24");
 

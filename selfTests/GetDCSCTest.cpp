@@ -89,15 +89,15 @@ void get_indices_local(PSpMat::MPI_DCCols &M, vector<IndexType> &I, vector<Index
 
 
         // output to file
-//        stringstream os;
-//        os << "dcsc/" << myrank << ".txt";
-//
-//        double t7 = MPI_Wtime();
-//        std::ofstream outFile(os.str());
-//        for (int i = 0; i < I.size(); i++)
-//            outFile << I[i] + 1 << "\t" << J[i] + 1 << "\n";
-//        double t8 = MPI_Wtime();
-//        cout << "output indices results for process " << myrank << " takes : " << (t8 - t7) << " s" << endl;
+        stringstream os;
+        os << "dcsc/" << myrank << ".txt";
+
+        double t7 = MPI_Wtime();
+        std::ofstream outFile(os.str());
+        for (int i = 0; i < I.size(); i++)
+            outFile << I[i] + 1 << "\t" << J[i] + 1 << "\n";
+        double t8 = MPI_Wtime();
+        cout << "output indices results for process " << myrank << " takes : " << (t8 - t7) << " s" << endl;
     }
 
 }
