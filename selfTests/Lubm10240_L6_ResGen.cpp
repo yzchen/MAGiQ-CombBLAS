@@ -255,8 +255,9 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
 }
 
 // r1, r2 are not reachable
-void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, int l1, int l2, int r1, int r2, int pair_size1,
-                         int pair_size2, int key1, int key2) {
+void
+merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, int l1, int l2, int r1, int r2, int pair_size1,
+                    int pair_size2, int key1, int key2) {
 //    cout << " l1 = " << l1 << ", r1 = " << r1 << ",         l2 = " << l2 << ", r2 = " << r2 << endl;
 //    int ssz1 = first.size(), ssz2 = second.size();
     int i = l1, j = l2;
@@ -324,7 +325,7 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
             int receiver = colrank - ceil(p / 2);
             MPI_Send(local_indices.data(), number_count, MPIType<IndexType>(), receiver, 0,
                      commGrid->GetColWorld());
-            cout << "round " << p / 2 << ", " << myrank << " sender " << number_count << endl;
+//            cout << "round " << p / 2 << ", " << myrank << " sender " << number_count << endl;
         } else if (colrank % p == 0) { // this processor is a receiver in this round
             MPI_Status status;
             std::vector<IndexType> recv_I(max_count);
@@ -336,14 +337,14 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
 
                 // do something
                 MPI_Get_count(&status, MPI_INT, &number_count);
-                cout << "round " << p / 2 << ", " << myrank << " receiver " << number_count << endl;
+//                cout << "round " << p / 2 << ", " << myrank << " receiver " << number_count << endl;
 
                 recv_I.resize(number_count);
                 int original_sz = local_indices.size();
                 local_indices.resize(original_sz + number_count);
                 merge_local_vectors(local_indices, recv_I, 0, 0, original_sz, number_count, 2, 2, 1, 1);
-                cout << "round " << p / 2 << " rank " << myrank << " has size of indices " << local_indices.size()
-                     << endl;
+//                cout << "round " << p / 2 << " rank " << myrank << " has size of indices " << local_indices.size()
+//                     << endl;
             }
         }
     }
@@ -359,8 +360,8 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
     int rowrank = commGrid->GetRankInProcCol();
 
     if (rowrank == 0) {
-        cout << myrank << " has size " << indices1.size() << " and " << indices2.size() << " pair size : " << pair_size1
-             << endl;
+//        cout << myrank << " has size " << indices1.size() << " and " << indices2.size() << " pair size : " << pair_size1
+//             << endl;
         for (int i1 = 0, i2 = 0; i1 < indices1.size() && i2 < indices2.size(); i1 += pair_size1) {
             while (indices1[i1 + key1] > indices2[i2 + key2]) {
                 i2 += pair_size2;
@@ -375,7 +376,7 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
                         res.push_back(indices2[i2 + order[oi + 1]]);
                     }
                 }
-                cout << myrank << " size of res join : " << res.size() << " i1, i2 : " << i1 << ", " << i2 << endl;
+//                cout << myrank << " size of res join : " << res.size() << " i1, i2 : " << i1 << ", " << i2 << endl;
             }
         }
     }
@@ -427,27 +428,142 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     //// magic number for flag
     coffset[rowneighs] = UINT32_MAX;
 
-    if (colrank == 0) {
-//        cout << myrank << " mycolumn : " << colrank << " base : " << ", " << co << endl;
+//    if (colrank == 0) {
+////        cout << myrank << " mycolumn : " << colrank << " base : " << ", " << co << endl;
+//
+//        cout << myrank << "\t";
+//        for (auto x : coffset) {
+//            cout << x << "\t";
+//        }
+//        cout << endl;
+//    }
 
-        cout << myrank << "\t";
-        for (auto x : coffset) {
-            cout << x << "\t";
+    //        cout << myrank << ", " << range_table.size() << endl;
+    local_sort_table(range_table, 0, range_table.size() / 3, pair_size, pivot);
+//        cout << myrank << ", " << range_table.size() << endl;
+    write_local_vector(range_table, "res2", 3);
+
+    vector<int> lens;
+    lens.reserve(rowneighs + 1);
+    lens.push_back(0);
+
+    // split table into correct range and send to correct process
+    int prev = 0;
+    for (int i = 1; i <= rowneighs; ++i) {
+        int j;
+        for (j = prev; j < range_table.size() && range_table[j + pivot] < coffset[i]; j += pair_size) {
+        }
+
+        // vector slice : prev -> j - 3
+//        cout << myrank << " cut point : " << j << endl;
+        int len = j - prev;
+        lens.push_back(len);
+
+//        vector<int> recvcounts;
+//
+//        /* Only root has the received data */
+//        if (myrank == i - 1)
+//            recvcounts.resize(rowneighs);
+//
+//        if (colrank == 0) {
+//            MPI_Barrier(commGrid->GetRowWorld());
+//            MPI_Gather(&len, 1, MPI_INT, recvcounts.data(), 1, MPI_INT, i - 1, commGrid->GetRowWorld());
+//
+//            if (myrank == i - 1) {
+//                cout << myrank << "\t";
+//                for (int k = 0; k < rowneighs; ++k) {
+//                    cout << recvcounts[k] << "\t";
+//                }
+//                cout << endl;
+//            }
+//
+//            vector<int> displs(recvcounts);
+//            partial_sum(displs.begin(), displs.end(), displs.begin());
+//
+////            MPI_Gatherv(range_table.data() + prev, len, MPIType<IndexType>(), res.data(), recvcounts.data(), displs.data(), MPIType<IndexType>(), i - 1, commGrid->GetRowWorld());
+//            MPI_Barrier(commGrid->GetRowWorld());
+//        }
+
+        prev = j;
+    }
+
+    if (colrank == 0) {
+        cout << "lens : " << myrank << "\t";
+        for (int k = 0; k < lens.size(); ++k) {
+            cout << lens[k] << "\t";
+        }
+        cout << endl;
+    }
+
+    vector<int> partial_sums(lens);
+    partial_sums[0] = 0;
+    partial_sum(partial_sums.begin(), partial_sums.end() - 1, partial_sums.begin() + 1);
+
+    int *recvcount[rowneighs];
+    vector<int> displs(rowneighs);
+    displs[0] = 0;
+
+    if (colrank == 0) {
+        recvcount[myrank] = new int[rowneighs];
+
+        for (int i = 0; i < rowneighs; ++i) {
+            MPI_Gather(lens.data() + i + 1, 1, MPI_INT, recvcount[i], 1, MPI_INT, i, commGrid->GetRowWorld());
+        }
+
+        cout << "recvcount : " << myrank << "\t";
+        for (int k = 0; k < rowneighs; ++k) {
+            cout << recvcount[myrank][k] << "\t";
         }
         cout << endl;
 
-        cout << myrank << ", " << range_table.size() << endl;
-        local_sort_table(range_table, 0, range_table.size() / 3, pair_size, pivot);
-        cout << myrank << ", " << range_table.size() << endl;
-        write_local_vector(range_table, "res2", 3);
+        for (int j = 1; j < rowneighs; ++j) {
+            displs[j] = displs[j - 1] + recvcount[myrank][j - 1];
+        }
 
-        // split table into correct range and send to correct process
-        // test for first vector
-        auto n1 = find_if(range_table.begin(), range_table.end(), bind2nd(less<IndexType>(), coffset[1]));
-        cout << myrank << " first vec : " << n1 - range_table.begin() << endl;
+        cout << "displs : " << myrank << "\t";
+        for (int k = 0; k < displs.size(); ++k) {
+            cout << displs[k] << "\t";
+        }
+        cout << endl;
 
+        res.resize(displs[rowneighs - 1] + recvcount[myrank][rowneighs - 1]);
+        cout << myrank << " result size = " << displs[rowneighs - 1] + recvcount[myrank][rowneighs - 1] << endl;
+
+//        for (int l = 0; l < rowneighs; ++l) {
+//            MPI_Gatherv(range_table.data() + partial_sums[l], lens[l], MPIType<IndexType>(), res.data(), recvcount[l],
+//                        displs.data(), MPIType<IndexType>(), l, commGrid->GetRowWorld());
+//        }
+        MPI_Gatherv(range_table.data(), lens[1], MPIType<IndexType>(), res.data(), recvcount[0],
+                displs.data(), MPIType<IndexType>(), 0, commGrid->GetRowWorld());
+
+        if (myrank == 0) {
+            cout << "\nrank 0 has : " << endl;
+            for (int t = 0; t < res.size(); t += 3) {
+                cout << res[t] << " " << res[t+1] << " " << res[t+2] << "\n";
+            }
+            cout << endl;
+        }
     }
 
+
+//        vector<int> recvcounts;
+//
+//        /* Only root has the received data */
+//        if (myrank == 0)
+//            recvcounts.resize(rowneighs);
+//
+//        if (colrank == 0) {
+//            MPI_Barrier(commGrid->GetRowWorld());
+//            MPI_Gather(lens.data(), 1, MPI_INT, recvcounts.data(), 1, MPI_INT, 0, commGrid->GetRowWorld());
+//
+//            if (myrank == 0) {
+//                cout << myrank << "\tcollection :\t";
+//                for (int k = 0; k < rowneighs; ++k) {
+//                    cout << recvcounts[k] << "\t";
+//                }
+//                cout << endl;
+//            }
+//        }
 
 }
 
