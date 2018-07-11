@@ -14,5 +14,4 @@ TESTDATA/*
 !TESTDATA/create_mm.jl
 !TESTDATA/scale_test.sh
 run/*
-!run/*.sh
 !run/dimApply/
