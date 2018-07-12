@@ -85,20 +85,26 @@ void resgen_l1(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
 
     write_local_vector(index_023456_0, "index_023456_0", 5);
 
-    // TODO : code check point
-    cout << myrank << " check point, finished 3 joins and 1 filter " << endl;
 
     local_redistribution(m_13, index_023456_0, 5, 2, index_023456);
     index_023456_0.clear();
 
+    // TODO : code check point
+    cout << myrank << " check point, finished 3 joins and 1 filter before 1111111" << endl;
+
     vector<IndexType> index_13;
     get_local_indices(m_13, index_13);
+    write_local_vector(index_13, "m_13", 2);
     send_local_indices(commGrid, index_13);
-    write_local_vector(index_24, "m_24", 2);
 
     vector<IndexType> order5 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
     vector<IndexType> index_0123456;
+
+    // TODO : code check point
+    cout << myrank << " check point, finished 3 joins and 1 filter " << endl;
+
     local_join(commGrid, index_023456, index_13, 5, 2, 2, 1, order5, index_0123456);
+
 
     send_local_results(commGrid, index_0123456.size() / 6);
 }
