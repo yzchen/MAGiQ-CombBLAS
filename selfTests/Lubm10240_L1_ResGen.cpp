@@ -32,10 +32,18 @@ void resgen_l1(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     send_local_indices(commGrid, index_05);
     write_local_vector(index_05, "m_50", 2);
 
+    if (myrank == 0) {
+        cout << "\nm_50\n" << endl;
+    }
+
     vector<IndexType> index_35;
     get_local_indices(m_35, index_35);
     send_local_indices(commGrid, index_35);
     write_local_vector(index_35, "m_35", 2);
+
+    if (myrank == 0) {
+        cout << "\nm_35\n" << endl;
+    }
 
     vector<IndexType> order1 = {0, 0, 1, 0, 1, 1};
     vector<IndexType> index_035_0, index_035;
@@ -45,6 +53,10 @@ void resgen_l1(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     write_local_vector(index_035_0, "index_035_0", 3);
     local_redistribution(m_43, index_035_0, 3, 1, index_035);
     index_035_0.clear();
+
+    if (myrank == 0) {
+        cout << "\nm_035 join && redistribution\n" << endl;
+    }
 
     vector<IndexType> index_43;
     get_local_indices(m_43, index_43);

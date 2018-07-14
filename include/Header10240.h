@@ -163,7 +163,7 @@ void write_local_vector(vector<IndexType> &recs, string name, int step) {
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
     stringstream os;
-    os << "l1resgen/" << name << "/" << myrank << "_3.txt";
+    os << "test/" << name << "/" << myrank << "_3.txt";
 
 //    double t7 = MPI_Wtime();
     std::ofstream outFile(os.str());
@@ -306,10 +306,10 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-    int number_count;
     // TODO : magic number
     // TODO : future fix : mpi gather to get all sizes and then add them to get actual total size
     int max_count = 15000000;
+//    int max_count = local_indices.size();
     // large max_count will generate error : bad_alloc
 //    int max_count = A.getlocalcols() * A.getlocalrows();
 
@@ -319,8 +319,48 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
     int colneighs = commGrid->GetGridRows();
     int colrank = commGrid->GetRankInProcCol();
 
-    // prepare data
+    // prepare max_count
+//
+////    if (colrank != 0) {
+////        number_count = local_indices.size();
+////
+////        cout << "myrank " << myrank << " sender " <<endl;
+////
+////        MPI_Send(&number_count, 1, MPIType<int>(), 0, 0, commGrid->GetColWorld());
+////
+////    } else {
+////        cout << "myrank " << myrank << " receiver " <<endl;
+////        for (int i = 1; i < colneighs; ++i) {
+////            int recv_count;
+////            MPI_Recv(&recv_count, 1, MPIType<int>(), i, 0, commGrid->GetColWorld(), MPI_STATUS_IGNORE);
+////            if (max_count < recv_count) {
+////                max_count = recv_count;
+////            }
+////        }
+////    }
+//
+//    for (int p = 2; p <= colneighs; p *= 2) {
+//
+//        if (colrank % p == p / 2) { // this processor is a sender in this round
+//            int receiver = colrank - ceil(p / 2);
+//            MPI_Send(&max_count, 1, MPIType<int>(), receiver, 0, commGrid->GetColWorld());
+//        } else if (colrank % p == 0) { // this processor is a receiver in this round
+//            int recv_count;
+//
+//            int sender = colrank + ceil(p / 2);
+//            if (sender < colneighs) {
+//                MPI_Recv(&recv_count, 1, MPIType<int>(), sender, 0, commGrid->GetColWorld(), MPI_STATUS_IGNORE);
+//                if (max_count < recv_count) {
+//                    max_count = recv_count;
+//                }
+//            }
+//        }
+//    }
+//
+//    cout << myrank << " local indices max count in send_local_indices : " << max_count << endl;
 
+    // prepare data
+    int number_count;
     for (int p = 2; p <= colneighs; p *= 2) {
 
         if (colrank % p == p / 2) { // this processor is a sender in this round
@@ -341,7 +381,7 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
                          commGrid->GetColWorld(), &status);
 
                 // do something
-                MPI_Get_count(&status, MPI_INT, &number_count);
+                MPI_Get_count(&status, MPIType<int>(), &number_count);
 //                cout << "round " << p / 2 << ", " << myrank << " receiver " << number_count << endl;
 
                 recv_I.resize(number_count);
@@ -353,6 +393,8 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
             }
         }
     }
+
+//    cout << "myrank " << myrank << " finish sending" << endl;
 
 }
 
@@ -377,8 +419,8 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
     int colrank = commGrid->GetRankInProcCol();
 
     if (colrank == 0) {
-        cout << myrank << " has size " << indices1.size() << " and " << indices2.size() << " pair size : " << pair_size1
-             << ", " << pair_size2 << endl;
+//        cout << myrank << " has size " << indices1.size() << " and " << indices2.size() << " pair size : " << pair_size1
+//             << ", " << pair_size2 << endl;
         int i1 = 0, i2 = 0;
         int sz1 = indices1.size(), sz2 = indices2.size();
 
@@ -417,7 +459,7 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
             }
         }
 
-        cout << myrank << " join size : " << res.size() << endl;
+//        cout << myrank << " join size : " << res.size() << endl;
 
 //        for (int i1 = 0, i2 = 0; i1 < indices1.size() && i2 < indices2.size(); i1 += pair_size1) {
 //            while (indices1[i1 + key1] > indices2[i2 + key2]) {
@@ -450,8 +492,8 @@ local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<
     int colrank = commGrid->GetRankInProcCol();
 
     if (colrank == 0) {
-        cout << myrank << " has size " << indices1.size() << " and " << indices2.size() << " pair size : " << pair_size1
-             << ", " << pair_size2 << endl;
+//        cout << myrank << " has size " << indices1.size() << " and " << indices2.size() << " pair size : " << pair_size1
+//             << ", " << pair_size2 << endl;
         int i1 = 0, i2 = 0;
         int sz1 = indices1.size(), sz2 = indices2.size();
 
@@ -486,7 +528,7 @@ local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<
             }
         }
 
-        cout << myrank << " filter size : " << res.size() << endl;
+//        cout << myrank << " filter size : " << res.size() << endl;
 
     }
 }
@@ -547,9 +589,9 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 //        cout << endl;
 //    }
 
-    cout << myrank << ", redis, " << range_table.size() << endl;
+//    cout << myrank << ", redis, " << range_table.size() << endl;
     local_sort_table(range_table, 0, range_table.size() / pair_size - 1, pair_size, pivot);
-    cout << myrank << ", redis, after sort,  " << range_table.size() << endl;
+//    cout << myrank << ", redis, after sort,  " << range_table.size() << endl;
 //    write_local_vector(range_table, "res12", 3);
 
     vector<int> lens;
@@ -643,7 +685,7 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 //        cout << endl;
 
         res.resize(displs[rowneighs - 1] + recvcount[myrank][rowneighs - 1]);
-        cout << myrank << " redis, result size = " << displs[rowneighs - 1] + recvcount[myrank][rowneighs - 1] << endl;
+//        cout << myrank << " redis, result size = " << displs[rowneighs - 1] + recvcount[myrank][rowneighs - 1] << endl;
 
 //        for (int l = 0; l < rowneighs; ++l) {
 //            MPI_Gatherv(range_table.data() + partial_sums[l], lens[l], MPIType<IndexType>(), res.data(), recvcount[l],
@@ -679,11 +721,11 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
                         displs.data(), MPIType<IndexType>(), k, commGrid->GetRowWorld());
 
             if (myrank == k) {
-                cout << "\nafter gatherv " << myrank << " res size : " << res.size() / pair_size << endl;
+//                cout << "\nafter gatherv " << myrank << " res size : " << res.size() / pair_size << endl;
 
                 local_sort_table(res, 0, res.size() / pair_size - 1, pair_size, pivot);
 
-                cout << "\nafter gatherv sorting " << myrank << endl;
+//                cout << "\nafter gatherv sorting " << myrank << endl;
 //                cout << "rank " << k << " has : " << endl;
 //                for (int t = 0; t < res.size(); t += 3) {
 //                    cout << res[t] << " " << res[t + 1] << " " << res[t + 2] << "\n";
@@ -702,24 +744,25 @@ void send_local_results(shared_ptr<CommGrid> commGrid, unsigned res_size) {
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
 //    if (commGrid->GetRankInProcCol() == 0) {
-        cout << commGrid->GetRank() << " begin sending results1" << endl;
+//    cout << commGrid->GetRank() << " begin sending results1" << endl;
     int rowneighs = commGrid->GetGridRows();
-        cout << commGrid->GetRank() << " begin sending results2" << endl;
+//    cout << commGrid->GetRank() << " begin sending results2" << endl;
 
     if (myrank < rowneighs) {
 
         if (commGrid->GetRank() != 0) {     // not myrank 0
-            cout << commGrid->GetRank() << " before sending " << endl;
+//            cout << commGrid->GetRank() << " before sending " << endl;
             MPI_Send(&res_size, 1, MPIType<unsigned>(), 0, 0, commGrid->GetRowWorld());
-            cout << commGrid->GetRank() << " after sending " << endl;
+//            cout << commGrid->GetRank() << " after sending " << endl;
         } else {    // myrank 0
             int recv_size;
             for (int i = 1; i < rowneighs; i++) {
-                cout << "receive from " << i << endl;
+//                cout << "receive from " << i << endl;
                 MPI_Recv(&recv_size, 1, MPIType<unsigned>(), i, 0, commGrid->GetRowWorld(), MPI_STATUS_IGNORE);
                 res_size += recv_size;
             }
-            cout << "final size : " << res_size << endl;
+            cout << "final result size : " << res_size << endl;
+            cout << "---------------------------------------------------------------" << endl;
         }
     }
 //    }
