@@ -362,7 +362,7 @@ void lubm10240_L7(int choice=0) {
     double t_pre1 = MPI_Wtime();
 
 //    string Mname("/home/cheny0l/work/db245/fuad/data/lubm10240/encoded.mm");
-        string Mname("/project/k1285/fuad/data/lubm10240/encoded.mm");
+        string Mname("/scratch/cheny0l/fuad/data/lubm10240/encoded.mm");
 
     double t1 = MPI_Wtime();
     PSpMat::MPI_DCCols G(MPI_COMM_WORLD);

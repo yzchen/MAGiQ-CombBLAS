@@ -5,190 +5,190 @@
 #include <vector>
 #include <iterator>
 #include <fstream>
-#include "../include/CombBLAS.h"
+#include "../include/Header100k.h"
 
 using namespace std;
 using namespace combblas;
 
-#define IndexType long
-//#define ElementType int
-#define ElementType long
+// #define IndexType long
+// //#define ElementType int
+// #define ElementType long
 
-class PSpMat {
-public:
-    typedef SpDCCols<IndexType, ElementType> DCCols;
-    typedef SpParMat<IndexType, ElementType, DCCols> MPI_DCCols;
-};
-
-
-typedef RDFRing<ElementType, ElementType> RDFINTINT;
-typedef PlusTimesSRing<ElementType, ElementType> PTINTINT;
-
-static double total_mult_time = 0.0;
-static double total_reduce_time = 0.0;
-static double total_prune_time = 0.0;
-static double total_mmul_scalar_time = 0.0;
-static double total_dim_apply_time = 0.0;
+// class PSpMat {
+// public:
+//     typedef SpDCCols<IndexType, ElementType> DCCols;
+//     typedef SpParMat<IndexType, ElementType, DCCols> MPI_DCCols;
+// };
 
 
-bool isZero(ElementType t) {
-    return t == 0;
-}
+// typedef RDFRing<ElementType, ElementType> RDFINTINT;
+// typedef PlusTimesSRing<ElementType, ElementType> PTINTINT;
 
-bool isNotZero(ElementType t) {
-    return t != 0;
-}
+// static double total_mult_time = 0.0;
+// static double total_reduce_time = 0.0;
+// static double total_prune_time = 0.0;
+// static double total_mmul_scalar_time = 0.0;
+// static double total_dim_apply_time = 0.0;
 
-ElementType rdf_multiply(ElementType a, ElementType b) {
-    if (a != 0 && b != 0 && a == b) {
-        return static_cast<ElementType>(1);
-    } else {
-        return static_cast<ElementType>(0);
-    }
-}
 
-ElementType selectSecond(ElementType a, ElementType b) {
-    return b;
-}
+// bool isZero(ElementType t) {
+//     return t == 0;
+// }
 
-void printReducedInfo(PSpMat::MPI_DCCols &M) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+// bool isNotZero(ElementType t) {
+//     return t != 0;
+// }
 
-    double t1 = MPI_Wtime();
+// ElementType rdf_multiply(ElementType a, ElementType b) {
+//     if (a != 0 && b != 0 && a == b) {
+//         return static_cast<ElementType>(1);
+//     } else {
+//         return static_cast<ElementType>(0);
+//     }
+// }
 
-    int nnz1 = M.getnnz();
+// ElementType selectSecond(ElementType a, ElementType b) {
+//     return b;
+// }
 
-    FullyDistVec<IndexType, ElementType> rowsums1(M.getcommgrid());
-    M.Reduce(rowsums1, Row, std::plus<ElementType>(), static_cast<ElementType>(0));
-    FullyDistVec<IndexType, ElementType> colsums1(M.getcommgrid());
-    M.Reduce(colsums1, Column, std::plus<ElementType>(), static_cast<ElementType>(0));
-    IndexType nnzrows1 = rowsums1.Count(isNotZero);
-    IndexType nnzcols1 = colsums1.Count(isNotZero);
+// void printReducedInfo(PSpMat::MPI_DCCols &M) {
+//     int myrank;
+//     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-    double t2 = MPI_Wtime();
+//     double t1 = MPI_Wtime();
 
-    float imM = M.LoadImbalance();
-    if (myrank == 0) {
-        cout << nnz1 << " [ " << nnzrows1 << ", " << nnzcols1 << " ]" << endl;
-        cout << "\tenum takes " << (t2 - t1) << " s" << endl;
-        cout << "\timbalance : " << imM << endl;
-        cout << "---------------------------------------------------------------" << endl;
-    }
-}
+//     int nnz1 = M.getnnz();
 
-void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &nonisov) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+//     FullyDistVec<IndexType, ElementType> rowsums1(M.getcommgrid());
+//     M.Reduce(rowsums1, Row, std::plus<ElementType>(), static_cast<ElementType>(0));
+//     FullyDistVec<IndexType, ElementType> colsums1(M.getcommgrid());
+//     M.Reduce(colsums1, Column, std::plus<ElementType>(), static_cast<ElementType>(0));
+//     IndexType nnzrows1 = rowsums1.Count(isNotZero);
+//     IndexType nnzcols1 = colsums1.Count(isNotZero);
 
-    // permute G
-    double t_perm1 = MPI_Wtime();
-    FullyDistVec<IndexType, ElementType> *ColSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
-    FullyDistVec<IndexType, ElementType> *RowSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
-    G.Reduce(*ColSums, Column, plus<ElementType>(), static_cast<ElementType>(0));
-    G.Reduce(*RowSums, Row, plus<ElementType>(), static_cast<ElementType>(0));
-    ColSums->EWiseApply(*RowSums, plus<ElementType>());
-    nonisov = ColSums->FindInds(bind2nd(greater<ElementType>(), 0));
-    nonisov.RandPerm();
-    G(nonisov, nonisov, true);
-    double t_perm2 = MPI_Wtime();
+//     double t2 = MPI_Wtime();
 
-    float impG = G.LoadImbalance();
-    if (myrank == 0) {
-        cout << "\tpermutation takes : " << (t_perm2 - t_perm1) << " s" << endl;
-        cout << "\timbalance of permuted G : " << impG << endl;
-    }
-}
+//     float imM = M.LoadImbalance();
+//     if (myrank == 0) {
+//         cout << nnz1 << " [ " << nnzrows1 << ", " << nnzcols1 << " ]" << endl;
+//         cout << "\tenum takes " << (t2 - t1) << " s" << endl;
+//         cout << "\timbalance : " << imM << endl;
+//         cout << "---------------------------------------------------------------" << endl;
+//     }
+// }
 
-PSpMat::MPI_DCCols transpose(const PSpMat::MPI_DCCols &M) {
-    PSpMat::MPI_DCCols N(M);
-    N.Transpose();
-    return N;
-}
+// void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &nonisov) {
+//     int myrank;
+//     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-void
-diagonalizeV(const PSpMat::MPI_DCCols &M, FullyDistVec<IndexType, ElementType> &diag, Dim dim = Row, int scalar = 1) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+//     // permute G
+//     double t_perm1 = MPI_Wtime();
+//     FullyDistVec<IndexType, ElementType> *ColSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
+//     FullyDistVec<IndexType, ElementType> *RowSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
+//     G.Reduce(*ColSums, Column, plus<ElementType>(), static_cast<ElementType>(0));
+//     G.Reduce(*RowSums, Row, plus<ElementType>(), static_cast<ElementType>(0));
+//     ColSums->EWiseApply(*RowSums, plus<ElementType>());
+//     nonisov = ColSums->FindInds(bind2nd(greater<ElementType>(), 0));
+//     nonisov.RandPerm();
+//     G(nonisov, nonisov, true);
+//     double t_perm2 = MPI_Wtime();
 
-    double t1 = MPI_Wtime();
-    M.Reduce(diag, dim, std::logical_or<ElementType>(), static_cast<ElementType>(0));
-    double t2 = MPI_Wtime();
+//     float impG = G.LoadImbalance();
+//     if (myrank == 0) {
+//         cout << "\tpermutation takes : " << (t_perm2 - t_perm1) << " s" << endl;
+//         cout << "\timbalance of permuted G : " << impG << endl;
+//     }
+// }
 
-    double t3 = MPI_Wtime();
-    if (scalar != 1) {
-        diag.Apply(bind2nd(multiplies<ElementType>(), scalar));
-    }
-    double t4 = MPI_Wtime();
+// PSpMat::MPI_DCCols transpose(const PSpMat::MPI_DCCols &M) {
+//     PSpMat::MPI_DCCols N(M);
+//     N.Transpose();
+//     return N;
+// }
 
-    if (myrank == 0) {
-        total_reduce_time += (t2 - t1);
-        total_mmul_scalar_time += (t4 - t3);
-        cout << "\tdiag-reduce takes : " << (t2 - t1) << " s" << endl;
-        cout << "\tmmul-scalar takes : " << (t4 - t3) << " s" << endl;
-    }
-}
+// void
+// diagonalizeV(const PSpMat::MPI_DCCols &M, FullyDistVec<IndexType, ElementType> &diag, Dim dim = Row, int scalar = 1) {
+//     int myrank;
+//     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-template<typename SR>
-void multPrune(PSpMat::MPI_DCCols &A, PSpMat::MPI_DCCols &B, PSpMat::MPI_DCCols &C, bool clearA = false,
-               bool clearB = false) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+//     double t1 = MPI_Wtime();
+//     M.Reduce(diag, dim, std::logical_or<ElementType>(), static_cast<ElementType>(0));
+//     double t2 = MPI_Wtime();
 
-    double t1 = MPI_Wtime();
-    float imA = A.LoadImbalance(), imB = B.LoadImbalance();
-    if (myrank == 0) {
-        cout << "\timA : " << imA << "    imB : " << imB << endl;
-    }
+//     double t3 = MPI_Wtime();
+//     if (scalar != 1) {
+//         diag.Apply(bind2nd(multiplies<ElementType>(), scalar));
+//     }
+//     double t4 = MPI_Wtime();
 
-    C = Mult_AnXBn_DoubleBuff<SR, ElementType, PSpMat::DCCols>(A, B, clearA, clearB);
-    double t2 = MPI_Wtime();
+//     if (myrank == 0) {
+//         total_reduce_time += (t2 - t1);
+//         total_mmul_scalar_time += (t4 - t3);
+//         cout << "\tdiag-reduce takes : " << (t2 - t1) << " s" << endl;
+//         cout << "\tmmul-scalar takes : " << (t4 - t3) << " s" << endl;
+//     }
+// }
 
-    if (myrank == 0) {
-        total_mult_time += (t2 - t1);
-        cout << "\tmultiplication takes: " << (t2 - t1) << " s" << endl;
-    }
+// template<typename SR>
+// void multPrune(PSpMat::MPI_DCCols &A, PSpMat::MPI_DCCols &B, PSpMat::MPI_DCCols &C, bool clearA = false,
+//                bool clearB = false) {
+//     int myrank;
+//     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-    double t3 = MPI_Wtime();
-    C.Prune(isZero);
-    double t4 = MPI_Wtime();
+//     double t1 = MPI_Wtime();
+//     float imA = A.LoadImbalance(), imB = B.LoadImbalance();
+//     if (myrank == 0) {
+//         cout << "\timA : " << imA << "    imB : " << imB << endl;
+//     }
 
-    if (myrank == 0) {
-        total_prune_time += (t4 - t3);
-        cout << "\tprune takes: " << (t4 - t3) << " s" << endl;
-    }
+//     C = Mult_AnXBn_DoubleBuff<SR, ElementType, PSpMat::DCCols>(A, B, clearA, clearB);
+//     double t2 = MPI_Wtime();
 
-    // printReducedInfo(C);
-}
+//     if (myrank == 0) {
+//         total_mult_time += (t2 - t1);
+//         cout << "\tmultiplication takes: " << (t2 - t1) << " s" << endl;
+//     }
 
-void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementType> &v, Dim dim, bool isRDF) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+//     double t3 = MPI_Wtime();
+//     C.Prune(isZero);
+//     double t4 = MPI_Wtime();
 
-    double t1 = MPI_Wtime();
-    if (isRDF) {
-        A.DimApply(dim, v, rdf_multiply);
-    } else {
-        A.DimApply(dim, v, std::multiplies<ElementType>());
-    }
-    double t2 = MPI_Wtime();
+//     if (myrank == 0) {
+//         total_prune_time += (t4 - t3);
+//         cout << "\tprune takes: " << (t4 - t3) << " s" << endl;
+//     }
 
-    if (myrank == 0) {
-        total_dim_apply_time += (t2 - t1);
-        cout << "\tdim-apply takes: " << (t2 - t1) << " s" << endl;
-    }
+//     // printReducedInfo(C);
+// }
 
-    double t3 = MPI_Wtime();
-    A.Prune(isZero);
-    double t4 = MPI_Wtime();
+// void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementType> &v, Dim dim, bool isRDF) {
+//     int myrank;
+//     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-    if (myrank == 0) {
-        total_prune_time += (t4 - t3);
-        cout << "\tprune takes: " << (t4 - t3) << " s" << endl;
-    }
+//     double t1 = MPI_Wtime();
+//     if (isRDF) {
+//         A.DimApply(dim, v, rdf_multiply);
+//     } else {
+//         A.DimApply(dim, v, std::multiplies<ElementType>());
+//     }
+//     double t2 = MPI_Wtime();
 
-//    printReducedInfo(A);
-}
+//     if (myrank == 0) {
+//         total_dim_apply_time += (t2 - t1);
+//         cout << "\tdim-apply takes: " << (t2 - t1) << " s" << endl;
+//     }
+
+//     double t3 = MPI_Wtime();
+//     A.Prune(isZero);
+//     double t4 = MPI_Wtime();
+
+//     if (myrank == 0) {
+//         total_prune_time += (t4 - t3);
+//         cout << "\tprune takes: " << (t4 - t3) << " s" << endl;
+//     }
+
+// //    printReducedInfo(A);
+// }
 
 void lubm100k_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, ElementType> &nonisov) {
     int myrank;
@@ -1273,7 +1273,7 @@ int main(int argc, char *argv[]) {
 
         double t_pre1 = MPI_Wtime();
 
-        string Mname("/project/k1285/encoded.mm");
+        string Mname("/scratch/cheny0l/encoded.mm");
 
         double t1 = MPI_Wtime();
         PSpMat::MPI_DCCols G(MPI_COMM_WORLD);
