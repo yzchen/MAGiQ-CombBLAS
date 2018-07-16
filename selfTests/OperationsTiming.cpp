@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 
     {
 //        string Aname("/home/cheny0l/work/db245/fuad/data/lubm320/encoded.mm");
-        string Aname("/project/k1285/fuad/data/lubm320/encoded.mm");
+        string Aname("/scratch/cheny0l/fuad/data/lubm320/encoded.mm");
         ofstream ofs ("time.csv", std::ofstream::app);
 
 //        ofs << "read,transpose,diagonalize,mmul_scalar,mult1,mult2\n";
