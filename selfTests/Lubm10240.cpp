@@ -20,6 +20,13 @@ void resgen_l1(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
+
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
         cout << "begin result generation ......" << endl;
@@ -345,6 +352,13 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
 void resgen_l2(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
 
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
@@ -701,6 +715,13 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
+
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
         cout << "begin result generation ......" << endl;
@@ -900,6 +921,13 @@ void resgen_l5(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_12) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
+
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
         cout << "begin result generation ......" << endl;
@@ -1034,6 +1062,13 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
 void resgen_l6(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_DCCols &m_14, PSpMat::MPI_DCCols &m_24) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
 
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
@@ -1250,8 +1285,14 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
+
     if (myrank == 0) {
-//        cout << "---------------------------------------------------------------" << endl;
         cout << "begin result generation ......" << endl;
     }
 
@@ -1262,26 +1303,20 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     vector<IndexType> index_05;
     get_local_indices(m_50, index_05);
     send_local_indices(commGrid, index_05);
-//    write_local_vector(index_05, "m_50", 2);
 
     vector<IndexType> index_35;
     get_local_indices(m_35, index_35);
     send_local_indices(commGrid, index_35);
-//    write_local_vector(index_35, "m_35", 2);
 
     vector<IndexType> order1 = {0, 0, 1, 0, 1, 1};
     vector<IndexType> index_035_0, index_035;
-
     local_join(commGrid, index_05, index_35, 2, 2, 1, 1, order1, index_035_0);
-
-//    write_local_vector(index_035_0, "index_035_0", 3);
     local_redistribution(m_43, index_035_0, 3, 1, index_035);
     index_035_0.clear();
 
     vector<IndexType> index_43;
     get_local_indices(m_43, index_43);
     send_local_indices(commGrid, index_43);
-//    write_local_vector(index_43, "m_43", 2);
 
     vector<IndexType> order2 = {0, 0, 0, 1, 1, 0, 0, 2};
     vector<IndexType> index_0345_0, index_0345;
@@ -1289,36 +1324,25 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     local_join(commGrid, index_035, index_43, 3, 2, 1, 1, order2, index_0345_0);
 
     local_redistribution(m_64, index_0345_0, 4, 2, index_0345);
-//    write_local_vector(index_0345, "index_0345", 4);
     index_0345_0.clear();
 
     vector<IndexType> index_64;
     get_local_indices(m_64, index_64);
     send_local_indices(commGrid, index_64);
-//    write_local_vector(index_64, "m_64", 2);
 
     vector<IndexType> order3 = {0, 0, 0, 1, 0, 2, 0, 3};
     vector<IndexType> index_03456;
 
-//    local_join(commGrid, index_0345, index_64, 4, 2, 2, 1, order3, index_03456);
     local_filter(commGrid, index_0345, index_64, 4, 2, 2, 3, 1, 0, order3, index_03456);
-
-//    write_local_vector(index_03456, "index_03456", 4);
 
     vector<IndexType> index_24;
     get_local_indices(m_24, index_24);
     send_local_indices(commGrid, index_24);
-//    write_local_vector(index_24, "m_24", 2);
 
     vector<IndexType> order4 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3};
     vector<IndexType> index_023456_0, index_023456;
 
     local_join(commGrid, index_03456, index_24, 4, 2, 2, 1, order4, index_023456_0);
-
-//    write_local_vector(index_023456_0, "index_023456_0", 5);
-
-    // TODO : code check point
-//    cout << myrank << " check point, finished 3 joins and 1 filter " << endl;
 
     local_redistribution(m_13, index_023456_0, 5, 2, index_023456);
     index_023456_0.clear();
@@ -1326,7 +1350,6 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     vector<IndexType> index_13;
     get_local_indices(m_13, index_13);
     send_local_indices(commGrid, index_13);
-//    write_local_vector(index_24, "m_24", 2);
 
     vector<IndexType> order5 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
     vector<IndexType> index_0123456;
@@ -1640,7 +1663,7 @@ int main(int argc, char *argv[]) {
         qvec->iota(G.getnrow(), 0);
 
         // query
-        for (int time = 1; time <= 5; time++) {
+//        for (int time = 1; time <= 5; time++) {
             lubm10240_l1(G, tG, nonisov);
             lubm10240_l2(G, tG, nonisov);
             lubm10240_l3(G, tG, nonisov);
@@ -1648,7 +1671,7 @@ int main(int argc, char *argv[]) {
             lubm10240_l5(G, tG, nonisov);
             lubm10240_l6(G, tG, nonisov);
             lubm10240_l7(G, tG, nonisov);
-        }
+//        }
     }
 
     MPI_Finalize();
