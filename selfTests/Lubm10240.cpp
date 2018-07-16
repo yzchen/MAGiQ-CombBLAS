@@ -20,6 +20,13 @@ void resgen_l1(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
+
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
         cout << "begin result generation ......" << endl;
@@ -345,6 +352,13 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
 void resgen_l2(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
 
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
@@ -707,6 +721,13 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
+
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
         cout << "begin result generation ......" << endl;
@@ -906,6 +927,13 @@ void resgen_l5(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_12) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
+
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
         cout << "begin result generation ......" << endl;
@@ -1040,6 +1068,13 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
 void resgen_l6(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_DCCols &m_14, PSpMat::MPI_DCCols &m_24) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
 
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
@@ -1255,6 +1290,13 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
                PSpMat::MPI_DCCols &m_24, PSpMat::MPI_DCCols &m_13) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
 
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;

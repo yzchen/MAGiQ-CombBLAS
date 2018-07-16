@@ -15,6 +15,13 @@ void resgen_l1(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_D
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
+
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
         cout << "begin result generation ......" << endl;
@@ -363,6 +370,13 @@ void resgen_l2(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
+
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
         cout << "begin result generation ......" << endl;
@@ -488,21 +502,21 @@ void lubm100k_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     auto commWorld = G.getcommgrid();
 
-    FullyDistVec<IndexType, ElementType> dm_50(commWorld), dm_35(commWorld), dm_13(commWorld),
-            dm_43(commWorld), dm_24(commWorld), dm_35_1(commWorld), dm_64(commWorld), dm_64_1(commWorld),
+    FullyDistVec<IndexType, ElementType> dm_30(commWorld), dm_35(commWorld), dm_13(commWorld),
+            dm_43(commWorld), dm_14(commWorld), dm_35_1(commWorld), dm_64(commWorld), dm_64_1(commWorld),
             dm_43_1(commWorld), dm_35_2(commWorld);
 
-    auto m_50(G), m_35(G), m_13(tG), m_43(tG), m_24(tG), m_64(G);
+    auto m_30(G), m_54(G), m_14(tG), m_43(tG), m_25(tG), m_65(G);
 
     IndexType ind1 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(399)))[0];
     IndexType ind2 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(4)))[0];
     IndexType ind3 = nonisov->FindInds(
             std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(7)))[0];
 
-    FullyDistVec<IndexType, ElementType> r_50(commWorld, G.getnrow(), 0), l_13(commWorld, G.getnrow(), 0), l_24(
+    FullyDistVec<IndexType, ElementType> r_30(commWorld, G.getnrow(), 0), l_14(commWorld, G.getnrow(), 0), l_24(
             commWorld, G.getnrow(), 0);
-    r_50.SetElement(ind1, 2);
-    l_13.SetElement(ind2, 1);
+    r_30.SetElement(ind1, 2);
+    l_14.SetElement(ind2, 1);
     l_24.SetElement(ind3, 1);
 
     // start count time
@@ -514,10 +528,10 @@ void lubm100k_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
         cout << "Query 3" << endl;
         cout << "###############################################################" << endl;
         cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(5,0) = G x {1@(22638,22638)}*6" << endl;
+        cout << "step 1 : m_(3,0) = G x {1@(399,399)}*2" << endl;
     }
     double t1_start = MPI_Wtime();
-    multDimApplyPrune(m_50, r_50, Column, true);
+    multDimApplyPrune(m_30, r_30, Column, true);
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -527,11 +541,11 @@ void lubm100k_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : m_(3, 5) = G * m_(5, 0).D()*10" << endl;
+        cout << "step 2 : m_(4,3) = G.T() * m_(3,0).D()*7" << endl;
     }
     double t2_start = MPI_Wtime();
-    diagonalizeV(m_50, dm_50, Row, 7);
-    multDimApplyPrune(m_35, dm_50, Column, true);
+    diagonalizeV(m_30, dm_30, Row, 7);
+    multDimApplyPrune(m_43, dm_30, Column, true);
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -541,11 +555,11 @@ void lubm100k_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(1,3) = G.T() x m_(3,5).D()*6" << endl;
+        cout << "step 3 : m_(1,4) = G.T() x m_(4,3).D()*2" << endl;
     }
     double t3_start = MPI_Wtime();
-    diagonalizeV(m_35, dm_35, Row, 2);
-    multDimApplyPrune(m_13, dm_35, Column, true);
+    diagonalizeV(m_43, dm_43, Row, 2);
+    multDimApplyPrune(m_14, dm_43, Column, true);
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -555,10 +569,10 @@ void lubm100k_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 4
     if (myrank == 0) {
-        cout << "step 4 : m_(1,3) = {1@(43,43)} x m_(1,3)" << endl;
+        cout << "step 4 : m_(1,4) = {1@(4,4)} x m_(1,4)" << endl;
     }
     double t4_start = MPI_Wtime();
-    multDimApplyPrune(m_13, l_13, Row, false);
+    multDimApplyPrune(m_14, l_14, Row, false);
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -568,11 +582,11 @@ void lubm100k_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 5
     if (myrank == 0) {
-        cout << "step 5 : m_(4,3) = G.T() x m_(1,3).T().D()*2" << endl;
+        cout << "step 5 : m_(5,4) = G x m_(1,4).T().D()*5" << endl;
     }
     double t5_start = MPI_Wtime();
-    diagonalizeV(m_13, dm_13, Column, 5);
-    multDimApplyPrune(m_43, dm_13, Column, true);
+    diagonalizeV(m_14, dm_14, Column, 5);
+    multDimApplyPrune(m_54, dm_14, Column, true);
     double t5_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -608,6 +622,13 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
                PSpMat::MPI_DCCols &m_12) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
 
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
@@ -699,7 +720,7 @@ void lubm100k_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
         cout << "Query 4" << endl;
         cout << "###############################################################" << endl;
         cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(2,0) = G x {1@(11,11)}*5" << endl;
+        cout << "step 1 : m_(2,0) = G x {1@(10,10)}*2" << endl;
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_20, r_20, Column, true);
@@ -712,7 +733,7 @@ void lubm100k_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : m_(1,2) = G.T() x m_(2,0).D()*6" << endl;
+        cout << "step 2 : m_(1,2) = G.T() x m_(2,0).D()*10" << endl;
     }
     double t2_start = MPI_Wtime();
     diagonalizeV(m_20, dm_20, Row, 10);
@@ -726,7 +747,7 @@ void lubm100k_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(1,0) = m_(2,1).T().D() x m_(1,0)" << endl;
+        cout << "step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)" << endl;
     }
     double t3_start = MPI_Wtime();
     multDimApplyPrune(m_12, l_12, Row, false);
@@ -739,7 +760,7 @@ void lubm100k_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 4
     if (myrank == 0) {
-        cout << "step 4 : m_(3,2) = G.T() x m_(1,2).T().D()*3" << endl;
+        cout << "step 4 : m_(3,2) = G.T() x m_(1,2).T().D()*4" << endl;
     }
     double t4_start = MPI_Wtime();
     diagonalizeV(m_12, dm_12, Column, 4);
@@ -753,7 +774,7 @@ void lubm100k_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 5
     if (myrank == 0) {
-        cout << "step 5 : m_(4,2) = G.T() x m_(3,2).T().D()*12" << endl;
+        cout << "step 5 : m_(4,2) = G.T() x m_(3,2).T().D()*11" << endl;
     }
     double t5_start = MPI_Wtime();
     diagonalizeV(m_32, dm_32, Column, 11);
@@ -767,7 +788,7 @@ void lubm100k_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 6
     if (myrank == 0) {
-        cout << "step 6 : m_(5,2) = G.T() x m_(4,2).T().D()*9" << endl;
+        cout << "step 6 : m_(5,2) = G.T() x m_(4,2).T().D()*12" << endl;
     }
     double t6_start = MPI_Wtime();
     diagonalizeV(m_42, dm_42, Column, 12);
@@ -815,6 +836,13 @@ void lubm100k_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 void resgen_l5(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_12) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
 
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
@@ -875,7 +903,7 @@ void lubm100k_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
         cout << "Query 5" << endl;
         cout << "###############################################################" << endl;
         cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(2,0) = G x {1@(11,11)}*11" << endl;
+        cout << "step 1 : m_(2,0) = G x {1@(2558,2558)}*2" << endl;
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_20, r_20, Column, true);
@@ -888,7 +916,7 @@ void lubm100k_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : G.T() x m_(2,0).D()*6" << endl;
+        cout << "step 2 : G.T() x m_(2,0).D()*5" << endl;
     }
     double t2_start = MPI_Wtime();
     diagonalizeV(m_20, dm_20, Row, 5);
@@ -902,7 +930,7 @@ void lubm100k_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(1,2) = {1@(357,357)} x m_(1,2)" << endl;
+        cout << "step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)" << endl;
     }
     double t3_start = MPI_Wtime();
     multDimApplyPrune(m_12, l_12, Row, false);
@@ -949,6 +977,13 @@ void lubm100k_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 void resgen_l6(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_DCCols &m_14, PSpMat::MPI_DCCols &m_24) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
 
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
@@ -1033,7 +1068,7 @@ void lubm100k_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
         cout << "Query 6" << endl;
         cout << "###############################################################" << endl;
         cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(3,0) = G x {1@(1345,1345)}*6" << endl;
+        cout << "step 1 : m_(3,0) = G x {1@(10,10)}*2" << endl;
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_30, r_30, Column, true);
@@ -1046,7 +1081,7 @@ void lubm100k_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : m_(4,3) = G.T() x m_(3,0).D()*5" << endl;
+        cout << "step 2 : m_(4,3) = G.T() x m_(3,0).D()*10" << endl;
     }
     double t2_start = MPI_Wtime();
     diagonalizeV(m_30, dm_30, Row, 10);
@@ -1060,7 +1095,7 @@ void lubm100k_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(1,4) = G.T() x m_(4,3).D()*6" << endl;
+        cout << "step 3 : m_(1,4) = G.T() x m_(4,3).D()*5" << endl;
     }
     double t3_start = MPI_Wtime();
     diagonalizeV(m_43, dm_43, Row, 5);
@@ -1074,7 +1109,7 @@ void lubm100k_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 4
     if (myrank == 0) {
-        cout << "step 4 : m_(1,4) = {1@(22638,22638)} x m_(1,4)" << endl;
+        cout << "step 4 : m_(1,4) = {1@(3,3)} x m_(1,4)" << endl;
     }
     double t4_start = MPI_Wtime();
     multDimApplyPrune(m_14, l_14, Row, false);
@@ -1087,7 +1122,7 @@ void lubm100k_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 5
     if (myrank == 0) {
-        cout << "step 5 : m_(2,4) = G.T() x m_(1,4).T().D()*11" << endl;
+        cout << "step 5 : m_(2,4) = G.T() x m_(1,4).T().D()*2" << endl;
     }
     double t5_start = MPI_Wtime();
     diagonalizeV(m_14, dm_14, Column, 2);
@@ -1101,7 +1136,7 @@ void lubm100k_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 6
     if (myrank == 0) {
-        cout << "step 6 : m_(2,4) = {1@(40169,40169)} x m_(2,4)" << endl;
+        cout << "step 6 : m_(2,4) = {1@(7,7)} x m_(2,4)" << endl;
     }
     double t6_start = MPI_Wtime();
     multDimApplyPrune(m_24, l_24, Row, false);
@@ -1163,6 +1198,13 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
                PSpMat::MPI_DCCols &m_24, PSpMat::MPI_DCCols &m_13) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
 
     if (myrank == 0) {
 //        cout << "---------------------------------------------------------------" << endl;
@@ -1265,11 +1307,11 @@ void lubm100k_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     IndexType ind3 = nonisov->FindInds(std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(3049)))[0];
 
 
-    FullyDistVec<IndexType, ElementType> dm_50(commWorld), dm_35(commWorld), dm_13(commWorld),
-            dm_43(commWorld), dm_24(commWorld), dm_35_1(commWorld), dm_64(commWorld), dm_64_1(commWorld),
+    FullyDistVec<IndexType, ElementType> dm_50(commWorld), dm_35(commWorld), dm_23(commWorld),
+            dm_43(commWorld), dm_14(commWorld), dm_35_1(commWorld), dm_64(commWorld), dm_64_1(commWorld),
             dm_43_1(commWorld), dm_35_2(commWorld);
 
-    auto m_50(G), m_35(G), m_13(tG), m_43(tG), m_24(tG), m_64(G);
+    auto m_50(G), m_35(G), m_23(tG), m_43(tG), m_14(tG), m_64(G);
 
     FullyDistVec<IndexType, ElementType> r_50(commWorld, G.getnrow(), 0), l_13(commWorld, G.getnrow(), 0), l_24(
             commWorld, G.getnrow(), 0);
@@ -1286,7 +1328,7 @@ void lubm100k_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
         cout << "Query 7" << endl;
         cout << "###############################################################" << endl;
         cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(5,0) = G x {1@(1345,1345)}*6" << endl;
+        cout << "step 1 : m_(5,0) = G x {1@(10,10)}*2" << endl;
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_50, r_50, Column, true);
@@ -1299,7 +1341,7 @@ void lubm100k_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : m_(3, 5) = G x m_(5, 0).D()*13" << endl;
+        cout << "step 2 : m_(3,5) = G x m_(5,0).D()*17" << endl;
     }
     double t2_start = MPI_Wtime();
     diagonalizeV(m_50, dm_50, Row, 17);
@@ -1313,11 +1355,11 @@ void lubm100k_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(1,3) = G.T() x m_(3,5).D()*6" << endl;
+        cout << "step 3 : m_(2,3) = G.T() x m_(3,5).D()*2" << endl;
     }
     double t3_start = MPI_Wtime();
     diagonalizeV(m_35, dm_35, Row, 2);
-    multDimApplyPrune(m_13, dm_35, Column, true);
+    multDimApplyPrune(m_23, dm_35, Column, true);
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1327,10 +1369,10 @@ void lubm100k_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 4
     if (myrank == 0) {
-        cout << "step 4 : m_(1,3) = {1@(43,43)} x m_(1,3)" << endl;
+        cout << "step 4 : m_(2,3) = {1@(399,399)} x m_(2,3)" << endl;
     }
     double t4_start = MPI_Wtime();
-    multDimApplyPrune(m_13, l_13, Row, false);
+    multDimApplyPrune(m_23, l_13, Row, false);
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1340,11 +1382,11 @@ void lubm100k_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 5
     if (myrank == 0) {
-        cout << "step 5 : m_(4,3) = G.T() x m_(1,3).T().D()*8" << endl;
+        cout << "step 5 : m_(4,3) = G.T() x m_(1,3).T().D()*16" << endl;
     }
     double t5_start = MPI_Wtime();
-    diagonalizeV(m_13, dm_13, Column, 16);
-    multDimApplyPrune(m_43, dm_13, Column, true);
+    diagonalizeV(m_23, dm_23, Column, 16);
+    multDimApplyPrune(m_43, dm_23, Column, true);
     double t5_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1354,11 +1396,11 @@ void lubm100k_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 6
     if (myrank == 0) {
-        cout << "step 6 : m_(2,4) = G.T() x m_(4,3).D()*6" << endl;
+        cout << "step 6 : m_(1,4) = G.T() x m_(4,3).D()*2" << endl;
     }
     double t6_start = MPI_Wtime();
     diagonalizeV(m_43, dm_43, Row, 2);
-    multDimApplyPrune(m_24, dm_43, Column, true);
+    multDimApplyPrune(m_14, dm_43, Column, true);
     double t6_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1368,10 +1410,10 @@ void lubm100k_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 7
     if (myrank == 0) {
-        cout << "step 7 : m_(2,4) = {1@(79,79)} x m_(2,4)" << endl;
+        cout << "step 7 : m_(1,4) = {1@(3049,3049)} x m_(1,4)" << endl;
     }
     double t7_start = MPI_Wtime();
-    multDimApplyPrune(m_24, l_24, Row, false);
+    multDimApplyPrune(m_14, l_24, Row, false);
     double t7_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1381,11 +1423,11 @@ void lubm100k_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     // ==> step 8
     if (myrank == 0) {
-        cout << "step 8 : m_(6,4) = G x m_(2,4).T().D()*4" << endl;
+        cout << "step 8 : m_(6,4) = G x m_(1,4).T().D()*6" << endl;
     }
     double t8_start = MPI_Wtime();
-    diagonalizeV(m_24, dm_24, Column, 6);
-    multDimApplyPrune(m_64, dm_24, Column, true);
+    diagonalizeV(m_14, dm_14, Column, 6);
+    multDimApplyPrune(m_64, dm_14, Column, true);
     double t8_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1464,7 +1506,7 @@ void lubm100k_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
 
     double resgen_start = MPI_Wtime();
-    resgen_l7(m_50, m_35, m_43, m_64, m_24, m_13);
+    resgen_l7(m_50, m_35, m_43, m_64, m_14, m_23);
     double resgen_end = MPI_Wtime();
 
     // end count time
@@ -1546,12 +1588,12 @@ int main(int argc, char *argv[]) {
         // query
         // for (int t = 0; t < 5; t++) {
             lubm100k_l1(G, tG);
-            // lubm100k_l2(G, tG);
-            // lubm100k_l3(G, tG);
-            // lubm100k_l4(G, tG);
-            // lubm100k_l5(G, tG);
-            // lubm100k_l6(G, tG);
-            // lubm100k_l7(G, tG);
+            lubm100k_l2(G, tG);
+            lubm100k_l3(G, tG);
+            lubm100k_l4(G, tG);
+            lubm100k_l5(G, tG);
+            lubm100k_l6(G, tG);
+            lubm100k_l7(G, tG);
         // }
     }
 
