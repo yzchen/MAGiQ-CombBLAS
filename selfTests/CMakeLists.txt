@@ -17,7 +17,7 @@ ADD_EXECUTABLE( lubm100k Lubm100k.cpp ../include/Header100k.h)
 # ADD_EXECUTABLE( pair Pair_FullyDistVec.cpp)
 # ADD_EXECUTABLE( getdcsc GetDCSCTest.cpp)
 # ADD_EXECUTABLE( reduct ReductionTest.cpp)
-ADD_EXECUTABLE( l6resgen Lubm10240_L6_ResGen.cpp ../include/Header10240.h)
+# ADD_EXECUTABLE( l6resgen Lubm10240_L6_ResGen.cpp ../include/Header10240.h)
 
 # TARGET_LINK_LIBRARIES( spmult CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 # TARGET_LINK_LIBRARIES( timing CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
@@ -36,5 +36,5 @@ TARGET_LINK_LIBRARIES( lubm100k CommGridlib MPITypelib MemoryPoollib Hashlib mmi
 # TARGET_LINK_LIBRARIES( pair CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 # TARGET_LINK_LIBRARIES( getdcsc CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 # TARGET_LINK_LIBRARIES( reduct CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
-TARGET_LINK_LIBRARIES( l6resgen CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
+# TARGET_LINK_LIBRARIES( l6resgen CommGridlib MPITypelib MemoryPoollib Hashlib mmiolib)
 
