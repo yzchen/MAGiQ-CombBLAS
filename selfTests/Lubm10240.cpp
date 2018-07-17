@@ -20,6 +20,7 @@ void resgen_l1(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    double t1_t = MPI_Wtime();
     total_get_local_indices_time = 0.0;
     total_send_local_indices_time = 0.0;
     total_local_join_time = 0.0;
@@ -27,89 +28,59 @@ void resgen_l1(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     total_redistribution_time = 0.0;
     total_send_result_time = 0.0;
 
-    if (myrank == 0) {
-//        cout << "---------------------------------------------------------------" << endl;
-        cout << "begin result generation ......" << endl;
-    }
+    // m_50 becoms m_05
+    m_50.Transpose();
 
     auto commGrid = m_50.getcommgrid();
 
-    // m_50 becoms m_05
-    m_50.Transpose();
-    vector<IndexType> index_05;
+    vector<IndexType> index_05, index_35, index_035_0, index_035, index_43, index_0345_0, index_0345,
+                        index_64, index_03456, index_24, index_023456_0, index_023456, index_13, index_0123456;
+
+    vector<IndexType> order1 = {0, 0, 1, 0, 1, 1}, order2 = {0, 0, 0, 1, 1, 0, 0, 2}, order3 = {0, 0, 0, 1, 0, 2, 0, 3}, 
+                        order4 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3}, order5 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
+    double t2_t = MPI_Wtime();
+
+    if (myrank == 0) {
+        cout << "begin result generation ......" << endl;
+        cout << "\ttranspose matrix and declarations take : " << (t2_t - t1_t) << " s\n" << endl;
+    }
+
     get_local_indices(m_50, index_05);
     send_local_indices(commGrid, index_05);
-//    write_local_vector(index_05, "m_50", 2);
 
-    vector<IndexType> index_35;
     get_local_indices(m_35, index_35);
     send_local_indices(commGrid, index_35);
-//    write_local_vector(index_35, "m_35", 2);
-
-    vector<IndexType> order1 = {0, 0, 1, 0, 1, 1};
-    vector<IndexType> index_035_0, index_035;
 
     local_join(commGrid, index_05, index_35, 2, 2, 1, 1, order1, index_035_0);
 
-//    write_local_vector(index_035_0, "index_035_0", 3);
     local_redistribution(m_43, index_035_0, 3, 1, index_035);
     index_035_0.clear();
 
-    vector<IndexType> index_43;
     get_local_indices(m_43, index_43);
     send_local_indices(commGrid, index_43);
-//    write_local_vector(index_43, "m_43", 2);
-
-    vector<IndexType> order2 = {0, 0, 0, 1, 1, 0, 0, 2};
-    vector<IndexType> index_0345_0, index_0345;
 
     local_join(commGrid, index_035, index_43, 3, 2, 1, 1, order2, index_0345_0);
 
     local_redistribution(m_64, index_0345_0, 4, 2, index_0345);
-//    write_local_vector(index_0345, "index_0345", 4);
     index_0345_0.clear();
 
-    vector<IndexType> index_64;
     get_local_indices(m_64, index_64);
     send_local_indices(commGrid, index_64);
-//    write_local_vector(index_64, "m_64", 2);
 
-    vector<IndexType> order3 = {0, 0, 0, 1, 0, 2, 0, 3};
-    vector<IndexType> index_03456;
-
-//    local_join(commGrid, index_0345, index_64, 4, 2, 2, 1, order3, index_03456);
     local_filter(commGrid, index_0345, index_64, 4, 2, 2, 3, 1, 0, order3, index_03456);
 
-//    write_local_vector(index_03456, "index_03456", 4);
-
-    vector<IndexType> index_24;
     get_local_indices(m_24, index_24);
     send_local_indices(commGrid, index_24);
-//    write_local_vector(index_24, "m_24", 2);
-
-    vector<IndexType> order4 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3};
-    vector<IndexType> index_023456_0, index_023456;
 
     local_join(commGrid, index_03456, index_24, 4, 2, 2, 1, order4, index_023456_0);
-
-//    write_local_vector(index_023456_0, "index_023456_0", 5);
-
-//    cout << myrank << " check point, finished 3 joins and 1 filter " << endl;
 
     local_redistribution(m_13, index_023456_0, 5, 2, index_023456);
     index_023456_0.clear();
 
-    vector<IndexType> index_13;
     get_local_indices(m_13, index_13);
     send_local_indices(commGrid, index_13);
-//    write_local_vector(index_13, "m_13", 2);
 
-    vector<IndexType> order5 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
-    vector<IndexType> index_0123456;
     local_join(commGrid, index_023456, index_13, 5, 2, 2, 1, order5, index_0123456);
-
-    // TODO : code check point
-//    cout << myrank << " check point, finished 3 joins and 1 filter and 2 redistributions" << endl;
 
     send_local_results(commGrid, index_0123456.size() / 6);
 }
@@ -345,14 +316,13 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<In
         cout << "query1 result_enum time : " << resgen_end - resgen_start << " s" << endl;
         cout << "query1 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl;
     }
-
-
 }
 
 void resgen_l2(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    double t1_t = MPI_Wtime();
     total_get_local_indices_time = 0.0;
     total_send_local_indices_time = 0.0;
     total_local_join_time = 0.0;
@@ -360,29 +330,26 @@ void resgen_l2(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
     total_redistribution_time = 0.0;
     total_send_result_time = 0.0;
 
-    if (myrank == 0) {
-//        cout << "---------------------------------------------------------------" << endl;
-        cout << "begin result generation ......" << endl;
-    }
-
-    auto commGrid = m_10.getcommgrid();
-
     // m_10 becoms m_01
     m_10.Transpose();
-    vector<IndexType> index_01;
+
+    vector<IndexType> index_01, index_21, index_012;
+    auto commGrid = m_10.getcommgrid();
+    vector<IndexType> order1 = {0, 0, 0, 1, 1, 0};
+    double t2_t = MPI_Wtime();
+
+    if (myrank == 0) {
+        cout << "begin result generation ......" << endl;
+        cout << "\ttranspose matrix and declarations take : " << (t2_t - t1_t) << " s\n" << endl;
+    }
+
     get_local_indices(m_10, index_01);
     send_local_indices(commGrid, index_01);
-//    write_local_vector(index_01, "m_10", 2);
 
-    vector<IndexType> index_21;
     get_local_indices(m_21, index_21);
     send_local_indices(commGrid, index_21);
-//    write_local_vector(index_21, "m_12", 2);
 
-    vector<IndexType> order1 = {0, 0, 0, 1, 1, 0};
-    vector<IndexType> index_012;
     local_join(commGrid, index_01, index_21, 2, 2, 1, 1, order1, index_012);
-//    write_local_vector(index_012, "index_012", 3);
 
     send_local_results(commGrid, index_012.size() / 3);
 }
@@ -721,6 +688,7 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    double t1_t = MPI_Wtime();
     total_get_local_indices_time = 0.0;
     total_send_local_indices_time = 0.0;
     total_local_join_time = 0.0;
@@ -728,49 +696,43 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
     total_redistribution_time = 0.0;
     total_send_result_time = 0.0;
 
-    if (myrank == 0) {
-//        cout << "---------------------------------------------------------------" << endl;
-        cout << "begin result generation ......" << endl;
-    }
+    // m_20 becoms m_02
+    m_20.Transpose();
 
     auto commGrid = m_20.getcommgrid();
 
-    // m_20 becoms m_02
-    m_20.Transpose();
-    vector<IndexType> index_02;
+    vector<IndexType> index_02, index_52, index_025, index_42, index_0245, index_32, index_02345, index_12, index_012345;
+
+    vector<IndexType> order1 = {0, 0, 0, 1, 1, 0}, order2 = {0, 0, 0, 1, 1, 0, 0, 2}, order3 = {0, 0, 0, 1, 1, 0, 0, 2, 0, 3},
+                        order4 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
+    double t2_t = MPI_Wtime();
+
+    if (myrank == 0) {
+        cout << "begin result generation ......" << endl;
+        cout << "\ttranspose matrix and declarations take : " << (t2_t - t1_t) << " s\n" << endl;
+    }
+
     get_local_indices(m_20, index_02);
     send_local_indices(commGrid, index_02);
 
-    vector<IndexType> index_52;
     get_local_indices(m_52, index_52);
     send_local_indices(commGrid, index_52);
 
-    vector<IndexType> order1 = {0, 0, 0, 1, 1, 0};
-    vector<IndexType> index_025;
     local_join(commGrid, index_02, index_52, 2, 2, 1, 1, order1, index_025);
 
-    vector<IndexType> index_42;
     get_local_indices(m_42, index_42);
     send_local_indices(commGrid, index_42);
 
-    vector<IndexType> order2 = {0, 0, 0, 1, 1, 0, 0, 2};
-    vector<IndexType> index_0245;
     local_join(commGrid, index_025, index_42, 3, 2, 1, 1, order2, index_0245);
 
-    vector<IndexType> index_32;
     get_local_indices(m_32, index_32);
     send_local_indices(commGrid, index_32);
 
-    vector<IndexType> order3 = {0, 0, 0, 1, 1, 0, 0, 2, 0, 3};
-    vector<IndexType> index_02345;
     local_join(commGrid, index_0245, index_32, 4, 2, 1, 1, order3, index_02345);
 
-    vector<IndexType> index_12;
     get_local_indices(m_12, index_12);
     send_local_indices(commGrid, index_12);
 
-    vector<IndexType> order4 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
-    vector<IndexType> index_012345;
     local_join(commGrid, index_02345, index_12, 5, 2, 1, 1, order4, index_012345);
 
     send_local_results(commGrid, index_012345.size() / 6);
@@ -927,6 +889,7 @@ void resgen_l5(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_12) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    double t1_t = MPI_Wtime();
     total_get_local_indices_time = 0.0;
     total_send_local_indices_time = 0.0;
     total_local_join_time = 0.0;
@@ -934,32 +897,28 @@ void resgen_l5(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_12) {
     total_redistribution_time = 0.0;
     total_send_result_time = 0.0;
 
-    if (myrank == 0) {
-//        cout << "---------------------------------------------------------------" << endl;
-        cout << "begin result generation ......" << endl;
-    }
-
-    auto commGrid = m_20.getcommgrid();
-
     // m_20 becoms m_02
     m_20.Transpose();
-    vector<IndexType> index_02;
+
+    vector<IndexType> index_02, index_12, index_012;
+    auto commGrid = m_20.getcommgrid();
+    vector<IndexType> order1 = {0, 1, 1, 1, 0, 0};
+    double t2_t = MPI_Wtime();
+
+    if (myrank == 0) {
+        cout << "begin result generation ......" << endl;
+        cout << "\ttranspose matrix and declarations take : " << (t2_t - t1_t) << " s\n" << endl;
+    }
+
     get_local_indices(m_20, index_02);
     send_local_indices(commGrid, index_02);
-//    write_local_vector(index_02, "m_20", 2);
 
-    vector<IndexType> index_12;
     get_local_indices(m_12, index_12);
     send_local_indices(commGrid, index_12);
-//    write_local_vector(index_12, "m_12", 2);
 
-    vector<IndexType> order1 = {0, 1, 1, 1, 0, 0};
-    vector<IndexType> index_012;
     local_join(commGrid, index_02, index_12, 2, 2, 1, 1, order1, index_012);
-//    write_local_vector(index_012, "index_012", 3);
 
     send_local_results(commGrid, index_012.size() / 3);
-
 }
 
 void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
@@ -1069,6 +1028,7 @@ void resgen_l6(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_D
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    double t1_t = MPI_Wtime();
     total_get_local_indices_time = 0.0;
     total_send_local_indices_time = 0.0;
     total_local_join_time = 0.0;
@@ -1076,53 +1036,41 @@ void resgen_l6(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_D
     total_redistribution_time = 0.0;
     total_send_result_time = 0.0;
 
-    if (myrank == 0) {
-//        cout << "---------------------------------------------------------------" << endl;
-        cout << "begin result generation ......" << endl;
-    }
+    // m_30 becoms m_03
+    m_30.Transpose();
 
     auto commGrid = m_30.getcommgrid();
 
-    // m_30 becoms m_03
-    m_30.Transpose();
-    vector<IndexType> index_03;
+    vector<IndexType> index_03, index_43, index_034_0, index_034, index_24, index_0234, index_14, index_01234;
+
+    vector<IndexType> order1 = {0, 0, 0, 1, 2, 0}, order2 = {0, 0, 1, 0, 0, 1, 0, 2}, order3 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3};
+    double t2_t = MPI_Wtime();
+
+    if (myrank == 0) {
+        cout << "begin result generation ......" << endl;
+        cout << "\ttranspose matrix and declarations take : " << (t2_t - t1_t) << " s\n" << endl;
+    }
+
     get_local_indices(m_30, index_03);
     send_local_indices(commGrid, index_03);
-//    write_local_vector(index_03, "index_03", 2);
 
-    vector<IndexType> index_43;
     get_local_indices(m_43, index_43);
     send_local_indices(commGrid, index_43);
-//    write_local_vector(index_43, "index_43", 2);
 
-    vector<IndexType> order1 = {0, 0, 0, 1, 2, 0};
-    vector<IndexType> index_034_0, index_034;
     local_join(commGrid, index_03, index_43, 2, 2, 1, 1, order1, index_034_0);
-//    write_local_vector(index_034_0, "index_034_0", 3);
     local_redistribution(m_14, index_034_0, 3, 2, index_034);
 
-    vector<IndexType> index_24;
     get_local_indices(m_24, index_24);
     send_local_indices(commGrid, index_24);
-//    write_local_vector(index_24, "index_24", 2);
 
-    vector<IndexType> order2 = {0, 0, 1, 0, 0, 1, 0, 2};
-    vector<IndexType> index_0234;
     local_join(commGrid, index_034, index_24, 3, 2, 2, 1, order2, index_0234);
-//    write_local_vector(index_0234, "index_0234", 4);
 
-    vector<IndexType> index_14;
     get_local_indices(m_14, index_14);
     send_local_indices(commGrid, index_14);
-//    write_local_vector(index_14, "index_14", 2);
 
-    vector<IndexType> order3 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3};
-    vector<IndexType> index_01234;
     local_join(m_14.getcommgrid(), index_0234, index_14, 4, 2, 3, 1, order3, index_01234);
-//    write_local_vector(index_01234, "index_01234", 5);
 
     send_local_results(commGrid, index_01234.size() / 5);
-
 }
 
 void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
@@ -1291,6 +1239,7 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    double t1_t = MPI_Wtime();
     total_get_local_indices_time = 0.0;
     total_send_local_indices_time = 0.0;
     total_local_join_time = 0.0;
@@ -1298,86 +1247,58 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     total_redistribution_time = 0.0;
     total_send_result_time = 0.0;
 
-    if (myrank == 0) {
-//        cout << "---------------------------------------------------------------" << endl;
-        cout << "begin result generation ......" << endl;
-    }
+    // m_50 becoms m_05
+    m_50.Transpose();
 
     auto commGrid = m_50.getcommgrid();
 
-    // m_50 becoms m_05
-    m_50.Transpose();
-    vector<IndexType> index_05;
+    vector<IndexType> index_05, index_35, index_035_0, index_035, index_43, index_0345_0, index_0345, index_64, 
+                        index_03456, index_24, index_023456_0, index_023456, index_13, index_0123456;
+
+    vector<IndexType> order1 = {0, 0, 1, 0, 1, 1}, order2 = {0, 0, 0, 1, 1, 0, 0, 2}, order3 = {0, 0, 0, 1, 0, 2, 0, 3},
+                        order4 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3}, order5 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
+    double t2_t = MPI_Wtime();
+
+    if (myrank == 0) {
+        cout << "begin result generation ......" << endl;
+        cout << "\ttranspose matrix and declarations take : " << (t2_t - t1_t) << " s\n" << endl;
+    }
+
     get_local_indices(m_50, index_05);
     send_local_indices(commGrid, index_05);
-//    write_local_vector(index_05, "m_50", 2);
 
-    vector<IndexType> index_35;
     get_local_indices(m_35, index_35);
     send_local_indices(commGrid, index_35);
-//    write_local_vector(index_35, "m_35", 2);
-
-    vector<IndexType> order1 = {0, 0, 1, 0, 1, 1};
-    vector<IndexType> index_035_0, index_035;
 
     local_join(commGrid, index_05, index_35, 2, 2, 1, 1, order1, index_035_0);
 
-//    write_local_vector(index_035_0, "index_035_0", 3);
     local_redistribution(m_43, index_035_0, 3, 1, index_035);
     index_035_0.clear();
 
-    vector<IndexType> index_43;
     get_local_indices(m_43, index_43);
     send_local_indices(commGrid, index_43);
-//    write_local_vector(index_43, "m_43", 2);
-
-    vector<IndexType> order2 = {0, 0, 0, 1, 1, 0, 0, 2};
-    vector<IndexType> index_0345_0, index_0345;
 
     local_join(commGrid, index_035, index_43, 3, 2, 1, 1, order2, index_0345_0);
 
     local_redistribution(m_64, index_0345_0, 4, 2, index_0345);
-//    write_local_vector(index_0345, "index_0345", 4);
     index_0345_0.clear();
 
-    vector<IndexType> index_64;
     get_local_indices(m_64, index_64);
     send_local_indices(commGrid, index_64);
-//    write_local_vector(index_64, "m_64", 2);
 
-    vector<IndexType> order3 = {0, 0, 0, 1, 0, 2, 0, 3};
-    vector<IndexType> index_03456;
-
-//    local_join(commGrid, index_0345, index_64, 4, 2, 2, 1, order3, index_03456);
     local_filter(commGrid, index_0345, index_64, 4, 2, 2, 3, 1, 0, order3, index_03456);
 
-//    write_local_vector(index_03456, "index_03456", 4);
-
-    vector<IndexType> index_24;
     get_local_indices(m_24, index_24);
     send_local_indices(commGrid, index_24);
-//    write_local_vector(index_24, "m_24", 2);
-
-    vector<IndexType> order4 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3};
-    vector<IndexType> index_023456_0, index_023456;
 
     local_join(commGrid, index_03456, index_24, 4, 2, 2, 1, order4, index_023456_0);
-
-//    write_local_vector(index_023456_0, "index_023456_0", 5);
-
-    // TODO : code check point
-//    cout << myrank << " check point, finished 3 joins and 1 filter " << endl;
 
     local_redistribution(m_13, index_023456_0, 5, 2, index_023456);
     index_023456_0.clear();
 
-    vector<IndexType> index_13;
     get_local_indices(m_13, index_13);
     send_local_indices(commGrid, index_13);
-//    write_local_vector(index_24, "m_24", 2);
 
-    vector<IndexType> order5 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
-    vector<IndexType> index_0123456;
     local_join(commGrid, index_023456, index_13, 5, 2, 2, 1, order5, index_0123456);
 
     send_local_results(commGrid, index_0123456.size() / 6);
