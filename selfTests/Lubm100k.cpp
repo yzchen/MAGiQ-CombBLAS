@@ -1593,6 +1593,21 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    comp[0] = compInt3A;
+    comp[1] = compInt3B;
+    comp[2] = compInt3C;
+
+    comp[5] = compInt4A;
+    comp[6] = compInt4B;
+    comp[7] = compInt4C;
+    comp[8] = compInt4D;
+
+    comp[10] = compInt5A;
+    comp[11] = compInt5B;
+    comp[12] = compInt5C;
+    comp[13] = compInt5D;
+    comp[14] = compInt5E;
+
     if (argc < 1) {
         if (myrank == 0) {
             cout << "Usage: ./lubm-largest" << endl;
@@ -1648,7 +1663,7 @@ int main(int argc, char *argv[]) {
         }
 
         // query
-        // for (int t = 0; t < 5; t++) {
+        for (int t = 0; t < 5; t++) {
             lubm100k_l1(G, tG);
             lubm100k_l2(G, tG);
             lubm100k_l3(G, tG);
@@ -1656,7 +1671,7 @@ int main(int argc, char *argv[]) {
             lubm100k_l5(G, tG);
             lubm100k_l6(G, tG);
             lubm100k_l7(G, tG);
-        // }
+        }
     }
 
     MPI_Finalize();

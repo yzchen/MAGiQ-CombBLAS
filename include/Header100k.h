@@ -41,6 +41,116 @@ double total_local_filter_time = 0.0;
 double total_redistribution_time = 0.0;
 double total_send_result_time = 0.0;
 
+typedef struct {
+    IndexType a, b, c;
+} Int3;
+
+int compInt3A(const void *elem1, const void *elem2) {
+    Int3 f = *((Int3 *) elem1);
+    Int3 s = *((Int3 *) elem2);
+    if (f.a > s.a) return 1;
+    if (f.a < s.a) return -1;
+    return 0;
+}
+
+int compInt3B(const void *elem1, const void *elem2) {
+    Int3 f = *((Int3 *) elem1);
+    Int3 s = *((Int3 *) elem2);
+    if (f.b > s.b) return 1;
+    if (f.b < s.b) return -1;
+    return 0;
+}
+
+int compInt3C(const void *elem1, const void *elem2) {
+    Int3 f = *((Int3 *) elem1);
+    Int3 s = *((Int3 *) elem2);
+    if (f.c > s.c) return 1;
+    if (f.c < s.c) return -1;
+    return 0;
+}
+
+typedef struct {
+    IndexType a, b, c, d;
+} Int4;
+
+int compInt4A(const void *elem1, const void *elem2) {
+    Int4 f = *((Int4 *) elem1);
+    Int4 s = *((Int4 *) elem2);
+    if (f.a > s.a) return 1;
+    if (f.a < s.a) return -1;
+    return 0;
+}
+
+int compInt4B(const void *elem1, const void *elem2) {
+    Int4 f = *((Int4 *) elem1);
+    Int4 s = *((Int4 *) elem2);
+    if (f.b > s.b) return 1;
+    if (f.b < s.b) return -1;
+    return 0;
+}
+
+int compInt4C(const void *elem1, const void *elem2) {
+    Int4 f = *((Int4 *) elem1);
+    Int4 s = *((Int4 *) elem2);
+    if (f.c > s.c) return 1;
+    if (f.c < s.c) return -1;
+    return 0;
+}
+
+int compInt4D(const void *elem1, const void *elem2) {
+    Int4 f = *((Int4 *) elem1);
+    Int4 s = *((Int4 *) elem2);
+    if (f.d > s.d) return 1;
+    if (f.d < s.d) return -1;
+    return 0;
+}
+
+typedef struct {
+    IndexType a, b, c, d, e;
+} Int5;
+
+int compInt5A(const void *elem1, const void *elem2) {
+    Int5 f = *((Int5 *) elem1);
+    Int5 s = *((Int5 *) elem2);
+    if (f.a > s.a) return 1;
+    if (f.a < s.a) return -1;
+    return 0;
+}
+
+int compInt5B(const void *elem1, const void *elem2) {
+    Int5 f = *((Int5 *) elem1);
+    Int5 s = *((Int5 *) elem2);
+    if (f.b > s.b) return 1;
+    if (f.b < s.b) return -1;
+    return 0;
+}
+
+int compInt5C(const void *elem1, const void *elem2) {
+    Int5 f = *((Int5 *) elem1);
+    Int5 s = *((Int5 *) elem2);
+    if (f.c > s.c) return 1;
+    if (f.c < s.c) return -1;
+    return 0;
+}
+
+int compInt5D(const void *elem1, const void *elem2) {
+    Int5 f = *((Int5 *) elem1);
+    Int5 s = *((Int5 *) elem2);
+    if (f.d > s.d) return 1;
+    if (f.d < s.d) return -1;
+    return 0;
+}
+
+int compInt5E(const void *elem1, const void *elem2) {
+    Int5 f = *((Int5 *) elem1);
+    Int5 s = *((Int5 *) elem2);
+    if (f.e > s.e) return 1;
+    if (f.e < s.e) return -1;
+    return 0;
+}
+
+int (*comp[15])(const void *, const void *);
+
 // for constructing diag matrix
 static FullyDistVec<IndexType, ElementType> *nonisov;
 
@@ -70,7 +180,7 @@ void printReducedInfo(PSpMat::MPI_DCCols &M) {
 
     double t1 = MPI_Wtime();
 
-    int nnz1 = M.getnnz();
+    IndexType nnz1 = M.getnnz();
 
     FullyDistVec<IndexType, ElementType> rowsums1(M.getcommgrid());
     M.Reduce(rowsums1, Row, std::plus<ElementType>(), static_cast<ElementType>(0));
@@ -281,8 +391,7 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
 }
 
 // r1, r2 are not reachable
-void
-merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, IndexType l1, IndexType l2, IndexType r1, IndexType r2, int pair_size1,
+void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, IndexType l1, IndexType l2, IndexType r1, IndexType r2, int pair_size1,
                     int pair_size2, int key1, int key2) {
     if (r2 - l2 == 0) {
         return;
@@ -442,8 +551,7 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
 }
 
 // key11 and key21 are main keys
-void
-local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
+void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
              int pair_size2, int key11, int key12, int key21, int key22, vector<IndexType> &order,
              vector<IndexType> &res) {
     // double t1 = MPI_Wtime();
@@ -501,20 +609,6 @@ local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<
     // }
 }
 
-// merge sort
-// left, right are number of tuples, not number of elements
-void local_sort_table(vector<IndexType> &range_table, IndexType left, IndexType right, IndexType pair_size, IndexType pivot) {
-    if (left < right) {
-        IndexType mid = (left + right) / 2;
-//        cout << "mid = " << mid << endl;
-        local_sort_table(range_table, left, mid, pair_size, pivot);
-        local_sort_table(range_table, mid + 1, right, pair_size, pivot);
-
-        merge_local_vectors(range_table, range_table, left * pair_size, (mid + 1) * pair_size, (mid + 1) * pair_size,
-                            (right + 1) * pair_size, pair_size, pair_size, pivot, pivot);
-    }
-}
-
 // column based operation
 void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table, int pair_size,
                           int pivot, vector<IndexType> &res) {
@@ -544,7 +638,7 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     coffset[rowneighs] = INT64_MAX;
 
     // cout << myrank << ", redis, " << range_table.size() << endl;
-    local_sort_table(range_table, 0, range_table.size() / pair_size - 1, pair_size, pivot);
+    qsort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
     // cout << myrank << ", redis, after sort,  " << range_table.size() << endl;
 
     vector<int> lens;
@@ -588,20 +682,13 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 
         for (int k = 0; k < rowneighs; ++k) {
             MPI_Gatherv(range_table.data() + partial_sums[k], lens[k + 1], MPIType<IndexType>(), res.data(),
-                        recvcount[k],
-                        displs.data(), MPIType<IndexType>(), k, commGrid->GetRowWorld());
-
-            if (myrank == k) {
-                // cout << "\nafter gatherv " << myrank << " res size : " << res.size() / pair_size << endl;
-
-                local_sort_table(res, 0, res.size() / pair_size - 1, pair_size, pivot);
-
-                // cout << "\nafter gatherv sorting " << myrank << endl;
-            }
+                        recvcount[k], displs.data(), MPIType<IndexType>(), k, commGrid->GetRowWorld());
         }
 
 //        write_local_vector(res, "res13", 3);
     }
+
+    qsort(res.data(), res.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
 
     // double t2 = MPI_Wtime();
     // total_redistribution_time += (t2 - t1);
