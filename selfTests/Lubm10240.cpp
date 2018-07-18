@@ -20,6 +20,7 @@ void resgen_l1(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    double t1_t = MPI_Wtime();
     total_get_local_indices_time = 0.0;
     total_send_local_indices_time = 0.0;
     total_local_join_time = 0.0;
@@ -27,91 +28,220 @@ void resgen_l1(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     total_redistribution_time = 0.0;
     total_send_result_time = 0.0;
 
-    if (myrank == 0) {
-//        cout << "---------------------------------------------------------------" << endl;
-        cout << "begin result generation ......" << endl;
-    }
+    // m_50 becoms m_05
+    m_50.Transpose();
 
     auto commGrid = m_50.getcommgrid();
 
-    // m_50 becoms m_05
-    m_50.Transpose();
-    vector<IndexType> index_05;
+    vector<IndexType> index_05, index_35, index_035_0, index_035, index_43, index_0345_0, index_0345,
+            index_64, index_03456, index_24, index_023456_0, index_023456, index_13, index_0123456;
+
+    vector<IndexType> order1 = {0, 0, 1, 0, 1, 1}, order2 = {0, 0, 0, 1, 1, 0, 0, 2}, order3 = {0, 0, 0, 1, 0, 2, 0, 3},
+            order4 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3}, order5 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
+    double t2_t = MPI_Wtime();
+
+    if (myrank == 0) {
+        cout << "begin result generation ......" << endl;
+        cout << "\ttranspose matrix and declarations take : " << (t2_t - t1_t) << " s\n" << endl;
+    }
+
+    double t2_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     get_local_indices(m_50, index_05);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t2_end = MPI_Wtime();
+    double t2 = t2_end - t2_start;
+
+    double t3_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     send_local_indices(commGrid, index_05);
-//    write_local_vector(index_05, "m_50", 2);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t3_end = MPI_Wtime();
+    double t3 = t3_end - t3_start;
 
-    vector<IndexType> index_35;
+    double t4_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     get_local_indices(m_35, index_35);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t4_end = MPI_Wtime();
+    double t4 = t4_end - t4_start;
+
+    double t5_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     send_local_indices(commGrid, index_35);
-//    write_local_vector(index_35, "m_35", 2);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t5_end = MPI_Wtime();
+    double t5 = t5_end - t5_start;
 
-    vector<IndexType> order1 = {0, 0, 1, 0, 1, 1};
-    vector<IndexType> index_035_0, index_035;
-
+    double t6_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     local_join(commGrid, index_05, index_35, 2, 2, 1, 1, order1, index_035_0);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t6_end = MPI_Wtime();
+    double t6 = t6_end - t6_start;
 
-//    write_local_vector(index_035_0, "index_035_0", 3);
+    send_local_results(commGrid, index_035_0.size() / 3);
+
+    double t7_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     local_redistribution(m_43, index_035_0, 3, 1, index_035);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t7_end = MPI_Wtime();
     index_035_0.clear();
+    double t7 = t7_end - t7_start;
 
-    vector<IndexType> index_43;
+    send_local_results(commGrid, index_035.size() / 3);
+
+    double t8_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     get_local_indices(m_43, index_43);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t8_end = MPI_Wtime();
+    double t8 = t8_end - t8_start;
+
+    double t9_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     send_local_indices(commGrid, index_43);
-//    write_local_vector(index_43, "m_43", 2);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t9_end = MPI_Wtime();
+    double t9 = t9_end - t9_start;
 
-    vector<IndexType> order2 = {0, 0, 0, 1, 1, 0, 0, 2};
-    vector<IndexType> index_0345_0, index_0345;
-
+    double t10_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     local_join(commGrid, index_035, index_43, 3, 2, 1, 1, order2, index_0345_0);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t10_end = MPI_Wtime();
+    double t10 = t10_end - t10_start;
 
+//    send_local_results(commGrid, index_0345_0.size() / 4);
+
+    double t11_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     local_redistribution(m_64, index_0345_0, 4, 2, index_0345);
-//    write_local_vector(index_0345, "index_0345", 4);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t11_end = MPI_Wtime();
     index_0345_0.clear();
+    double t11 = t11_end - t11_start;
 
-    vector<IndexType> index_64;
+//    send_local_results(commGrid, index_0345.size() / 4);
+
+    double t12_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     get_local_indices(m_64, index_64);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t12_end = MPI_Wtime();
+    double t12 = t12_end - t12_start;
+
+    double t13_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     send_local_indices(commGrid, index_64);
-//    write_local_vector(index_64, "m_64", 2);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t13_end = MPI_Wtime();
+    double t13 = t13_end - t13_start;
 
-    vector<IndexType> order3 = {0, 0, 0, 1, 0, 2, 0, 3};
-    vector<IndexType> index_03456;
-
-//    local_join(commGrid, index_0345, index_64, 4, 2, 2, 1, order3, index_03456);
+    double t14_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     local_filter(commGrid, index_0345, index_64, 4, 2, 2, 3, 1, 0, order3, index_03456);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t14_end = MPI_Wtime();
+    double t14 = t14_end - t14_start;
 
-//    write_local_vector(index_03456, "index_03456", 4);
+//    send_local_results(commGrid, index_03456.size() / 4);
 
-    vector<IndexType> index_24;
+    double t15_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     get_local_indices(m_24, index_24);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t15_end = MPI_Wtime();
+    double t15 = t15_end - t15_start;
+
+    double t16_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     send_local_indices(commGrid, index_24);
-//    write_local_vector(index_24, "m_24", 2);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t16_end = MPI_Wtime();
+    double t16 = t16_end - t16_start;
 
-    vector<IndexType> order4 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3};
-    vector<IndexType> index_023456_0, index_023456;
-
+    double t17_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     local_join(commGrid, index_03456, index_24, 4, 2, 2, 1, order4, index_023456_0);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t17_end = MPI_Wtime();
+    double t17 = t17_end - t17_start;
 
-//    write_local_vector(index_023456_0, "index_023456_0", 5);
+//    send_local_results(commGrid, index_023456_0.size() / 5);
 
-//    cout << myrank << " check point, finished 3 joins and 1 filter " << endl;
-
+    double t18_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     local_redistribution(m_13, index_023456_0, 5, 2, index_023456);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t18_end = MPI_Wtime();
     index_023456_0.clear();
+    double t18 = t18_end - t18_start;
 
-    vector<IndexType> index_13;
+//    send_local_results(commGrid, index_023456.size() / 5);
+
+    double t19_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     get_local_indices(m_13, index_13);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t19_end = MPI_Wtime();
+    double t19 = t19_end - t19_start;
+
+    double t20_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     send_local_indices(commGrid, index_13);
-//    write_local_vector(index_13, "m_13", 2);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t20_end = MPI_Wtime();
+    double t20 = t20_end - t20_start;
 
-    vector<IndexType> order5 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
-    vector<IndexType> index_0123456;
+    double t21_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     local_join(commGrid, index_023456, index_13, 5, 2, 2, 1, order5, index_0123456);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t21_end = MPI_Wtime();
+    double t21 = t21_end - t21_start;
 
-    // TODO : code check point
-//    cout << myrank << " check point, finished 3 joins and 1 filter and 2 redistributions" << endl;
-
+    double t22_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     send_local_results(commGrid, index_0123456.size() / 6);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t22_end = MPI_Wtime();
+    double t22 = t22_end - t22_start;
+
+    if (myrank == 0) {
+        cout << "\tm_05 get local indices takes : " << t2 << " s" << endl;
+        cout << "\tm_05 send local indices takes : " << t3 << " s" << endl;
+        cout << "\tm_35 get local indices takes : " << t4 << " s" << endl;
+        cout << "\tm_35 send local indices takes : " << t5 << " s" << endl;
+        cout << "\tm_43 get local indices takes : " << t8 << " s" << endl;
+        cout << "\tm_43 send local indices takes : " << t9 << " s" << endl;
+        cout << "\tm_64 get local indices takes : " << t12 << " s" << endl;
+        cout << "\tm_64 send local indices takes : " << t13 << " s" << endl;
+        cout << "\tm_24 get local indices takes : " << t15 << " s" << endl;
+        cout << "\tm_24 send local indices takes : " << t16 << " s" << endl;
+        cout << "\tm_13 get local indices takes : " << t19 << " s" << endl;
+        cout << "\tm_13 send local indices takes : " << t20 << " s" << endl;
+        cout << "total get local indices time : " << (t2 + t4 + t8 + t12 + t15 + t19) << " s" << endl;
+        cout << "total send local indices time : " << (t3 + t5 + t9 + t13 + t16 + t20) << " s\n" << endl;
+
+        cout << "\tlocal join of m_05 and m_35 takes : " << t6 << " s" << endl;
+        cout << "\tlocal join of m_035 and m_43 takes : " << t10 << " s" << endl;
+        cout << "\tlocal join of m_03456 and m_24 takes : " << t17 << " s" << endl;
+        cout << "\tlocal join of m_023456 and m_13 takes : " << t21 << " s" << endl;
+        cout << "total local join time : " << (t6 + t10 + t17 + t21) << " s\n" << endl;
+
+        cout << "\tlocal filter of m_0345 and m_64 takes : " << t14 << " s" << endl;
+        cout << "total local filter time : " << t14 << " s\n" << endl;
+
+        cout << "\tredistribution of m_035 takes : " << t7 << " s" << endl;
+        cout << "\tredistribution of m_0345 takes : " << t11 << " s" << endl;
+        cout << "\tredistribution of m_023456 takes : " << t18 << " s" << endl;
+        cout << "total redistribution time : " << (t7 + t11 + t18) << " s" << endl;
+
+        cout << "total send local result time : " << t22 << " s" << endl;
+        cout << "---------------------------------------------------------------\n" << endl;
+    }
 }
 
 void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
@@ -1601,6 +1731,21 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    comp[0] = compInt3A;
+    comp[1] = compInt3B;
+    comp[2] = compInt3C;
+
+    comp[5] = compInt4A;
+    comp[6] = compInt4B;
+    comp[7] = compInt4C;
+    comp[8] = compInt4D;
+
+    comp[10] = compInt5A;
+    comp[11] = compInt5B;
+    comp[12] = compInt5C;
+    comp[13] = compInt5D;
+    comp[14] = compInt5E;
+
     if (argc < 1) {
         if (myrank == 0) {
             cout << "Usage: ./lubm10240" << endl;
@@ -1665,12 +1810,12 @@ int main(int argc, char *argv[]) {
         // query
 //        for (int time = 1; time <= 5; time++) {
             lubm10240_l1(G, tG, nonisov);
-            lubm10240_l2(G, tG, nonisov);
-            lubm10240_l3(G, tG, nonisov);
-            lubm10240_l4(G, tG, nonisov);
-            lubm10240_l5(G, tG, nonisov);
-            lubm10240_l6(G, tG, nonisov);
-            lubm10240_l7(G, tG, nonisov);
+//            lubm10240_l2(G, tG, nonisov);
+//            lubm10240_l3(G, tG, nonisov);
+//            lubm10240_l4(G, tG, nonisov);
+//            lubm10240_l5(G, tG, nonisov);
+//            lubm10240_l6(G, tG, nonisov);
+//            lubm10240_l7(G, tG, nonisov);
 //        }
     }
 

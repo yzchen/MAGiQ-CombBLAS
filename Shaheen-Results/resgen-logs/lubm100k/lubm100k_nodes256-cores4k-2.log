@@ -1,0 +1,2536 @@
+###############################################################
+Load Matrix
+###############################################################
+---------------------------------------------------------------
+starting reading lubm100k data......
+Matrix is Float
+Total number of nonzeros expected across all processors is 14148811080
+File is 292810977573 bytes
+As a whole: 3365100502 rows and 3365100502 columns and 13665278162 nonzeros
+	read file takes : 127.076 s
+	original imbalance of G : 64.0016
+	permutation takes : 471.964 s
+	imbalance of permuted G : 6.03973
+	transpose G takes : 0.335141 s
+graph load (Total) : 600.678 s
+---------------------------------------------------------------
+
+###############################################################
+Query 1
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(1996,1996)}*2
+	dim-apply takes: 1.72035 s
+	prune takes: 0.0126879 s
+step 1 (Total) : 1.73311 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T * m_(3, 0).D()*7
+	diag-reduce takes : 1.08782 s
+	mmul-scalar takes : 0.000939846 s
+	dim-apply takes: 1.73517 s
+	prune takes: 0.0145888 s
+step 2 (Total) : 2.8386 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 1.29369 s
+	mmul-scalar takes : 0.000942945 s
+	dim-apply takes: 1.72072 s
+	prune takes: 0.0093379 s
+step 3 (Total) : 3.02477 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(4,4)} * m_(1,4)
+	dim-apply takes: 0.884049 s
+	prune takes: 0 s
+step 4 (Total) : 0.884082 s
+---------------------------------------------------------------
+step 5 : m_(5,4) = G x m_(1,4).T().D()*5
+	diag-reduce takes : 3.25158 s
+	mmul-scalar takes : 0.00154185 s
+	dim-apply takes: 1.54304 s
+	prune takes: 0.0127299 s
+step 5 (Total) : 4.809 s
+---------------------------------------------------------------
+step 6 : m_(2,5) = G.T() x m_(5,4).D()*2
+	diag-reduce takes : 1.10915 s
+	mmul-scalar takes : 0.000974894 s
+	dim-apply takes: 1.69627 s
+	prune takes: 0.00999999 s
+step 6 (Total) : 2.81648 s
+---------------------------------------------------------------
+step 7 : m_(2,5) = {1@(7,7)} * m_(2,5)
+	dim-apply takes: 0.546094 s
+	prune takes: 9.53674e-07 s
+step 7 (Total) : 0.546124 s
+---------------------------------------------------------------
+step 8 : m_(6,5) = G x m_(2,5).T().D()*15
+	diag-reduce takes : 3.59341 s
+	mmul-scalar takes : 0.0013752 s
+	dim-apply takes: 1.47459 s
+	prune takes: 0.0126541 s
+step 8 (Total) : 5.08213 s
+---------------------------------------------------------------
+step 9 : m_(6,5) = m_(4,3).T().D() x m_(6,5)
+	diag-reduce takes : 3.129 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.222682 s
+	prune takes: 3.88622e-05 s
+step 9 (Total) : 3.35179 s
+---------------------------------------------------------------
+step 10 : m_(4,3) = m_(4,3) x m_(6,5).D()
+	diag-reduce takes : 1.19912 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 1.66185 s
+	prune takes: 0.000319958 s
+step 10 (Total) : 2.86136 s
+---------------------------------------------------------------
+step 11 : m_(5,4) = m_(6,5).T().D() x m_(5,4)
+	diag-reduce takes : 3.12642 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.213068 s
+	prune takes: 1.90735e-06 s
+step 11 (Total) : 3.33954 s
+---------------------------------------------------------------
+step 12 : m_(4,3) = m_(5,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.33346 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.219082 s
+	prune takes: 1.19209e-05 s
+step 12 (Total) : 3.55262 s
+---------------------------------------------------------------
+step 13 : m_(3,0) = m_(4,3).T().D() x m_(3,0)
+	diag-reduce takes : 3.54326 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.216566 s
+	prune takes: 9.53674e-07 s
+step 13 (Total) : 3.75989 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 1.90735e-06 s
+
+final result size : 2528
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 2528
+---------------------------------------------------------------
+	m_03 get local indices takes : 0.0777342 s
+	m_03 send local indices takes : 0.00454283 s
+	m_43 get local indices takes : 9.58443e-05 s
+	m_43 send local indices takes : 0.00931096 s
+	m_54 get local indices takes : 7.89165e-05 s
+	m_54 send local indices takes : 6.07967e-05 s
+	m_65 get local indices takes : 9.48906e-05 s
+	m_65 send local indices takes : 0.00723219 s
+	m_25 get local indices takes : 7.79629e-05 s
+	m_25 send local indices takes : 5.00679e-05 s
+	m_14 get local indices takes : 6.19888e-05 s
+	m_14 send local indices takes : 2.28882e-05 s
+total get local indices time : 0.0781438 s
+total send local indices time : 0.0212197 s
+	local join of m_03 and m_43 takes : 0.000649214 s
+	local join of m_034 and m_54 takes : 0.0230839 s
+	local join of m_03456 and m_25 takes : 5.96046e-06 s
+	local join of m_023456 and m_14 takes : 3.8147e-06 s
+total local join time : 0.0237429 s
+	local filter of m_0345 and m_65 takes : 0.149804 s
+total local filter time : 0.149804 s
+	redistribution of m_034 takes : 0.230751 s
+	redistribution of m_0345 takes : 6.62012 s
+	redistribution of m_023456 takes : 0.000622034 s
+total redistribution time : 6.85149 s
+query1 mmul_scalar time : 0.00577474 s
+query1 prune time : 0.0723732 s
+query1 diag_reduce time : 24.6669 s
+query1 dim_apply time : 13.8535 s
+query1 result_enum time : 8.11193 s
+query1 time (Total) : 46.7117 s
+
+###############################################################
+Query 2
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(1,0) = G x {1@(3049,3049)}*2
+	dim-apply takes: 1.53545 s
+	prune takes: 0.0122859 s
+step 1 (Total) : 1.54779 s
+---------------------------------------------------------------
+step 2 : m_(2,1) = G.T() x m_(1,0).D()*4
+	diag-reduce takes : 1.06078 s
+	mmul-scalar takes : 0.00096488 s
+	dim-apply takes: 1.58062 s
+	prune takes: 0.0129061 s
+step 2 (Total) : 2.65535 s
+---------------------------------------------------------------
+step 3 : m_(1,0) = m_(2,1).T().D() * m_(1,0)
+	diag-reduce takes : 3.21021 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.827877 s
+	prune takes: 0 s
+step 3 (Total) : 4.03815 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 2.14577e-06 s
+
+final result size : 110583289
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 110583289
+---------------------------------------------------------------
+query2 mmul_scalar time : 0.00096488 s
+query2 prune time : 0.025192 s
+query2 diag_reduce time : 4.27099 s
+query2 dim_apply time : 3.94394 s
+query2 result_enum time : 0.743835 s
+query2 time (Total) : 8.98521 s
+
+###############################################################
+Query 3
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(399,399)}*2
+	dim-apply takes: 1.53474 s
+	prune takes: 0.01266 s
+step 1 (Total) : 1.54747 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T() * m_(3,0).D()*7
+	diag-reduce takes : 1.10982 s
+	mmul-scalar takes : 0.0009408 s
+	dim-apply takes: 1.55184 s
+	prune takes: 0.00999403 s
+step 2 (Total) : 2.67268 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 0.272412 s
+	mmul-scalar takes : 0.00170779 s
+	dim-apply takes: 1.48151 s
+	prune takes: 0.0106089 s
+step 3 (Total) : 1.76633 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(4,4)} x m_(1,4)
+	dim-apply takes: 0.875242 s
+	prune takes: 2.14577e-06 s
+step 4 (Total) : 0.875277 s
+---------------------------------------------------------------
+step 5 : m_(5,4) = G x m_(1,4).T().D()*5
+	diag-reduce takes : 3.34778 s
+	mmul-scalar takes : 0.00158596 s
+	dim-apply takes: 1.47198 s
+	prune takes: 0.01279 s
+step 5 (Total) : 4.83423 s
+---------------------------------------------------------------
+begin result generation ......
+final size : 0
+---------------------------------------------------------------
+query3 mmul_scalar time : 0.00423455 s
+query3 prune time : 0.0460551 s
+query3 diag_reduce time : 4.73 s
+query3 dim_apply time : 6.91531 s
+query3 result_enum time : 1.71661e-05 s
+query3 time (Total) : 11.6961 s
+
+###############################################################
+Query 4
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(2,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.52572 s
+	prune takes: 0.0124948 s
+step 1 (Total) : 1.53828 s
+---------------------------------------------------------------
+step 2 : m_(1,2) = G.T() x m_(2,0).D()*10
+	diag-reduce takes : 1.02474 s
+	mmul-scalar takes : 0.000990868 s
+	dim-apply takes: 1.57498 s
+	prune takes: 0.010447 s
+step 2 (Total) : 2.61125 s
+---------------------------------------------------------------
+step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)
+	dim-apply takes: 0.907674 s
+	prune takes: 2.69413e-05 s
+step 3 (Total) : 0.907736 s
+---------------------------------------------------------------
+step 4 : m_(3,2) = G.T() x m_(1,2).T().D()*4
+	diag-reduce takes : 3.284 s
+	mmul-scalar takes : 0.00159883 s
+	dim-apply takes: 1.54666 s
+	prune takes: 0.0100451 s
+step 4 (Total) : 4.84239 s
+---------------------------------------------------------------
+step 5 : m_(4,2) = G.T() x m_(3,2).T().D()*11
+	diag-reduce takes : 3.274 s
+	mmul-scalar takes : 0.00128794 s
+	dim-apply takes: 1.56312 s
+	prune takes: 0.0103149 s
+step 5 (Total) : 4.84881 s
+---------------------------------------------------------------
+step 6 : m_(5,2) = G.T() x m_(4,2).T().D()*12
+	diag-reduce takes : 3.25659 s
+	mmul-scalar takes : 0.00124788 s
+	dim-apply takes: 1.51366 s
+	prune takes: 0.0105128 s
+step 6 (Total) : 4.78211 s
+---------------------------------------------------------------
+step 7 : m_(2,0) = m_(5,2).T().D() x m_(2,0)
+	diag-reduce takes : 3.27102 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.520321 s
+	prune takes: 0 s
+step 7 (Total) : 3.79141 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 1.90735e-06 s
+
+final result size : 9
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 9
+---------------------------------------------------------------
+query4 mmul_scalar time : 0.00512552 s
+query4 prune time : 0.0538416 s
+query4 diag_reduce time : 14.1104 s
+query4 dim_apply time : 9.15214 s
+query4 result_enum time : 0.436941 s
+query4 time (Total) : 23.7591 s
+
+###############################################################
+Query 5
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(2,0) = G x {1@(2558,2558)}*2
+	dim-apply takes: 1.49385 s
+	prune takes: 0.0125561 s
+step 1 (Total) : 1.50647 s
+---------------------------------------------------------------
+step 2 : G.T() x m_(2,0).D()*5
+	diag-reduce takes : 1.10299 s
+	mmul-scalar takes : 0.000939131 s
+	dim-apply takes: 1.62695 s
+	prune takes: 0.010946 s
+step 2 (Total) : 2.74191 s
+---------------------------------------------------------------
+step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)
+	dim-apply takes: 0.227996 s
+	prune takes: 2.59876e-05 s
+step 3 (Total) : 0.228063 s
+---------------------------------------------------------------
+step 4 : m_(2,0) = m_(1,2).T().D() x m_(2,0)
+	diag-reduce takes : 3.81179 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.217504 s
+	prune takes: 1.19209e-06 s
+step 4 (Total) : 4.02937 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 1.90735e-06 s
+
+final result size : 10
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 10
+---------------------------------------------------------------
+query5 mmul_scalar time : 0.000939131 s
+query5 prune time : 0.0235293 s
+query5 diag_reduce time : 4.91478 s
+query5 dim_apply time : 3.5663 s
+query5 result_enum time : 0.318893 s
+query5 time (Total) : 8.82482 s
+
+###############################################################
+Query 6
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.52518 s
+	prune takes: 0.0127239 s
+step 1 (Total) : 1.53797 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T() x m_(3,0).D()*10
+	diag-reduce takes : 1.05982 s
+	mmul-scalar takes : 0.000938892 s
+	dim-apply takes: 1.62183 s
+	prune takes: 0.00992703 s
+step 2 (Total) : 2.6926 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*5
+	diag-reduce takes : 1.12547 s
+	mmul-scalar takes : 0.000990868 s
+	dim-apply takes: 1.52653 s
+	prune takes: 0.0100889 s
+step 3 (Total) : 2.66318 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(3,3)} x m_(1,4)
+	dim-apply takes: 0.838832 s
+	prune takes: 5.00679e-06 s
+step 4 (Total) : 0.838883 s
+---------------------------------------------------------------
+step 5 : m_(2,4) = G.T() x m_(1,4).T().D()*2
+	diag-reduce takes : 3.21162 s
+	mmul-scalar takes : 0.00109005 s
+	dim-apply takes: 1.50308 s
+	prune takes: 0.010468 s
+step 5 (Total) : 4.72636 s
+---------------------------------------------------------------
+step 6 : m_(2,4) = {1@(7,7)} x m_(2,4)
+	dim-apply takes: 0.295825 s
+	prune takes: 1.19209e-06 s
+step 6 (Total) : 0.295863 s
+---------------------------------------------------------------
+step 7 : m_(4,3) = m_(2,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.5773 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.218322 s
+	prune takes: 2.69413e-05 s
+step 7 (Total) : 3.79572 s
+---------------------------------------------------------------
+step 8 : m_(3,0) = m_(4,3).T().D() x m_(3,0)
+	diag-reduce takes : 3.30031 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.216877 s
+	prune takes: 9.53674e-07 s
+step 8 (Total) : 3.51725 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 9.53674e-07 s
+
+final result size : 117
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 117
+---------------------------------------------------------------
+query6 mmul_scalar time : 0.00301981 s
+query6 prune time : 0.043242 s
+query6 diag_reduce time : 12.2745 s
+query6 dim_apply time : 7.74647 s
+query6 result_enum time : 0.0178249 s
+query6 time (Total) : 20.0858 s
+
+###############################################################
+Query 7
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(5,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.50913 s
+	prune takes: 0.0127099 s
+step 1 (Total) : 1.5219 s
+---------------------------------------------------------------
+step 2 : m_(3,5) = G x m_(5,0).D()*17
+	diag-reduce takes : 1.09514 s
+	mmul-scalar takes : 0.000943184 s
+	dim-apply takes: 1.51619 s
+	prune takes: 0.0150361 s
+step 2 (Total) : 2.6274 s
+---------------------------------------------------------------
+step 3 : m_(2,3) = G.T() x m_(3,5).D()*2
+	diag-reduce takes : 1.07442 s
+	mmul-scalar takes : 0.001086 s
+	dim-apply takes: 1.54876 s
+	prune takes: 0.0102921 s
+step 3 (Total) : 2.63465 s
+---------------------------------------------------------------
+step 4 : m_(2,3) = {1@(399,399)} x m_(2,3)
+	dim-apply takes: 0.963164 s
+	prune takes: 9.53674e-07 s
+step 4 (Total) : 0.963195 s
+---------------------------------------------------------------
+step 5 : m_(4,3) = G.T() x m_(1,3).T().D()*16
+	diag-reduce takes : 3.16586 s
+	mmul-scalar takes : 0.00149512 s
+	dim-apply takes: 1.50493 s
+	prune takes: 0.0135391 s
+step 5 (Total) : 4.68592 s
+---------------------------------------------------------------
+step 6 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 1.16571 s
+	mmul-scalar takes : 0.000962019 s
+	dim-apply takes: 1.6424 s
+	prune takes: 0.00948501 s
+step 6 (Total) : 2.81863 s
+---------------------------------------------------------------
+step 7 : m_(1,4) = {1@(3049,3049)} x m_(1,4)
+	dim-apply takes: 0.23009 s
+	prune takes: 0 s
+step 7 (Total) : 0.230123 s
+---------------------------------------------------------------
+step 8 : m_(6,4) = G x m_(1,4).T().D()*6
+	diag-reduce takes : 3.87717 s
+	mmul-scalar takes : 0.00124598 s
+	dim-apply takes: 1.46796 s
+	prune takes: 0.014297 s
+step 8 (Total) : 5.36076 s
+---------------------------------------------------------------
+step 9 : m_(6,4) = m_(3,5).T().D() x m_(6,4)
+	diag-reduce takes : 3.16637 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.216104 s
+	prune takes: 0.000232935 s
+step 9 (Total) : 3.38277 s
+---------------------------------------------------------------
+step 10 : m_(3,5) = m_(3,5) x m_(6,4).D()
+	diag-reduce takes : 1.5287 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 1.61264 s
+	prune takes: 0.000365019 s
+step 10 (Total) : 3.14177 s
+---------------------------------------------------------------
+step 11 : m_(4,3) = m_(6,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.11562 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.228314 s
+	prune takes: 0.000400066 s
+step 11 (Total) : 3.34441 s
+---------------------------------------------------------------
+step 12 : m_(3,5) = m_(4,3).T().D() x m_(3,5)
+	diag-reduce takes : 3.60728 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.210976 s
+	prune takes: 0.000313997 s
+step 12 (Total) : 3.81864 s
+---------------------------------------------------------------
+step 13 : m_(5,0) = m_(3,5).T().D() x m_(5,0)
+	diag-reduce takes : 3.69249 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.222323 s
+	prune takes: 0 s
+step 13 (Total) : 3.91488 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 9.53674e-07 s
+
+final result size : 4504091
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 4504091
+---------------------------------------------------------------
+query7 mmul_scalar time : 0.0057323 s
+query7 prune time : 0.0766721 s
+query7 diag_reduce time : 25.4888 s
+query7 dim_apply time : 12.873 s
+query7 result_enum time : 10.6488 s
+query7 time (Total) : 49.0941 s
+
+###############################################################
+Query 1
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(1996,1996)}*2
+	dim-apply takes: 1.50266 s
+	prune takes: 0.012542 s
+step 1 (Total) : 1.51526 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T * m_(3, 0).D()*7
+	diag-reduce takes : 1.01793 s
+	mmul-scalar takes : 0.0010159 s
+	dim-apply takes: 1.54575 s
+	prune takes: 0.0164411 s
+step 2 (Total) : 2.58123 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 1.22039 s
+	mmul-scalar takes : 0.00100398 s
+	dim-apply takes: 1.65624 s
+	prune takes: 0.00936294 s
+step 3 (Total) : 2.88707 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(4,4)} * m_(1,4)
+	dim-apply takes: 0.819853 s
+	prune takes: 1.19209e-06 s
+step 4 (Total) : 0.819887 s
+---------------------------------------------------------------
+step 5 : m_(5,4) = G x m_(1,4).T().D()*5
+	diag-reduce takes : 3.18863 s
+	mmul-scalar takes : 0.00125504 s
+	dim-apply takes: 1.51285 s
+	prune takes: 0.0126469 s
+step 5 (Total) : 4.71548 s
+---------------------------------------------------------------
+step 6 : m_(2,5) = G.T() x m_(5,4).D()*2
+	diag-reduce takes : 1.06844 s
+	mmul-scalar takes : 0.000943184 s
+	dim-apply takes: 1.5804 s
+	prune takes: 0.00974894 s
+step 6 (Total) : 2.65961 s
+---------------------------------------------------------------
+step 7 : m_(2,5) = {1@(7,7)} * m_(2,5)
+	dim-apply takes: 0.285214 s
+	prune takes: 0 s
+step 7 (Total) : 0.285245 s
+---------------------------------------------------------------
+step 8 : m_(6,5) = G x m_(2,5).T().D()*15
+	diag-reduce takes : 3.77302 s
+	mmul-scalar takes : 0.00127983 s
+	dim-apply takes: 1.54149 s
+	prune takes: 0.0122411 s
+step 8 (Total) : 5.32815 s
+---------------------------------------------------------------
+step 9 : m_(6,5) = m_(4,3).T().D() x m_(6,5)
+	diag-reduce takes : 3.13723 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.216628 s
+	prune takes: 3.91006e-05 s
+step 9 (Total) : 3.35397 s
+---------------------------------------------------------------
+step 10 : m_(4,3) = m_(4,3) x m_(6,5).D()
+	diag-reduce takes : 1.19194 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 1.49697 s
+	prune takes: 0.00028491 s
+step 10 (Total) : 2.68927 s
+---------------------------------------------------------------
+step 11 : m_(5,4) = m_(6,5).T().D() x m_(5,4)
+	diag-reduce takes : 3.18647 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.214871 s
+	prune takes: 1.90735e-06 s
+step 11 (Total) : 3.40141 s
+---------------------------------------------------------------
+step 12 : m_(4,3) = m_(5,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.31565 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.218535 s
+	prune takes: 2.5034e-05 s
+step 12 (Total) : 3.53428 s
+---------------------------------------------------------------
+step 13 : m_(3,0) = m_(4,3).T().D() x m_(3,0)
+	diag-reduce takes : 3.36162 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.224862 s
+	prune takes: 9.53674e-07 s
+step 13 (Total) : 3.58655 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 9.53674e-07 s
+
+final result size : 2528
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 2528
+---------------------------------------------------------------
+	m_03 get local indices takes : 7.82013e-05 s
+	m_03 send local indices takes : 0.00425386 s
+	m_43 get local indices takes : 6.50883e-05 s
+	m_43 send local indices takes : 0.0224869 s
+	m_54 get local indices takes : 6.10352e-05 s
+	m_54 send local indices takes : 6.31809e-05 s
+	m_65 get local indices takes : 8.70228e-05 s
+	m_65 send local indices takes : 0.00910401 s
+	m_25 get local indices takes : 6.60419e-05 s
+	m_25 send local indices takes : 8.01086e-05 s
+	m_14 get local indices takes : 5.10216e-05 s
+	m_14 send local indices takes : 3.19481e-05 s
+total get local indices time : 0.000408411 s
+total send local indices time : 0.03602 s
+	local join of m_03 and m_43 takes : 0.000699043 s
+	local join of m_034 and m_54 takes : 0.0230451 s
+	local join of m_03456 and m_25 takes : 6.19888e-06 s
+	local join of m_023456 and m_14 takes : 4.05312e-06 s
+total local join time : 0.0237544 s
+	local filter of m_0345 and m_65 takes : 0.149785 s
+total local filter time : 0.149785 s
+	redistribution of m_034 takes : 0.234023 s
+	redistribution of m_0345 takes : 6.4607 s
+	redistribution of m_023456 takes : 0.000652075 s
+total redistribution time : 6.69537 s
+query1 mmul_scalar time : 0.00549793 s
+query1 prune time : 0.0733361 s
+query1 diag_reduce time : 24.4613 s
+query1 dim_apply time : 12.8163 s
+query1 result_enum time : 7.80903 s
+query1 time (Total) : 45.1667 s
+
+###############################################################
+Query 2
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(1,0) = G x {1@(3049,3049)}*2
+	dim-apply takes: 1.50863 s
+	prune takes: 0.012527 s
+step 1 (Total) : 1.52122 s
+---------------------------------------------------------------
+step 2 : m_(2,1) = G.T() x m_(1,0).D()*4
+	diag-reduce takes : 1.03592 s
+	mmul-scalar takes : 0.00104785 s
+	dim-apply takes: 1.51701 s
+	prune takes: 0.014019 s
+step 2 (Total) : 2.5681 s
+---------------------------------------------------------------
+step 3 : m_(1,0) = m_(2,1).T().D() * m_(1,0)
+	diag-reduce takes : 3.33235 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.87084 s
+	prune takes: 0 s
+step 3 (Total) : 4.20325 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 9.53674e-07 s
+
+final result size : 110583289
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 110583289
+---------------------------------------------------------------
+query2 mmul_scalar time : 0.00104785 s
+query2 prune time : 0.026546 s
+query2 diag_reduce time : 4.36827 s
+query2 dim_apply time : 3.89648 s
+query2 result_enum time : 0.632579 s
+query2 time (Total) : 8.92524 s
+
+###############################################################
+Query 3
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(399,399)}*2
+	dim-apply takes: 1.55319 s
+	prune takes: 0.012356 s
+step 1 (Total) : 1.56561 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T() * m_(3,0).D()*7
+	diag-reduce takes : 1.11634 s
+	mmul-scalar takes : 0.000936031 s
+	dim-apply takes: 1.50794 s
+	prune takes: 0.0103951 s
+step 2 (Total) : 2.63571 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 0.332601 s
+	mmul-scalar takes : 0.00176311 s
+	dim-apply takes: 1.51645 s
+	prune takes: 0.0106881 s
+step 3 (Total) : 1.8616 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(4,4)} x m_(1,4)
+	dim-apply takes: 0.553961 s
+	prune takes: 9.53674e-07 s
+step 4 (Total) : 0.553993 s
+---------------------------------------------------------------
+step 5 : m_(5,4) = G x m_(1,4).T().D()*5
+	diag-reduce takes : 3.59747 s
+	mmul-scalar takes : 0.00167084 s
+	dim-apply takes: 1.51163 s
+	prune takes: 0.0126948 s
+step 5 (Total) : 5.12356 s
+---------------------------------------------------------------
+begin result generation ......
+final size : 0
+---------------------------------------------------------------
+query3 mmul_scalar time : 0.00436997 s
+query3 prune time : 0.0461349 s
+query3 diag_reduce time : 5.0464 s
+query3 dim_apply time : 6.64318 s
+query3 result_enum time : 5.00679e-06 s
+query3 time (Total) : 11.7406 s
+
+###############################################################
+Query 4
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(2,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.5015 s
+	prune takes: 0.0122759 s
+step 1 (Total) : 1.51384 s
+---------------------------------------------------------------
+step 2 : m_(1,2) = G.T() x m_(2,0).D()*10
+	diag-reduce takes : 1.02228 s
+	mmul-scalar takes : 0.000941992 s
+	dim-apply takes: 1.5495 s
+	prune takes: 0.0108871 s
+step 2 (Total) : 2.58372 s
+---------------------------------------------------------------
+step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)
+	dim-apply takes: 0.934852 s
+	prune takes: 2.69413e-05 s
+step 3 (Total) : 0.934913 s
+---------------------------------------------------------------
+step 4 : m_(3,2) = G.T() x m_(1,2).T().D()*4
+	diag-reduce takes : 3.13765 s
+	mmul-scalar takes : 0.000787973 s
+	dim-apply takes: 1.4782 s
+	prune takes: 0.0107989 s
+step 4 (Total) : 4.62756 s
+---------------------------------------------------------------
+step 5 : m_(4,2) = G.T() x m_(3,2).T().D()*11
+	diag-reduce takes : 3.3189 s
+	mmul-scalar takes : 0.00165701 s
+	dim-apply takes: 1.5088 s
+	prune takes: 0.0109138 s
+step 5 (Total) : 4.84037 s
+---------------------------------------------------------------
+step 6 : m_(5,2) = G.T() x m_(4,2).T().D()*12
+	diag-reduce takes : 3.2749 s
+	mmul-scalar takes : 0.00153089 s
+	dim-apply takes: 1.45065 s
+	prune takes: 0.0105431 s
+step 6 (Total) : 4.73772 s
+---------------------------------------------------------------
+step 7 : m_(2,0) = m_(5,2).T().D() x m_(2,0)
+	diag-reduce takes : 3.39213 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.513502 s
+	prune takes: 9.53674e-07 s
+step 7 (Total) : 3.90569 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 2.14577e-06 s
+
+final result size : 9
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 9
+---------------------------------------------------------------
+query4 mmul_scalar time : 0.00491786 s
+query4 prune time : 0.0554469 s
+query4 diag_reduce time : 14.1459 s
+query4 dim_apply time : 8.93701 s
+query4 result_enum time : 0.38433 s
+query4 time (Total) : 23.5283 s
+
+###############################################################
+Query 5
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(2,0) = G x {1@(2558,2558)}*2
+	dim-apply takes: 1.5376 s
+	prune takes: 0.0121601 s
+step 1 (Total) : 1.54982 s
+---------------------------------------------------------------
+step 2 : G.T() x m_(2,0).D()*5
+	diag-reduce takes : 1.02788 s
+	mmul-scalar takes : 0.000939846 s
+	dim-apply takes: 1.61165 s
+	prune takes: 0.0102699 s
+step 2 (Total) : 2.65082 s
+---------------------------------------------------------------
+step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)
+	dim-apply takes: 0.248563 s
+	prune takes: 3.60012e-05 s
+step 3 (Total) : 0.248632 s
+---------------------------------------------------------------
+step 4 : m_(2,0) = m_(1,2).T().D() x m_(2,0)
+	diag-reduce takes : 3.74007 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.209815 s
+	prune takes: 2.14577e-06 s
+step 4 (Total) : 3.94995 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 1.90735e-06 s
+
+final result size : 10
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 10
+---------------------------------------------------------------
+query5 mmul_scalar time : 0.000939846 s
+query5 prune time : 0.0224681 s
+query5 diag_reduce time : 4.76795 s
+query5 dim_apply time : 3.60763 s
+query5 result_enum time : 0.313232 s
+query5 time (Total) : 8.71252 s
+
+###############################################################
+Query 6
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.5623 s
+	prune takes: 0.0123711 s
+step 1 (Total) : 1.57472 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T() x m_(3,0).D()*10
+	diag-reduce takes : 0.994087 s
+	mmul-scalar takes : 0.00104284 s
+	dim-apply takes: 1.55403 s
+	prune takes: 0.010757 s
+step 2 (Total) : 2.56001 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*5
+	diag-reduce takes : 1.18268 s
+	mmul-scalar takes : 0.000941992 s
+	dim-apply takes: 1.57608 s
+	prune takes: 0.0101879 s
+step 3 (Total) : 2.76998 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(3,3)} x m_(1,4)
+	dim-apply takes: 0.898484 s
+	prune takes: 4.05312e-06 s
+step 4 (Total) : 0.898532 s
+---------------------------------------------------------------
+step 5 : m_(2,4) = G.T() x m_(1,4).T().D()*2
+	diag-reduce takes : 3.18012 s
+	mmul-scalar takes : 0.00160813 s
+	dim-apply takes: 1.53736 s
+	prune takes: 0.010638 s
+step 5 (Total) : 4.72982 s
+---------------------------------------------------------------
+step 6 : m_(2,4) = {1@(7,7)} x m_(2,4)
+	dim-apply takes: 0.264729 s
+	prune takes: 2.14577e-06 s
+step 6 (Total) : 0.264783 s
+---------------------------------------------------------------
+step 7 : m_(4,3) = m_(2,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.52842 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.214581 s
+	prune takes: 2.59876e-05 s
+step 7 (Total) : 3.7431 s
+---------------------------------------------------------------
+step 8 : m_(3,0) = m_(4,3).T().D() x m_(3,0)
+	diag-reduce takes : 3.23152 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.21832 s
+	prune takes: 0 s
+step 8 (Total) : 3.4499 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 2.14577e-06 s
+
+final result size : 117
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 117
+---------------------------------------------------------------
+query6 mmul_scalar time : 0.00359297 s
+query6 prune time : 0.0439861 s
+query6 diag_reduce time : 12.1168 s
+query6 dim_apply time : 7.82589 s
+query6 result_enum time : 0.037993 s
+query6 time (Total) : 20.029 s
+
+###############################################################
+Query 7
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(5,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.5868 s
+	prune takes: 0.0124691 s
+step 1 (Total) : 1.59934 s
+---------------------------------------------------------------
+step 2 : m_(3,5) = G x m_(5,0).D()*17
+	diag-reduce takes : 1.02274 s
+	mmul-scalar takes : 0.000982046 s
+	dim-apply takes: 1.55019 s
+	prune takes: 0.0149658 s
+step 2 (Total) : 2.58898 s
+---------------------------------------------------------------
+step 3 : m_(2,3) = G.T() x m_(3,5).D()*2
+	diag-reduce takes : 1.0695 s
+	mmul-scalar takes : 0.000936985 s
+	dim-apply takes: 1.55406 s
+	prune takes: 0.0106452 s
+step 3 (Total) : 2.63524 s
+---------------------------------------------------------------
+step 4 : m_(2,3) = {1@(399,399)} x m_(2,3)
+	dim-apply takes: 0.364183 s
+	prune takes: 9.53674e-07 s
+step 4 (Total) : 0.364214 s
+---------------------------------------------------------------
+step 5 : m_(4,3) = G.T() x m_(1,3).T().D()*16
+	diag-reduce takes : 3.79947 s
+	mmul-scalar takes : 0.00121784 s
+	dim-apply takes: 1.49079 s
+	prune takes: 0.0150049 s
+step 5 (Total) : 5.30661 s
+---------------------------------------------------------------
+step 6 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 1.1715 s
+	mmul-scalar takes : 0.000964165 s
+	dim-apply takes: 1.52758 s
+	prune takes: 0.009969 s
+step 6 (Total) : 2.71011 s
+---------------------------------------------------------------
+step 7 : m_(1,4) = {1@(3049,3049)} x m_(1,4)
+	dim-apply takes: 0.298164 s
+	prune takes: 9.53674e-07 s
+step 7 (Total) : 0.298226 s
+---------------------------------------------------------------
+step 8 : m_(6,4) = G x m_(1,4).T().D()*6
+	diag-reduce takes : 3.78493 s
+	mmul-scalar takes : 0.00158596 s
+	dim-apply takes: 1.50127 s
+	prune takes: 0.0147691 s
+step 8 (Total) : 5.30266 s
+---------------------------------------------------------------
+step 9 : m_(6,4) = m_(3,5).T().D() x m_(6,4)
+	diag-reduce takes : 3.16464 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.217918 s
+	prune takes: 0.000226021 s
+step 9 (Total) : 3.38285 s
+---------------------------------------------------------------
+step 10 : m_(3,5) = m_(3,5) x m_(6,4).D()
+	diag-reduce takes : 1.19632 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 1.53639 s
+	prune takes: 0.000353098 s
+step 10 (Total) : 2.73313 s
+---------------------------------------------------------------
+step 11 : m_(4,3) = m_(6,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.20449 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.222851 s
+	prune takes: 0.0004251 s
+step 11 (Total) : 3.42784 s
+---------------------------------------------------------------
+step 12 : m_(3,5) = m_(4,3).T().D() x m_(3,5)
+	diag-reduce takes : 3.3725 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.212493 s
+	prune takes: 0.00030899 s
+step 12 (Total) : 3.58537 s
+---------------------------------------------------------------
+step 13 : m_(5,0) = m_(3,5).T().D() x m_(5,0)
+	diag-reduce takes : 3.6199 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.21098 s
+	prune takes: 2.14577e-06 s
+step 13 (Total) : 3.83096 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 3.09944e-06 s
+
+final result size : 4504091
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 4504091
+---------------------------------------------------------------
+query7 mmul_scalar time : 0.005687 s
+query7 prune time : 0.0791402 s
+query7 diag_reduce time : 25.406 s
+query7 dim_apply time : 12.2737 s
+query7 result_enum time : 10.4557 s
+query7 time (Total) : 48.2215 s
+
+###############################################################
+Query 1
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(1996,1996)}*2
+	dim-apply takes: 1.51393 s
+	prune takes: 0.012351 s
+step 1 (Total) : 1.52634 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T * m_(3, 0).D()*7
+	diag-reduce takes : 0.99751 s
+	mmul-scalar takes : 0.000936985 s
+	dim-apply takes: 1.5754 s
+	prune takes: 0.0161009 s
+step 2 (Total) : 2.59004 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 1.15235 s
+	mmul-scalar takes : 0.00101805 s
+	dim-apply takes: 1.54597 s
+	prune takes: 0.00951004 s
+step 3 (Total) : 2.70892 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(4,4)} * m_(1,4)
+	dim-apply takes: 0.801035 s
+	prune takes: 0 s
+step 4 (Total) : 0.801069 s
+---------------------------------------------------------------
+step 5 : m_(5,4) = G x m_(1,4).T().D()*5
+	diag-reduce takes : 3.20986 s
+	mmul-scalar takes : 0.00126004 s
+	dim-apply takes: 1.50964 s
+	prune takes: 0.012778 s
+step 5 (Total) : 4.73365 s
+---------------------------------------------------------------
+step 6 : m_(2,5) = G.T() x m_(5,4).D()*2
+	diag-reduce takes : 1.03246 s
+	mmul-scalar takes : 0.000995874 s
+	dim-apply takes: 1.57454 s
+	prune takes: 0.00932002 s
+step 6 (Total) : 2.61738 s
+---------------------------------------------------------------
+step 7 : m_(2,5) = {1@(7,7)} * m_(2,5)
+	dim-apply takes: 0.215545 s
+	prune takes: 9.53674e-07 s
+step 7 (Total) : 0.215578 s
+---------------------------------------------------------------
+step 8 : m_(6,5) = G x m_(2,5).T().D()*15
+	diag-reduce takes : 3.77127 s
+	mmul-scalar takes : 0.00107312 s
+	dim-apply takes: 1.56027 s
+	prune takes: 0.0123658 s
+step 8 (Total) : 5.34507 s
+---------------------------------------------------------------
+step 9 : m_(6,5) = m_(4,3).T().D() x m_(6,5)
+	diag-reduce takes : 3.12931 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.218051 s
+	prune takes: 3.69549e-05 s
+step 9 (Total) : 3.34748 s
+---------------------------------------------------------------
+step 10 : m_(4,3) = m_(4,3) x m_(6,5).D()
+	diag-reduce takes : 1.1853 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 1.49325 s
+	prune takes: 0.000295162 s
+step 10 (Total) : 2.67891 s
+---------------------------------------------------------------
+step 11 : m_(5,4) = m_(6,5).T().D() x m_(5,4)
+	diag-reduce takes : 3.2202 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.215771 s
+	prune takes: 2.14577e-06 s
+step 11 (Total) : 3.43605 s
+---------------------------------------------------------------
+step 12 : m_(4,3) = m_(5,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.32052 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.223052 s
+	prune takes: 2.5034e-05 s
+step 12 (Total) : 3.54368 s
+---------------------------------------------------------------
+step 13 : m_(3,0) = m_(4,3).T().D() x m_(3,0)
+	diag-reduce takes : 3.38474 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.217179 s
+	prune takes: 1.19209e-06 s
+step 13 (Total) : 3.60198 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 9.53674e-07 s
+
+final result size : 2528
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 2528
+---------------------------------------------------------------
+	m_03 get local indices takes : 0.000101805 s
+	m_03 send local indices takes : 0.00439405 s
+	m_43 get local indices takes : 7.58171e-05 s
+	m_43 send local indices takes : 0.022444 s
+	m_54 get local indices takes : 5.91278e-05 s
+	m_54 send local indices takes : 6.10352e-05 s
+	m_65 get local indices takes : 0.000101089 s
+	m_65 send local indices takes : 0.00869417 s
+	m_25 get local indices takes : 6.38962e-05 s
+	m_25 send local indices takes : 4.98295e-05 s
+	m_14 get local indices takes : 5.50747e-05 s
+	m_14 send local indices takes : 2.40803e-05 s
+total get local indices time : 0.00045681 s
+total send local indices time : 0.0356672 s
+	local join of m_03 and m_43 takes : 0.000708818 s
+	local join of m_034 and m_54 takes : 0.023097 s
+	local join of m_03456 and m_25 takes : 7.15256e-06 s
+	local join of m_023456 and m_14 takes : 5.00679e-06 s
+total local join time : 0.023818 s
+	local filter of m_0345 and m_65 takes : 0.150249 s
+total local filter time : 0.150249 s
+	redistribution of m_034 takes : 0.233331 s
+	redistribution of m_0345 takes : 6.50904 s
+	redistribution of m_023456 takes : 0.00067687 s
+total redistribution time : 6.74305 s
+query1 mmul_scalar time : 0.00528407 s
+query1 prune time : 0.0727873 s
+query1 diag_reduce time : 24.4035 s
+query1 dim_apply time : 12.6636 s
+query1 result_enum time : 7.70423 s
+query1 time (Total) : 44.8506 s
+
+###############################################################
+Query 2
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(1,0) = G x {1@(3049,3049)}*2
+	dim-apply takes: 1.51995 s
+	prune takes: 0.0122712 s
+step 1 (Total) : 1.53229 s
+---------------------------------------------------------------
+step 2 : m_(2,1) = G.T() x m_(1,0).D()*4
+	diag-reduce takes : 1.01137 s
+	mmul-scalar takes : 0.000991821 s
+	dim-apply takes: 1.56849 s
+	prune takes: 0.0133669 s
+step 2 (Total) : 2.59431 s
+---------------------------------------------------------------
+step 3 : m_(1,0) = m_(2,1).T().D() * m_(1,0)
+	diag-reduce takes : 3.30607 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.743762 s
+	prune takes: 1.19209e-06 s
+step 3 (Total) : 4.0499 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 9.53674e-07 s
+
+final result size : 110583289
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 110583289
+---------------------------------------------------------------
+query2 mmul_scalar time : 0.000991821 s
+query2 prune time : 0.0256393 s
+query2 diag_reduce time : 4.31745 s
+query2 dim_apply time : 3.83221 s
+query2 result_enum time : 0.706125 s
+query2 time (Total) : 8.88272 s
+
+###############################################################
+Query 3
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(399,399)}*2
+	dim-apply takes: 1.51866 s
+	prune takes: 0.012681 s
+step 1 (Total) : 1.5314 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T() * m_(3,0).D()*7
+	diag-reduce takes : 1.14335 s
+	mmul-scalar takes : 0.000939131 s
+	dim-apply takes: 1.53796 s
+	prune takes: 0.0105851 s
+step 2 (Total) : 2.69292 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 0.322749 s
+	mmul-scalar takes : 0.00174689 s
+	dim-apply takes: 1.50522 s
+	prune takes: 0.010694 s
+step 3 (Total) : 1.8405 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(4,4)} x m_(1,4)
+	dim-apply takes: 0.526807 s
+	prune takes: 9.53674e-07 s
+step 4 (Total) : 0.526841 s
+---------------------------------------------------------------
+step 5 : m_(5,4) = G x m_(1,4).T().D()*5
+	diag-reduce takes : 3.63997 s
+	mmul-scalar takes : 0.00157213 s
+	dim-apply takes: 1.55658 s
+	prune takes: 0.0163569 s
+step 5 (Total) : 5.2146 s
+---------------------------------------------------------------
+begin result generation ......
+final size : 0
+---------------------------------------------------------------
+query3 mmul_scalar time : 0.00425816 s
+query3 prune time : 0.050318 s
+query3 diag_reduce time : 5.10606 s
+query3 dim_apply time : 6.64523 s
+query3 result_enum time : 5.96046e-06 s
+query3 time (Total) : 11.8064 s
+
+###############################################################
+Query 4
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(2,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.49944 s
+	prune takes: 0.0123849 s
+step 1 (Total) : 1.51188 s
+---------------------------------------------------------------
+step 2 : m_(1,2) = G.T() x m_(2,0).D()*10
+	diag-reduce takes : 1.03021 s
+	mmul-scalar takes : 0.000941038 s
+	dim-apply takes: 1.59327 s
+	prune takes: 0.0105889 s
+step 2 (Total) : 2.6351 s
+---------------------------------------------------------------
+step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)
+	dim-apply takes: 0.890252 s
+	prune takes: 2.59876e-05 s
+step 3 (Total) : 0.890312 s
+---------------------------------------------------------------
+step 4 : m_(3,2) = G.T() x m_(1,2).T().D()*4
+	diag-reduce takes : 3.13486 s
+	mmul-scalar takes : 0.00154686 s
+	dim-apply takes: 1.55242 s
+	prune takes: 0.010571 s
+step 4 (Total) : 4.6995 s
+---------------------------------------------------------------
+step 5 : m_(4,2) = G.T() x m_(3,2).T().D()*11
+	diag-reduce takes : 3.27917 s
+	mmul-scalar takes : 0.00176001 s
+	dim-apply takes: 1.31562 s
+	prune takes: 0.0101619 s
+step 5 (Total) : 4.60681 s
+---------------------------------------------------------------
+step 6 : m_(5,2) = G.T() x m_(4,2).T().D()*12
+	diag-reduce takes : 3.23001 s
+	mmul-scalar takes : 0.00160885 s
+	dim-apply takes: 1.52658 s
+	prune takes: 0.00987387 s
+step 6 (Total) : 4.76819 s
+---------------------------------------------------------------
+step 7 : m_(2,0) = m_(5,2).T().D() x m_(2,0)
+	diag-reduce takes : 3.32007 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.523401 s
+	prune takes: 9.53674e-07 s
+step 7 (Total) : 3.84353 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 2.14577e-06 s
+
+final result size : 9
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 9
+---------------------------------------------------------------
+query4 mmul_scalar time : 0.00585675 s
+query4 prune time : 0.0536075 s
+query4 diag_reduce time : 13.9943 s
+query4 dim_apply time : 8.90098 s
+query4 result_enum time : 0.365487 s
+query4 time (Total) : 23.321 s
+
+###############################################################
+Query 5
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(2,0) = G x {1@(2558,2558)}*2
+	dim-apply takes: 1.51865 s
+	prune takes: 0.012378 s
+step 1 (Total) : 1.53109 s
+---------------------------------------------------------------
+step 2 : G.T() x m_(2,0).D()*5
+	diag-reduce takes : 1.03971 s
+	mmul-scalar takes : 0.00103998 s
+	dim-apply takes: 1.5449 s
+	prune takes: 0.01104 s
+step 2 (Total) : 2.59678 s
+---------------------------------------------------------------
+step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)
+	dim-apply takes: 0.570784 s
+	prune takes: 3.69549e-05 s
+step 3 (Total) : 0.570855 s
+---------------------------------------------------------------
+step 4 : m_(2,0) = m_(1,2).T().D() x m_(2,0)
+	diag-reduce takes : 3.37873 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.214264 s
+	prune takes: 1.90735e-06 s
+step 4 (Total) : 3.59309 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 9.53674e-07 s
+
+final result size : 10
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 10
+---------------------------------------------------------------
+query5 mmul_scalar time : 0.00103998 s
+query5 prune time : 0.0234568 s
+query5 diag_reduce time : 4.41844 s
+query5 dim_apply time : 3.8486 s
+query5 result_enum time : 0.308159 s
+query5 time (Total) : 8.60006 s
+
+###############################################################
+Query 6
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.49308 s
+	prune takes: 0.012326 s
+step 1 (Total) : 1.50547 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T() x m_(3,0).D()*10
+	diag-reduce takes : 1.00324 s
+	mmul-scalar takes : 0.000936985 s
+	dim-apply takes: 1.60359 s
+	prune takes: 0.00999689 s
+step 2 (Total) : 2.61784 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*5
+	diag-reduce takes : 1.09742 s
+	mmul-scalar takes : 0.00101495 s
+	dim-apply takes: 1.58024 s
+	prune takes: 0.010237 s
+step 3 (Total) : 2.689 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(3,3)} x m_(1,4)
+	dim-apply takes: 0.944179 s
+	prune takes: 4.05312e-06 s
+step 4 (Total) : 0.944228 s
+---------------------------------------------------------------
+step 5 : m_(2,4) = G.T() x m_(1,4).T().D()*2
+	diag-reduce takes : 3.14371 s
+	mmul-scalar takes : 0.001683 s
+	dim-apply takes: 1.51046 s
+	prune takes: 0.00993919 s
+step 5 (Total) : 4.66589 s
+---------------------------------------------------------------
+step 6 : m_(2,4) = {1@(7,7)} x m_(2,4)
+	dim-apply takes: 0.253228 s
+	prune takes: 9.53674e-07 s
+step 6 (Total) : 0.253268 s
+---------------------------------------------------------------
+step 7 : m_(4,3) = m_(2,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.50231 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.221128 s
+	prune takes: 2.7895e-05 s
+step 7 (Total) : 3.72354 s
+---------------------------------------------------------------
+step 8 : m_(3,0) = m_(4,3).T().D() x m_(3,0)
+	diag-reduce takes : 3.22373 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.221355 s
+	prune takes: 9.53674e-07 s
+step 8 (Total) : 3.44514 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 9.53674e-07 s
+
+final result size : 117
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 117
+---------------------------------------------------------------
+query6 mmul_scalar time : 0.00363493 s
+query6 prune time : 0.0425329 s
+query6 diag_reduce time : 11.9704 s
+query6 dim_apply time : 7.82726 s
+query6 result_enum time : 0.024806 s
+query6 time (Total) : 19.8693 s
+
+###############################################################
+Query 7
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(5,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.57373 s
+	prune takes: 0.012675 s
+step 1 (Total) : 1.58647 s
+---------------------------------------------------------------
+step 2 : m_(3,5) = G x m_(5,0).D()*17
+	diag-reduce takes : 1.05566 s
+	mmul-scalar takes : 0.000941038 s
+	dim-apply takes: 1.55167 s
+	prune takes: 0.014926 s
+step 2 (Total) : 2.62328 s
+---------------------------------------------------------------
+step 3 : m_(2,3) = G.T() x m_(3,5).D()*2
+	diag-reduce takes : 1.07455 s
+	mmul-scalar takes : 0.000942945 s
+	dim-apply takes: 1.55324 s
+	prune takes: 0.01055 s
+step 3 (Total) : 2.63937 s
+---------------------------------------------------------------
+step 4 : m_(2,3) = {1@(399,399)} x m_(2,3)
+	dim-apply takes: 0.402253 s
+	prune takes: 9.53674e-07 s
+step 4 (Total) : 0.402282 s
+---------------------------------------------------------------
+step 5 : m_(4,3) = G.T() x m_(1,3).T().D()*16
+	diag-reduce takes : 3.7016 s
+	mmul-scalar takes : 0.00119114 s
+	dim-apply takes: 1.58303 s
+	prune takes: 0.0134919 s
+step 5 (Total) : 5.2994 s
+---------------------------------------------------------------
+step 6 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 1.11962 s
+	mmul-scalar takes : 0.00093317 s
+	dim-apply takes: 1.57461 s
+	prune takes: 0.00952101 s
+step 6 (Total) : 2.70476 s
+---------------------------------------------------------------
+step 7 : m_(1,4) = {1@(3049,3049)} x m_(1,4)
+	dim-apply takes: 0.257676 s
+	prune takes: 1.90735e-06 s
+step 7 (Total) : 0.257744 s
+---------------------------------------------------------------
+step 8 : m_(6,4) = G x m_(1,4).T().D()*6
+	diag-reduce takes : 3.79392 s
+	mmul-scalar takes : 0.00164604 s
+	dim-apply takes: 1.51885 s
+	prune takes: 0.015033 s
+step 8 (Total) : 5.32955 s
+---------------------------------------------------------------
+step 9 : m_(6,4) = m_(3,5).T().D() x m_(6,4)
+	diag-reduce takes : 3.17923 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.223568 s
+	prune takes: 0.000210047 s
+step 9 (Total) : 3.40307 s
+---------------------------------------------------------------
+step 10 : m_(3,5) = m_(3,5) x m_(6,4).D()
+	diag-reduce takes : 1.20024 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 1.47068 s
+	prune takes: 0.000356197 s
+step 10 (Total) : 2.67134 s
+---------------------------------------------------------------
+step 11 : m_(4,3) = m_(6,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.231 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.223396 s
+	prune takes: 0.000396967 s
+step 11 (Total) : 3.45486 s
+---------------------------------------------------------------
+step 12 : m_(3,5) = m_(4,3).T().D() x m_(3,5)
+	diag-reduce takes : 3.42675 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.216411 s
+	prune takes: 0.000324965 s
+step 12 (Total) : 3.64355 s
+---------------------------------------------------------------
+step 13 : m_(5,0) = m_(3,5).T().D() x m_(5,0)
+	diag-reduce takes : 3.57653 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.217423 s
+	prune takes: 9.53674e-07 s
+step 13 (Total) : 3.79401 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 1.19209e-06 s
+
+final result size : 4504091
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 4504091
+---------------------------------------------------------------
+query7 mmul_scalar time : 0.00565434 s
+query7 prune time : 0.0774889 s
+query7 diag_reduce time : 25.3591 s
+query7 dim_apply time : 12.3665 s
+query7 result_enum time : 10.4844 s
+query7 time (Total) : 48.2943 s
+
+###############################################################
+Query 1
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(1996,1996)}*2
+	dim-apply takes: 1.54099 s
+	prune takes: 0.0125101 s
+step 1 (Total) : 1.55355 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T * m_(3, 0).D()*7
+	diag-reduce takes : 1.02138 s
+	mmul-scalar takes : 0.000941992 s
+	dim-apply takes: 1.60931 s
+	prune takes: 0.0151069 s
+step 2 (Total) : 2.64682 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 1.16805 s
+	mmul-scalar takes : 0.00106001 s
+	dim-apply takes: 1.5442 s
+	prune takes: 0.0101199 s
+step 3 (Total) : 2.72352 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(4,4)} * m_(1,4)
+	dim-apply takes: 0.801987 s
+	prune takes: 9.53674e-07 s
+step 4 (Total) : 0.802019 s
+---------------------------------------------------------------
+step 5 : m_(5,4) = G x m_(1,4).T().D()*5
+	diag-reduce takes : 3.23726 s
+	mmul-scalar takes : 0.00123906 s
+	dim-apply takes: 1.52867 s
+	prune takes: 0.0124662 s
+step 5 (Total) : 4.77973 s
+---------------------------------------------------------------
+step 6 : m_(2,5) = G.T() x m_(5,4).D()*2
+	diag-reduce takes : 1.00225 s
+	mmul-scalar takes : 0.0010519 s
+	dim-apply takes: 1.5866 s
+	prune takes: 0.00935698 s
+step 6 (Total) : 2.59933 s
+---------------------------------------------------------------
+step 7 : m_(2,5) = {1@(7,7)} * m_(2,5)
+	dim-apply takes: 0.268357 s
+	prune takes: 0 s
+step 7 (Total) : 0.268384 s
+---------------------------------------------------------------
+step 8 : m_(6,5) = G x m_(2,5).T().D()*15
+	diag-reduce takes : 3.69203 s
+	mmul-scalar takes : 0.00105691 s
+	dim-apply takes: 1.50706 s
+	prune takes: 0.0125611 s
+step 8 (Total) : 5.21281 s
+---------------------------------------------------------------
+step 9 : m_(6,5) = m_(4,3).T().D() x m_(6,5)
+	diag-reduce takes : 3.11225 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.21977 s
+	prune takes: 3.69549e-05 s
+step 9 (Total) : 3.33211 s
+---------------------------------------------------------------
+step 10 : m_(4,3) = m_(4,3) x m_(6,5).D()
+	diag-reduce takes : 1.1866 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 1.51674 s
+	prune takes: 0.000285149 s
+step 10 (Total) : 2.70369 s
+---------------------------------------------------------------
+step 11 : m_(5,4) = m_(6,5).T().D() x m_(5,4)
+	diag-reduce takes : 3.23364 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.218271 s
+	prune takes: 2.14577e-06 s
+step 11 (Total) : 3.45197 s
+---------------------------------------------------------------
+step 12 : m_(4,3) = m_(5,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.29285 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.222743 s
+	prune takes: 2.40803e-05 s
+step 12 (Total) : 3.51568 s
+---------------------------------------------------------------
+step 13 : m_(3,0) = m_(4,3).T().D() x m_(3,0)
+	diag-reduce takes : 3.33504 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.217682 s
+	prune takes: 9.53674e-07 s
+step 13 (Total) : 3.55279 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 3.09944e-06 s
+
+final result size : 2528
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 2528
+---------------------------------------------------------------
+	m_03 get local indices takes : 0.000100136 s
+	m_03 send local indices takes : 0.00423598 s
+	m_43 get local indices takes : 0.000119925 s
+	m_43 send local indices takes : 0.00923514 s
+	m_54 get local indices takes : 5.19753e-05 s
+	m_54 send local indices takes : 6.38962e-05 s
+	m_65 get local indices takes : 9.799e-05 s
+	m_65 send local indices takes : 0.0150158 s
+	m_25 get local indices takes : 6.91414e-05 s
+	m_25 send local indices takes : 4.79221e-05 s
+	m_14 get local indices takes : 5.60284e-05 s
+	m_14 send local indices takes : 2.59876e-05 s
+total get local indices time : 0.000495195 s
+total send local indices time : 0.0286248 s
+	local join of m_03 and m_43 takes : 0.000715971 s
+	local join of m_034 and m_54 takes : 0.0231459 s
+	local join of m_03456 and m_25 takes : 5.96046e-06 s
+	local join of m_023456 and m_14 takes : 4.05312e-06 s
+total local join time : 0.0238719 s
+	local filter of m_0345 and m_65 takes : 0.150313 s
+total local filter time : 0.150313 s
+	redistribution of m_034 takes : 0.231595 s
+	redistribution of m_0345 takes : 6.47863 s
+	redistribution of m_023456 takes : 0.000635147 s
+total redistribution time : 6.71086 s
+query1 mmul_scalar time : 0.00534987 s
+query1 prune time : 0.0724714 s
+query1 diag_reduce time : 24.2814 s
+query1 dim_apply time : 12.7824 s
+query1 result_enum time : 7.67633 s
+query1 time (Total) : 44.819 s
+
+###############################################################
+Query 2
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(1,0) = G x {1@(3049,3049)}*2
+	dim-apply takes: 1.5284 s
+	prune takes: 0.0123448 s
+step 1 (Total) : 1.5408 s
+---------------------------------------------------------------
+step 2 : m_(2,1) = G.T() x m_(1,0).D()*4
+	diag-reduce takes : 1.02767 s
+	mmul-scalar takes : 0.00101209 s
+	dim-apply takes: 1.60452 s
+	prune takes: 0.0128291 s
+step 2 (Total) : 2.64612 s
+---------------------------------------------------------------
+step 3 : m_(1,0) = m_(2,1).T().D() * m_(1,0)
+	diag-reduce takes : 3.19218 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.637429 s
+	prune takes: 9.53674e-07 s
+step 3 (Total) : 3.82968 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 2.14577e-06 s
+
+final result size : 110583289
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 110583289
+---------------------------------------------------------------
+query2 mmul_scalar time : 0.00101209 s
+query2 prune time : 0.0251749 s
+query2 diag_reduce time : 4.21986 s
+query2 dim_apply time : 3.77035 s
+query2 result_enum time : 0.811841 s
+query2 time (Total) : 8.82852 s
+
+###############################################################
+Query 3
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(399,399)}*2
+	dim-apply takes: 1.52644 s
+	prune takes: 0.0124021 s
+step 1 (Total) : 1.53891 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T() * m_(3,0).D()*7
+	diag-reduce takes : 1.08701 s
+	mmul-scalar takes : 0.000990868 s
+	dim-apply takes: 1.5655 s
+	prune takes: 0.0104759 s
+step 2 (Total) : 2.66406 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 0.31615 s
+	mmul-scalar takes : 0.00173116 s
+	dim-apply takes: 1.52959 s
+	prune takes: 0.0105619 s
+step 3 (Total) : 1.85812 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(4,4)} x m_(1,4)
+	dim-apply takes: 0.572253 s
+	prune takes: 0 s
+step 4 (Total) : 0.572286 s
+---------------------------------------------------------------
+step 5 : m_(5,4) = G x m_(1,4).T().D()*5
+	diag-reduce takes : 3.673 s
+	mmul-scalar takes : 0.00162196 s
+	dim-apply takes: 1.54627 s
+	prune takes: 0.016923 s
+step 5 (Total) : 5.23797 s
+---------------------------------------------------------------
+begin result generation ......
+final size : 0
+---------------------------------------------------------------
+query3 mmul_scalar time : 0.00434399 s
+query3 prune time : 0.0503628 s
+query3 diag_reduce time : 5.07616 s
+query3 dim_apply time : 6.74006 s
+query3 result_enum time : 5.96046e-06 s
+query3 time (Total) : 11.8715 s
+
+###############################################################
+Query 4
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(2,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.59415 s
+	prune takes: 0.0122221 s
+step 1 (Total) : 1.60643 s
+---------------------------------------------------------------
+step 2 : m_(1,2) = G.T() x m_(2,0).D()*10
+	diag-reduce takes : 0.999611 s
+	mmul-scalar takes : 0.000943899 s
+	dim-apply takes: 1.60461 s
+	prune takes: 0.010278 s
+step 2 (Total) : 2.61553 s
+---------------------------------------------------------------
+step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)
+	dim-apply takes: 0.784241 s
+	prune takes: 2.69413e-05 s
+step 3 (Total) : 0.784302 s
+---------------------------------------------------------------
+step 4 : m_(3,2) = G.T() x m_(1,2).T().D()*4
+	diag-reduce takes : 3.24674 s
+	mmul-scalar takes : 0.00162005 s
+	dim-apply takes: 1.56595 s
+	prune takes: 0.0104079 s
+step 4 (Total) : 4.82482 s
+---------------------------------------------------------------
+step 5 : m_(4,2) = G.T() x m_(3,2).T().D()*11
+	diag-reduce takes : 3.3118 s
+	mmul-scalar takes : 0.00161886 s
+	dim-apply takes: 1.51951 s
+	prune takes: 0.010354 s
+step 5 (Total) : 4.84338 s
+---------------------------------------------------------------
+step 6 : m_(5,2) = G.T() x m_(4,2).T().D()*12
+	diag-reduce takes : 3.24006 s
+	mmul-scalar takes : 0.00121999 s
+	dim-apply takes: 1.54902 s
+	prune takes: 0.0104041 s
+step 6 (Total) : 4.8008 s
+---------------------------------------------------------------
+step 7 : m_(2,0) = m_(5,2).T().D() x m_(2,0)
+	diag-reduce takes : 3.24872 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.509298 s
+	prune takes: 2.14577e-06 s
+step 7 (Total) : 3.75808 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 2.14577e-06 s
+
+final result size : 9
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 9
+---------------------------------------------------------------
+query4 mmul_scalar time : 0.0054028 s
+query4 prune time : 0.0536952 s
+query4 diag_reduce time : 14.0469 s
+query4 dim_apply time : 9.12678 s
+query4 result_enum time : 0.387759 s
+query4 time (Total) : 23.6213 s
+
+###############################################################
+Query 5
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(2,0) = G x {1@(2558,2558)}*2
+	dim-apply takes: 1.58729 s
+	prune takes: 0.012254 s
+step 1 (Total) : 1.5996 s
+---------------------------------------------------------------
+step 2 : G.T() x m_(2,0).D()*5
+	diag-reduce takes : 1.02615 s
+	mmul-scalar takes : 0.000940084 s
+	dim-apply takes: 1.62369 s
+	prune takes: 0.0105639 s
+step 2 (Total) : 2.66143 s
+---------------------------------------------------------------
+step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)
+	dim-apply takes: 0.244349 s
+	prune takes: 3.8147e-05 s
+step 3 (Total) : 0.244427 s
+---------------------------------------------------------------
+step 4 : m_(2,0) = m_(1,2).T().D() x m_(2,0)
+	diag-reduce takes : 3.65715 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.216681 s
+	prune takes: 0 s
+step 4 (Total) : 3.87389 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 1.19209e-06 s
+
+final result size : 10
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 10
+---------------------------------------------------------------
+query5 mmul_scalar time : 0.000940084 s
+query5 prune time : 0.022856 s
+query5 diag_reduce time : 4.6833 s
+query5 dim_apply time : 3.67201 s
+query5 result_enum time : 0.311716 s
+query5 time (Total) : 8.69117 s
+
+###############################################################
+Query 6
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.51011 s
+	prune takes: 0.0125031 s
+step 1 (Total) : 1.52268 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T() x m_(3,0).D()*10
+	diag-reduce takes : 1.02677 s
+	mmul-scalar takes : 0.000943899 s
+	dim-apply takes: 1.54871 s
+	prune takes: 0.0111158 s
+step 2 (Total) : 2.58762 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*5
+	diag-reduce takes : 1.18888 s
+	mmul-scalar takes : 0.000943184 s
+	dim-apply takes: 1.55553 s
+	prune takes: 0.0101671 s
+step 3 (Total) : 2.75561 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(3,3)} x m_(1,4)
+	dim-apply takes: 0.903977 s
+	prune takes: 5.00679e-06 s
+step 4 (Total) : 0.904028 s
+---------------------------------------------------------------
+step 5 : m_(2,4) = G.T() x m_(1,4).T().D()*2
+	diag-reduce takes : 3.16179 s
+	mmul-scalar takes : 0.00141311 s
+	dim-apply takes: 1.56122 s
+	prune takes: 0.0105391 s
+step 5 (Total) : 4.73506 s
+---------------------------------------------------------------
+step 6 : m_(2,4) = {1@(7,7)} x m_(2,4)
+	dim-apply takes: 0.273568 s
+	prune takes: 2.14577e-06 s
+step 6 (Total) : 0.273608 s
+---------------------------------------------------------------
+step 7 : m_(4,3) = m_(2,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.56453 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.208641 s
+	prune takes: 2.69413e-05 s
+step 7 (Total) : 3.77327 s
+---------------------------------------------------------------
+step 8 : m_(3,0) = m_(4,3).T().D() x m_(3,0)
+	diag-reduce takes : 3.25825 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.219228 s
+	prune takes: 9.53674e-07 s
+step 8 (Total) : 3.47754 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 9.53674e-07 s
+
+final result size : 117
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 117
+---------------------------------------------------------------
+query6 mmul_scalar time : 0.00330019 s
+query6 prune time : 0.0443602 s
+query6 diag_reduce time : 12.2002 s
+query6 dim_apply time : 7.78099 s
+query6 result_enum time : 0.0208879 s
+query6 time (Total) : 20.0505 s
+
+###############################################################
+Query 7
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(5,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.59572 s
+	prune takes: 0.01265 s
+step 1 (Total) : 1.60844 s
+---------------------------------------------------------------
+step 2 : m_(3,5) = G x m_(5,0).D()*17
+	diag-reduce takes : 0.988902 s
+	mmul-scalar takes : 0.000941038 s
+	dim-apply takes: 1.58634 s
+	prune takes: 0.0151289 s
+step 2 (Total) : 2.5914 s
+---------------------------------------------------------------
+step 3 : m_(2,3) = G.T() x m_(3,5).D()*2
+	diag-reduce takes : 1.02303 s
+	mmul-scalar takes : 0.000940084 s
+	dim-apply takes: 1.61783 s
+	prune takes: 0.00933599 s
+step 3 (Total) : 2.6512 s
+---------------------------------------------------------------
+step 4 : m_(2,3) = {1@(399,399)} x m_(2,3)
+	dim-apply takes: 0.328134 s
+	prune takes: 1.19209e-06 s
+step 4 (Total) : 0.328166 s
+---------------------------------------------------------------
+step 5 : m_(4,3) = G.T() x m_(1,3).T().D()*16
+	diag-reduce takes : 3.79726 s
+	mmul-scalar takes : 0.0011692 s
+	dim-apply takes: 1.548 s
+	prune takes: 0.014478 s
+step 5 (Total) : 5.361 s
+---------------------------------------------------------------
+step 6 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 1.175 s
+	mmul-scalar takes : 0.000936031 s
+	dim-apply takes: 1.52016 s
+	prune takes: 0.0104949 s
+step 6 (Total) : 2.70668 s
+---------------------------------------------------------------
+step 7 : m_(1,4) = {1@(3049,3049)} x m_(1,4)
+	dim-apply takes: 0.294361 s
+	prune takes: 9.53674e-07 s
+step 7 (Total) : 0.294407 s
+---------------------------------------------------------------
+step 8 : m_(6,4) = G x m_(1,4).T().D()*6
+	diag-reduce takes : 3.82491 s
+	mmul-scalar takes : 0.00160289 s
+	dim-apply takes: 1.47067 s
+	prune takes: 0.014807 s
+step 8 (Total) : 5.31209 s
+---------------------------------------------------------------
+step 9 : m_(6,4) = m_(3,5).T().D() x m_(6,4)
+	diag-reduce takes : 3.18154 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.217411 s
+	prune takes: 0.000257969 s
+step 9 (Total) : 3.39929 s
+---------------------------------------------------------------
+step 10 : m_(3,5) = m_(3,5) x m_(6,4).D()
+	diag-reduce takes : 1.19269 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 1.69416 s
+	prune takes: 0.000353098 s
+step 10 (Total) : 2.88728 s
+---------------------------------------------------------------
+step 11 : m_(4,3) = m_(6,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.1842 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.221188 s
+	prune takes: 0.000413895 s
+step 11 (Total) : 3.40588 s
+---------------------------------------------------------------
+step 12 : m_(3,5) = m_(4,3).T().D() x m_(3,5)
+	diag-reduce takes : 3.38126 s
+	mmul-scalar takes : 9.53674e-07 s
+	dim-apply takes: 0.21954 s
+	prune takes: 0.000285149 s
+step 12 (Total) : 3.60115 s
+---------------------------------------------------------------
+step 13 : m_(5,0) = m_(3,5).T().D() x m_(5,0)
+	diag-reduce takes : 3.54653 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.221091 s
+	prune takes: 2.14577e-06 s
+step 13 (Total) : 3.76773 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 3.09944e-06 s
+
+final result size : 4504091
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 4504091
+---------------------------------------------------------------
+query7 mmul_scalar time : 0.0055902 s
+query7 prune time : 0.0782092 s
+query7 diag_reduce time : 25.2953 s
+query7 dim_apply time : 12.5346 s
+query7 result_enum time : 10.4546 s
+query7 time (Total) : 48.3695 s
+
+###############################################################
+Query 1
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(1996,1996)}*2
+	dim-apply takes: 1.57188 s
+	prune takes: 0.0121601 s
+step 1 (Total) : 1.58409 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T * m_(3, 0).D()*7
+	diag-reduce takes : 1.00067 s
+	mmul-scalar takes : 0.000947952 s
+	dim-apply takes: 1.55197 s
+	prune takes: 0.0161262 s
+step 2 (Total) : 2.56981 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 1.16851 s
+	mmul-scalar takes : 0.000941038 s
+	dim-apply takes: 1.59881 s
+	prune takes: 0.00948191 s
+step 3 (Total) : 2.77781 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(4,4)} * m_(1,4)
+	dim-apply takes: 0.789464 s
+	prune takes: 9.53674e-07 s
+step 4 (Total) : 0.789498 s
+---------------------------------------------------------------
+step 5 : m_(5,4) = G x m_(1,4).T().D()*5
+	diag-reduce takes : 3.14063 s
+	mmul-scalar takes : 0.00145411 s
+	dim-apply takes: 1.52937 s
+	prune takes: 0.012552 s
+step 5 (Total) : 4.6841 s
+---------------------------------------------------------------
+step 6 : m_(2,5) = G.T() x m_(5,4).D()*2
+	diag-reduce takes : 0.999885 s
+	mmul-scalar takes : 0.000943899 s
+	dim-apply takes: 1.55395 s
+	prune takes: 0.00935912 s
+step 6 (Total) : 2.56421 s
+---------------------------------------------------------------
+step 7 : m_(2,5) = {1@(7,7)} * m_(2,5)
+	dim-apply takes: 0.283717 s
+	prune takes: 3.8147e-06 s
+step 7 (Total) : 0.283781 s
+---------------------------------------------------------------
+step 8 : m_(6,5) = G x m_(2,5).T().D()*15
+	diag-reduce takes : 3.80428 s
+	mmul-scalar takes : 0.00138712 s
+	dim-apply takes: 1.55023 s
+	prune takes: 0.0128901 s
+step 8 (Total) : 5.36889 s
+---------------------------------------------------------------
+step 9 : m_(6,5) = m_(4,3).T().D() x m_(6,5)
+	diag-reduce takes : 3.13409 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.214934 s
+	prune takes: 3.79086e-05 s
+step 9 (Total) : 3.34912 s
+---------------------------------------------------------------
+step 10 : m_(4,3) = m_(4,3) x m_(6,5).D()
+	diag-reduce takes : 1.18151 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 1.46913 s
+	prune takes: 0.00028801 s
+step 10 (Total) : 2.65099 s
+---------------------------------------------------------------
+step 11 : m_(5,4) = m_(6,5).T().D() x m_(5,4)
+	diag-reduce takes : 3.23951 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.21327 s
+	prune takes: 2.86102e-06 s
+step 11 (Total) : 3.45286 s
+---------------------------------------------------------------
+step 12 : m_(4,3) = m_(5,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.30655 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.228203 s
+	prune takes: 2.59876e-05 s
+step 12 (Total) : 3.53486 s
+---------------------------------------------------------------
+step 13 : m_(3,0) = m_(4,3).T().D() x m_(3,0)
+	diag-reduce takes : 3.35635 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.212649 s
+	prune takes: 0 s
+step 13 (Total) : 3.56907 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 9.53674e-07 s
+
+final result size : 2528
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 2528
+---------------------------------------------------------------
+	m_03 get local indices takes : 7.79629e-05 s
+	m_03 send local indices takes : 0.00418186 s
+	m_43 get local indices takes : 8.60691e-05 s
+	m_43 send local indices takes : 0.0161519 s
+	m_54 get local indices takes : 5.79357e-05 s
+	m_54 send local indices takes : 6.10352e-05 s
+	m_65 get local indices takes : 8.29697e-05 s
+	m_65 send local indices takes : 0.00880384 s
+	m_25 get local indices takes : 6.79493e-05 s
+	m_25 send local indices takes : 4.79221e-05 s
+	m_14 get local indices takes : 5.29289e-05 s
+	m_14 send local indices takes : 2.5034e-05 s
+total get local indices time : 0.000425816 s
+total send local indices time : 0.0292716 s
+	local join of m_03 and m_43 takes : 0.000736952 s
+	local join of m_034 and m_54 takes : 0.023082 s
+	local join of m_03456 and m_25 takes : 6.19888e-06 s
+	local join of m_023456 and m_14 takes : 5.00679e-06 s
+total local join time : 0.0238302 s
+	local filter of m_0345 and m_65 takes : 0.150236 s
+total local filter time : 0.150236 s
+	redistribution of m_034 takes : 0.23249 s
+	redistribution of m_0345 takes : 6.47564 s
+	redistribution of m_023456 takes : 0.000620842 s
+total redistribution time : 6.70875 s
+query1 mmul_scalar time : 0.00567412 s
+query1 prune time : 0.0729289 s
+query1 diag_reduce time : 24.332 s
+query1 dim_apply time : 12.7676 s
+query1 result_enum time : 7.62551 s
+query1 time (Total) : 44.8048 s
+
+###############################################################
+Query 2
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(1,0) = G x {1@(3049,3049)}*2
+	dim-apply takes: 1.52414 s
+	prune takes: 0.0124311 s
+step 1 (Total) : 1.53663 s
+---------------------------------------------------------------
+step 2 : m_(2,1) = G.T() x m_(1,0).D()*4
+	diag-reduce takes : 1.03023 s
+	mmul-scalar takes : 0.000984192 s
+	dim-apply takes: 1.54428 s
+	prune takes: 0.013603 s
+step 2 (Total) : 2.58918 s
+---------------------------------------------------------------
+step 3 : m_(1,0) = m_(2,1).T().D() * m_(1,0)
+	diag-reduce takes : 3.27971 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.752124 s
+	prune takes: 9.53674e-07 s
+step 3 (Total) : 4.0319 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 2.14577e-06 s
+
+final result size : 110583289
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 110583289
+---------------------------------------------------------------
+query2 mmul_scalar time : 0.000984192 s
+query2 prune time : 0.0260351 s
+query2 diag_reduce time : 4.30994 s
+query2 dim_apply time : 3.82054 s
+query2 result_enum time : 0.705328 s
+query2 time (Total) : 8.86313 s
+
+###############################################################
+Query 3
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(399,399)}*2
+	dim-apply takes: 1.48618 s
+	prune takes: 0.0121119 s
+step 1 (Total) : 1.49835 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T() * m_(3,0).D()*7
+	diag-reduce takes : 28.394 s
+	mmul-scalar takes : 0.000938892 s
+	dim-apply takes: 2.47911 s
+	prune takes: 0.00949883 s
+step 2 (Total) : 30.8836 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 0.303815 s
+	mmul-scalar takes : 0.00175214 s
+	dim-apply takes: 1.4928 s
+	prune takes: 0.0108049 s
+step 3 (Total) : 1.80926 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(4,4)} x m_(1,4)
+	dim-apply takes: 0.542923 s
+	prune takes: 1.19209e-06 s
+step 4 (Total) : 0.542956 s
+---------------------------------------------------------------
+step 5 : m_(5,4) = G x m_(1,4).T().D()*5
+	diag-reduce takes : 3.5686 s
+	mmul-scalar takes : 0.00139213 s
+	dim-apply takes: 1.53764 s
+	prune takes: 0.01355 s
+step 5 (Total) : 5.12128 s
+---------------------------------------------------------------
+begin result generation ......
+final size : 0
+---------------------------------------------------------------
+query3 mmul_scalar time : 0.00408316 s
+query3 prune time : 0.0459669 s
+query3 diag_reduce time : 32.2664 s
+query3 dim_apply time : 7.53865 s
+query3 result_enum time : 1.69277e-05 s
+query3 time (Total) : 39.8556 s
+
+###############################################################
+Query 4
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(2,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.52673 s
+	prune takes: 0.0123169 s
+step 1 (Total) : 1.53911 s
+---------------------------------------------------------------
+step 2 : m_(1,2) = G.T() x m_(2,0).D()*10
+	diag-reduce takes : 0.995183 s
+	mmul-scalar takes : 0.000943899 s
+	dim-apply takes: 1.55288 s
+	prune takes: 0.0102792 s
+step 2 (Total) : 2.55936 s
+---------------------------------------------------------------
+step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)
+	dim-apply takes: 0.934232 s
+	prune takes: 2.71797e-05 s
+step 3 (Total) : 0.934294 s
+---------------------------------------------------------------
+step 4 : m_(3,2) = G.T() x m_(1,2).T().D()*4
+	diag-reduce takes : 3.11037 s
+	mmul-scalar takes : 0.00152087 s
+	dim-apply takes: 1.53334 s
+	prune takes: 0.0109038 s
+step 4 (Total) : 4.65624 s
+---------------------------------------------------------------
+step 5 : m_(4,2) = G.T() x m_(3,2).T().D()*11
+	diag-reduce takes : 3.26544 s
+	mmul-scalar takes : 0.0016458 s
+	dim-apply takes: 1.50447 s
+	prune takes: 0.010649 s
+step 5 (Total) : 4.7823 s
+---------------------------------------------------------------
+step 6 : m_(5,2) = G.T() x m_(4,2).T().D()*12
+	diag-reduce takes : 3.27723 s
+	mmul-scalar takes : 0.00165796 s
+	dim-apply takes: 1.62625 s
+	prune takes: 0.0100701 s
+step 6 (Total) : 4.91529 s
+---------------------------------------------------------------
+step 7 : m_(2,0) = m_(5,2).T().D() x m_(2,0)
+	diag-reduce takes : 3.27572 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.513485 s
+	prune takes: 1.90735e-06 s
+step 7 (Total) : 3.78926 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 1.19209e-06 s
+
+final result size : 9
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 9
+---------------------------------------------------------------
+query4 mmul_scalar time : 0.00576854 s
+query4 prune time : 0.0542481 s
+query4 diag_reduce time : 13.9239 s
+query4 dim_apply time : 9.19138 s
+query4 result_enum time : 0.411368 s
+query4 time (Total) : 23.5874 s
+
+###############################################################
+Query 5
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(2,0) = G x {1@(2558,2558)}*2
+	dim-apply takes: 1.53599 s
+	prune takes: 0.0124221 s
+step 1 (Total) : 1.54847 s
+---------------------------------------------------------------
+step 2 : G.T() x m_(2,0).D()*5
+	diag-reduce takes : 1.01963 s
+	mmul-scalar takes : 0.000939131 s
+	dim-apply takes: 1.60611 s
+	prune takes: 0.0112181 s
+step 2 (Total) : 2.63799 s
+---------------------------------------------------------------
+step 3 : m_(1,2) = {1@(6,6)} x m_(1,2)
+	dim-apply takes: 0.265791 s
+	prune takes: 3.91006e-05 s
+step 3 (Total) : 0.265881 s
+---------------------------------------------------------------
+step 4 : m_(2,0) = m_(1,2).T().D() x m_(2,0)
+	diag-reduce takes : 3.75931 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.218669 s
+	prune takes: 9.53674e-07 s
+step 4 (Total) : 3.97804 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 9.53674e-07 s
+
+final result size : 10
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 10
+---------------------------------------------------------------
+query5 mmul_scalar time : 0.000939131 s
+query5 prune time : 0.0236802 s
+query5 diag_reduce time : 4.77894 s
+query5 dim_apply time : 3.62656 s
+query5 result_enum time : 0.306654 s
+query5 time (Total) : 8.73715 s
+
+###############################################################
+Query 6
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(3,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.52345 s
+	prune takes: 0.0124791 s
+step 1 (Total) : 1.53598 s
+---------------------------------------------------------------
+step 2 : m_(4,3) = G.T() x m_(3,0).D()*10
+	diag-reduce takes : 1.00965 s
+	mmul-scalar takes : 0.00101089 s
+	dim-apply takes: 1.57634 s
+	prune takes: 0.0107939 s
+step 2 (Total) : 2.59789 s
+---------------------------------------------------------------
+step 3 : m_(1,4) = G.T() x m_(4,3).D()*5
+	diag-reduce takes : 1.11908 s
+	mmul-scalar takes : 0.000946045 s
+	dim-apply takes: 1.57796 s
+	prune takes: 0.0102079 s
+step 3 (Total) : 2.70828 s
+---------------------------------------------------------------
+step 4 : m_(1,4) = {1@(3,3)} x m_(1,4)
+	dim-apply takes: 0.916951 s
+	prune takes: 3.09944e-06 s
+step 4 (Total) : 0.916998 s
+---------------------------------------------------------------
+step 5 : m_(2,4) = G.T() x m_(1,4).T().D()*2
+	diag-reduce takes : 3.14356 s
+	mmul-scalar takes : 0.00151515 s
+	dim-apply takes: 1.51728 s
+	prune takes: 0.010325 s
+step 5 (Total) : 4.67278 s
+---------------------------------------------------------------
+step 6 : m_(2,4) = {1@(7,7)} x m_(2,4)
+	dim-apply takes: 0.25249 s
+	prune takes: 1.90735e-06 s
+step 6 (Total) : 0.252528 s
+---------------------------------------------------------------
+step 7 : m_(4,3) = m_(2,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.50647 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.215813 s
+	prune takes: 2.59876e-05 s
+step 7 (Total) : 3.72238 s
+---------------------------------------------------------------
+step 8 : m_(3,0) = m_(4,3).T().D() x m_(3,0)
+	diag-reduce takes : 3.21036 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.215624 s
+	prune takes: 9.53674e-07 s
+step 8 (Total) : 3.42604 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 1.90735e-06 s
+
+final result size : 117
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 117
+---------------------------------------------------------------
+query6 mmul_scalar time : 0.00347209 s
+query6 prune time : 0.0438378 s
+query6 diag_reduce time : 11.9891 s
+query6 dim_apply time : 7.79592 s
+query6 result_enum time : 0.0298641 s
+query6 time (Total) : 19.8629 s
+
+###############################################################
+Query 7
+###############################################################
+---------------------------------------------------------------
+step 1 : m_(5,0) = G x {1@(10,10)}*2
+	dim-apply takes: 1.5772 s
+	prune takes: 0.0122111 s
+step 1 (Total) : 1.58947 s
+---------------------------------------------------------------
+step 2 : m_(3,5) = G x m_(5,0).D()*17
+	diag-reduce takes : 1.00828 s
+	mmul-scalar takes : 0.00104785 s
+	dim-apply takes: 1.55903 s
+	prune takes: 0.015043 s
+step 2 (Total) : 2.58349 s
+---------------------------------------------------------------
+step 3 : m_(2,3) = G.T() x m_(3,5).D()*2
+	diag-reduce takes : 1.03582 s
+	mmul-scalar takes : 0.000993967 s
+	dim-apply takes: 1.5534 s
+	prune takes: 0.010144 s
+step 3 (Total) : 2.60045 s
+---------------------------------------------------------------
+step 4 : m_(2,3) = {1@(399,399)} x m_(2,3)
+	dim-apply takes: 0.30552 s
+	prune takes: 9.53674e-07 s
+step 4 (Total) : 0.305551 s
+---------------------------------------------------------------
+step 5 : m_(4,3) = G.T() x m_(1,3).T().D()*16
+	diag-reduce takes : 3.81701 s
+	mmul-scalar takes : 0.0012598 s
+	dim-apply takes: 1.53589 s
+	prune takes: 0.014957 s
+step 5 (Total) : 5.36924 s
+---------------------------------------------------------------
+step 6 : m_(1,4) = G.T() x m_(4,3).D()*2
+	diag-reduce takes : 1.15774 s
+	mmul-scalar takes : 0.00099802 s
+	dim-apply takes: 1.58722 s
+	prune takes: 0.00996399 s
+step 6 (Total) : 2.75601 s
+---------------------------------------------------------------
+step 7 : m_(1,4) = {1@(3049,3049)} x m_(1,4)
+	dim-apply takes: 0.247183 s
+	prune takes: 9.53674e-07 s
+step 7 (Total) : 0.247218 s
+---------------------------------------------------------------
+step 8 : m_(6,4) = G x m_(1,4).T().D()*6
+	diag-reduce takes : 3.75094 s
+	mmul-scalar takes : 0.00158501 s
+	dim-apply takes: 1.56092 s
+	prune takes: 0.014698 s
+step 8 (Total) : 5.32824 s
+---------------------------------------------------------------
+step 9 : m_(6,4) = m_(3,5).T().D() x m_(6,4)
+	diag-reduce takes : 3.10308 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.220754 s
+	prune takes: 0.000267029 s
+step 9 (Total) : 3.32419 s
+---------------------------------------------------------------
+step 10 : m_(3,5) = m_(3,5) x m_(6,4).D()
+	diag-reduce takes : 1.20453 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 1.58193 s
+	prune takes: 0.000353098 s
+step 10 (Total) : 2.78688 s
+---------------------------------------------------------------
+step 11 : m_(4,3) = m_(6,4).T().D() x m_(4,3)
+	diag-reduce takes : 3.2094 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.227964 s
+	prune takes: 0.000397921 s
+step 11 (Total) : 3.43783 s
+---------------------------------------------------------------
+step 12 : m_(3,5) = m_(4,3).T().D() x m_(3,5)
+	diag-reduce takes : 3.37862 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.219114 s
+	prune takes: 0.000298977 s
+step 12 (Total) : 3.5981 s
+---------------------------------------------------------------
+step 13 : m_(5,0) = m_(3,5).T().D() x m_(5,0)
+	diag-reduce takes : 3.58161 s
+	mmul-scalar takes : 0 s
+	dim-apply takes: 0.223281 s
+	prune takes: 9.53674e-07 s
+step 13 (Total) : 3.80496 s
+---------------------------------------------------------------
+begin result generation ......
+	transpose matrix and declarations take : 2.14577e-06 s
+
+final result size : 4504091
+total get local indices time : 0 s
+total send local indices time : 0 s
+total local join time : 0 s
+total local filter time : 0 s
+final size : 4504091
+---------------------------------------------------------------
+query7 mmul_scalar time : 0.00588465 s
+query7 prune time : 0.078337 s
+query7 diag_reduce time : 25.247 s
+query7 dim_apply time : 12.3994 s
+query7 result_enum time : 10.4181 s
+query7 time (Total) : 48.1499 s
