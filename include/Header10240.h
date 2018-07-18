@@ -34,6 +34,116 @@ double total_local_filter_time = 0.0;
 double total_redistribution_time = 0.0;
 double total_send_result_time = 0.0;
 
+typedef struct {
+    IndexType a, b, c;
+} Int3;
+
+int compInt3A(const void *elem1, const void *elem2) {
+    Int3 f = *((Int3 *) elem1);
+    Int3 s = *((Int3 *) elem2);
+    if (f.a > s.a) return 1;
+    if (f.a < s.a) return -1;
+    return 0;
+}
+
+int compInt3B(const void *elem1, const void *elem2) {
+    Int3 f = *((Int3 *) elem1);
+    Int3 s = *((Int3 *) elem2);
+    if (f.b > s.b) return 1;
+    if (f.b < s.b) return -1;
+    return 0;
+}
+
+int compInt3C(const void *elem1, const void *elem2) {
+    Int3 f = *((Int3 *) elem1);
+    Int3 s = *((Int3 *) elem2);
+    if (f.c > s.c) return 1;
+    if (f.c < s.c) return -1;
+    return 0;
+}
+
+typedef struct {
+    IndexType a, b, c, d;
+} Int4;
+
+int compInt4A(const void *elem1, const void *elem2) {
+    Int4 f = *((Int4 *) elem1);
+    Int4 s = *((Int4 *) elem2);
+    if (f.a > s.a) return 1;
+    if (f.a < s.a) return -1;
+    return 0;
+}
+
+int compInt4B(const void *elem1, const void *elem2) {
+    Int4 f = *((Int4 *) elem1);
+    Int4 s = *((Int4 *) elem2);
+    if (f.b > s.b) return 1;
+    if (f.b < s.b) return -1;
+    return 0;
+}
+
+int compInt4C(const void *elem1, const void *elem2) {
+    Int4 f = *((Int4 *) elem1);
+    Int4 s = *((Int4 *) elem2);
+    if (f.c > s.c) return 1;
+    if (f.c < s.c) return -1;
+    return 0;
+}
+
+int compInt4D(const void *elem1, const void *elem2) {
+    Int4 f = *((Int4 *) elem1);
+    Int4 s = *((Int4 *) elem2);
+    if (f.d > s.d) return 1;
+    if (f.d < s.d) return -1;
+    return 0;
+}
+
+typedef struct {
+    IndexType a, b, c, d, e;
+} Int5;
+
+int compInt5A(const void *elem1, const void *elem2) {
+    Int5 f = *((Int5 *) elem1);
+    Int5 s = *((Int5 *) elem2);
+    if (f.a > s.a) return 1;
+    if (f.a < s.a) return -1;
+    return 0;
+}
+
+int compInt5B(const void *elem1, const void *elem2) {
+    Int5 f = *((Int5 *) elem1);
+    Int5 s = *((Int5 *) elem2);
+    if (f.b > s.b) return 1;
+    if (f.b < s.b) return -1;
+    return 0;
+}
+
+int compInt5C(const void *elem1, const void *elem2) {
+    Int5 f = *((Int5 *) elem1);
+    Int5 s = *((Int5 *) elem2);
+    if (f.c > s.c) return 1;
+    if (f.c < s.c) return -1;
+    return 0;
+}
+
+int compInt5D(const void *elem1, const void *elem2) {
+    Int5 f = *((Int5 *) elem1);
+    Int5 s = *((Int5 *) elem2);
+    if (f.d > s.d) return 1;
+    if (f.d < s.d) return -1;
+    return 0;
+}
+
+int compInt5E(const void *elem1, const void *elem2) {
+    Int5 f = *((Int5 *) elem1);
+    Int5 s = *((Int5 *) elem2);
+    if (f.e > s.e) return 1;
+    if (f.e < s.e) return -1;
+    return 0;
+}
+
+int (*comp[15])(const void *, const void *);
+
 bool isZero(ElementType t) {
     return t == 0;
 }
@@ -60,14 +170,14 @@ void printReducedInfo(PSpMat::MPI_DCCols &M) {
 
     double t1 = MPI_Wtime();
 
-    int nnz1 = M.getnnz();
+    IndexType nnz1 = M.getnnz();
 
     FullyDistVec<int, ElementType> rowsums1(M.getcommgrid());
     M.Reduce(rowsums1, Row, std::plus<ElementType>(), 0);
     FullyDistVec<int, ElementType> colsums1(M.getcommgrid());
     M.Reduce(colsums1, Column, std::plus<ElementType>(), 0);
-    int nnzrows1 = rowsums1.Count(isNotZero);
-    int nnzcols1 = colsums1.Count(isNotZero);
+    IndexType nnzrows1 = rowsums1.Count(isNotZero);
+    IndexType nnzcols1 = colsums1.Count(isNotZero);
 
     double t2 = MPI_Wtime();
 
@@ -453,20 +563,6 @@ void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, ve
     }
 }
 
-// merge sort
-// left, right are number of tuples, not number of elements
-void local_sort_table(vector<IndexType> &range_table, int left, int right, int pair_size, int pivot) {
-    if (left < right) {
-        int mid = (left + right) / 2;
-//        cout << "mid = " << mid << endl;
-        local_sort_table(range_table, left, mid, pair_size, pivot);
-        local_sort_table(range_table, mid + 1, right, pair_size, pivot);
-
-        merge_local_vectors(range_table, range_table, left * pair_size, (mid + 1) * pair_size, (mid + 1) * pair_size,
-                            (right + 1) * pair_size, pair_size, pair_size, pivot, pivot);
-    }
-}
-
 // column based operation
 void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table, int pair_size,
                           int pivot, vector<IndexType> &res) {
@@ -496,7 +592,14 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     coffset[rowneighs] = UINT32_MAX;
 
 //    cout << myrank << ", redis, " << range_table.size() << endl;
-    local_sort_table(range_table, 0, range_table.size() / pair_size - 1, pair_size, pivot);
+    double t1_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
+    qsort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t1_end = MPI_Wtime();
+    if (myrank == 0) {
+        cout << "\tredistribution : local sort1 takes : " << (t1_end - t1_start) << " s" << endl;
+    }
 //    cout << myrank << ", redis, after sort,  " << range_table.size() << endl;
 //    write_local_vector(range_table, "res12", 3);
 
@@ -525,6 +628,8 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     vector<int> displs(rowneighs);
     displs[0] = 0;
 
+    double t2_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
     if (colrank == 0) {
         recvcount[myrank] = new int[rowneighs];
 
@@ -541,17 +646,29 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 
         for (int k = 0; k < rowneighs; ++k) {
             MPI_Gatherv(range_table.data() + partial_sums[k], lens[k + 1], MPIType<IndexType>(), res.data(),
-                        recvcount[k],
-                        displs.data(), MPIType<IndexType>(), k, commGrid->GetRowWorld());
+                        recvcount[k], displs.data(), MPIType<IndexType>(), k, commGrid->GetRowWorld());
 
-            if (myrank == k) {
-//                cout << "\nafter gatherv " << myrank << " res size : " << res.size() / pair_size << endl;
-
-                local_sort_table(res, 0, res.size() / pair_size - 1, pair_size, pivot);
-            }
+//             if (myrank == k) {
+// //                cout << "\nafter gatherv " << myrank << " res size : " << res.size() / pair_size << endl;
+//                 local_sort_table(res, 0, res.size() / pair_size - 1, pair_size, pivot);
+//             }
         }
 
 //        write_local_vector(res, "res13", 3);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t2_end = MPI_Wtime();
+    if (myrank == 0) {
+        cout << "\tredistribution : communication takes : " << (t2_end - t2_start) << " s" << endl;
+    }
+
+    double t3_start = MPI_Wtime();
+    MPI_Barrier(MPI_COMM_WORLD);
+    qsort(res.data(), res.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t3_end = MPI_Wtime();
+    if (myrank == 0) {
+        cout << "\tredistribution : local sort2 takes : " << (t3_end - t3_start) << " s" << endl;
     }
 
     double t2 = MPI_Wtime();
