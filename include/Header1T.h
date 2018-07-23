@@ -2,8 +2,8 @@
 // Created by cheny0l on 10/07/18.
 //
 
-#ifndef COMBINATORIAL_BLAS_HEADER10240_H
-#define COMBINATORIAL_BLAS_HEADER10240_H
+#ifndef COMBINATORIAL_BLAS_HEADER1T_H
+#define COMBINATORIAL_BLAS_HEADER1T_H
 
 #include <iostream>
 #include <functional>
@@ -14,7 +14,7 @@
 using namespace std;
 using namespace combblas;
 
-#define IndexType uint32_t
+#define IndexType uint64_t
 #define ElementType uint16_t
 
 class PSpMat {
@@ -162,60 +162,6 @@ ElementType rdf_multiply(ElementType a, ElementType b) {
 // handle duplicate in original loaded data
 ElementType selectSecond(ElementType a, ElementType b) { return b; }
 
-// for large dataset(i.e. lubm1T), avoid calling this function, because of overflow in M.Reduce
-void printReducedInfo(PSpMat::MPI_DCCols &M) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    double t1 = MPI_Wtime();
-
-    IndexType nnz1 = M.getnnz();
-
-    FullyDistVec<IndexType, ElementType> rowsums1(M.getcommgrid());
-    M.Reduce(rowsums1, Row, std::plus<ElementType>(), static_cast<ElementType>(0));
-    FullyDistVec<IndexType, ElementType> colsums1(M.getcommgrid());
-    M.Reduce(colsums1, Column, std::plus<ElementType>(), static_cast<ElementType>(0));
-    IndexType nnzrows1 = rowsums1.Count(isNotZero);
-    IndexType nnzcols1 = colsums1.Count(isNotZero);
-
-    double t2 = MPI_Wtime();
-
-    float imM = M.LoadImbalance();
-    if (myrank == 0) {
-        cout << nnz1 << " [ " << nnzrows1 << ", " << nnzcols1 << " ]" << endl;
-        cout << "\tenum takes " << (t2 - t1) << " s" << endl;
-        cout << "\timbalance : " << imM << endl;
-        cout << "---------------------------------------------------------------" << endl;
-    }
-}
-
-// not need for new dataset, already nicely permuted
-void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    // permute G
-    double t_perm1 = MPI_Wtime();
-    FullyDistVec<IndexType, ElementType> *ColSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
-    FullyDistVec<IndexType, ElementType> *RowSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
-    G.Reduce(*ColSums, Column, plus<ElementType>(), static_cast<ElementType>(0));
-    G.Reduce(*RowSums, Row, plus<ElementType>(), static_cast<ElementType>(0));
-    ColSums->EWiseApply(*RowSums, plus<ElementType>());
-
-    nonisov = ColSums->FindInds(bind2nd(greater<ElementType>(), static_cast<ElementType>(0)));
-
-    nonisov.RandPerm();
-
-    G(nonisov, nonisov, true);
-    double t_perm2 = MPI_Wtime();
-
-    float impG = G.LoadImbalance();
-    if (myrank == 0) {
-        cout << "\tpermutation takes : " << (t_perm2 - t_perm1) << " s" << endl;
-        cout << "\timbalance of permuted G : " << impG << endl;
-    }
-}
-
 PSpMat::MPI_DCCols transpose(const PSpMat::MPI_DCCols &M) {
     PSpMat::MPI_DCCols N(M);
     N.Transpose();
@@ -273,22 +219,6 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
     if (myrank == 0) {
         total_prune_time += (t4 - t3);
         cout << "\tprune takes: " << (t4 - t3) << " s" << endl;
-    }
-}
-
-// no need for super computer, for locally testing
-void write_local_vector(vector<IndexType> &recs, string name, IndexType step) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    stringstream os;
-    os << "test/" << name << "/" << myrank << "_3.txt";
-
-    std::ofstream outFile(os.str());
-    for (IndexType i = 0; i < recs.size(); i += step) {
-        for (IndexType ii = 0; ii < step; ii++)
-            outFile << recs[i + ii] + 1 << "\t";
-        outFile << "\n";
     }
 }
 
@@ -657,4 +587,4 @@ void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
     }
 }
 
-#endif //COMBINATORIAL_BLAS_HEADER10240_H
+#endif COMBINATORIAL_BLAS_HEADER1T_H
