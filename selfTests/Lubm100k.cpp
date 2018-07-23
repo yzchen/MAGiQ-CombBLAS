@@ -624,8 +624,7 @@ void lubm100k_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
 
     IndexType ind1 = nonisov->FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(399)))[0];
     IndexType ind2 = nonisov->FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(4)))[0];
-    IndexType ind3 = nonisov->FindInds(
-            std::bind2nd(std::equal_to<ElementType>(), static_cast<ElementType>(7)))[0];
+    IndexType ind3 = nonisov->FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(7)))[0];
 
     FullyDistVec<IndexType, ElementType> r_30(commWorld, G.getnrow(), 0), l_14(commWorld, G.getnrow(), 0), l_24(
             commWorld, G.getnrow(), 0);
