@@ -293,7 +293,7 @@ void write_local_vector(vector<IndexType> &recs, string name, int step) {
 // M should have same rows and cols
 // indices size should be even, I and J are together
 void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
-//    double t1 = MPI_Wtime();
+    double t1 = MPI_Wtime();
     assert(M.getnrow() == M.getncol());
 
     auto commGrid = M.getcommgrid();
@@ -341,11 +341,11 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
     }
 //    cout << myrank << " nz : " << I.size() << endl;
 
-//    double t2 = MPI_Wtime();
-//    if (myrank == 0) {
-//        cout << "\tget local indices takes : " << (t2 - t1) << " s" << endl;
-//    }
-//    total_get_local_indices_time += (t2 - t1);
+    double t2 = MPI_Wtime();
+    if (myrank == 0) {
+        cout << "\tget local indices takes : " << (t2 - t1) << " s" << endl;
+    }
+    total_get_local_indices_time += (t2 - t1);
 }
 
 // r1, r2 are not reachable
@@ -388,7 +388,7 @@ merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, int l1,
 }
 
 void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_indices) {
-//    double t1 = MPI_Wtime();
+    double t1 = MPI_Wtime();
 
     int nprocs, myrank;
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -441,11 +441,11 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
 
 //    cout << "myrank " << myrank << " finish sending" << endl;
 
-//    double t2 = MPI_Wtime();
-//    total_send_local_indices_time += (t2 - t1);
-//    if (myrank == 0) {
-//        cout << "\tsend local indices takes : " << (t2 - t1) << " s" << endl;
-//    }
+    double t2 = MPI_Wtime();
+    total_send_local_indices_time += (t2 - t1);
+    if (myrank == 0) {
+        cout << "\tsend local indices takes : " << (t2 - t1) << " s" << endl;
+    }
 }
 
 void put_tuple(vector<IndexType> &res, vector<IndexType> &source1, vector<IndexType> &source2, int index1, int index2,
@@ -463,7 +463,7 @@ void put_tuple(vector<IndexType> &res, vector<IndexType> &source1, vector<IndexT
 
 void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
                 int pair_size2, int key1, int key2, vector<IndexType> &order, vector<IndexType> &res) {
-//    double t1 = MPI_Wtime();
+    double t1 = MPI_Wtime();
 
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -502,11 +502,11 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
         }
     }
 
-//    double t2 = MPI_Wtime();
-//    total_local_join_time += (t2 - t1);
-//    if (myrank == 0) {
-//        cout << "\tlocal join takes : " << (t2 - t1) << " s\n" << endl;
-//    }
+    double t2 = MPI_Wtime();
+    total_local_join_time += (t2 - t1);
+    if (myrank == 0) {
+        cout << "\tlocal join takes : " << (t2 - t1) << " s\n" << endl;
+    }
 }
 
 // key11 and key21 are main keys
@@ -514,7 +514,7 @@ void
 local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
              int pair_size2, int key11, int key12, int key21, int key22, vector<IndexType> &order,
              vector<IndexType> &res) {
-//    double t1 = MPI_Wtime();
+    double t1 = MPI_Wtime();
 
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -560,31 +560,17 @@ local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<
 //        cout << myrank << " filter size : " << res.size() << endl;
     }
 
-//    double t2 = MPI_Wtime();
-//    total_local_filter_time += (t2 - t1);
-//    if (myrank == 0) {
-//        cout << "\tlocal filter takes : " << (t2 - t1) << " s\n" << endl;
-//    }
-}
-
-// merge sort
-// left, right are number of tuples, not number of elements
-void local_sort_table(vector<IndexType> &range_table, int left, int right, int pair_size, int pivot) {
-    if (left < right) {
-        int mid = (left + right) / 2;
-//        cout << "mid = " << mid << endl;
-        local_sort_table(range_table, left, mid, pair_size, pivot);
-        local_sort_table(range_table, mid + 1, right, pair_size, pivot);
-
-        merge_local_vectors(range_table, range_table, left * pair_size, (mid + 1) * pair_size, (mid + 1) * pair_size,
-                            (right + 1) * pair_size, pair_size, pair_size, pivot, pivot);
+    double t2 = MPI_Wtime();
+    total_local_filter_time += (t2 - t1);
+    if (myrank == 0) {
+        cout << "\tlocal filter takes : " << (t2 - t1) << " s\n" << endl;
     }
 }
 
 // column based operation
 void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table, int pair_size,
                           int pivot, vector<IndexType> &res) {
-//    double t1 = MPI_Wtime();
+    double t1 = MPI_Wtime();
 
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -610,16 +596,9 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     coffset[rowneighs] = UINT32_MAX;
 
 //    cout << myrank << ", redis, " << range_table.size() << endl;
-    double t1_start = MPI_Wtime();
-    MPI_Barrier(MPI_COMM_WORLD);
 //    local_sort_table(range_table, 0, range_table.size() / pair_size - 1, pair_size, pivot);
     //TODO : replace merge sort with qsort
     qsort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
-    MPI_Barrier(MPI_COMM_WORLD);
-    double t1_end = MPI_Wtime();
-    if (myrank == 0) {
-        cout << "\t\tlocal sort in redistribution takes : " << (t1_end - t1_start) << " s" << endl;
-    }
 //    cout << myrank << ", redis, after sort,  " << range_table.size() << endl;
 //    write_local_vector(range_table, "res12", 3);
 
@@ -678,12 +657,11 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 //        write_local_vector(res, "res13", 3);
     }
 
-//    double t2 = MPI_Wtime();
-//    total_redistribution_time += (t2 - t1);
-//    if (myrank == 0) {
-//        cout << "\tlocal redistribution takes : " << (t2 - t1) << " s\n" << endl;
-//    }
-
+    double t2 = MPI_Wtime();
+    total_redistribution_time += (t2 - t1);
+    if (myrank == 0) {
+        cout << "\tlocal redistribution takes : " << (t2 - t1) << " s\n" << endl;
+    }
 }
 
 void send_local_results(shared_ptr<CommGrid> commGrid, unsigned res_size) {

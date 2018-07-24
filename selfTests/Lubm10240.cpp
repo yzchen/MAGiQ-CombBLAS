@@ -895,7 +895,7 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
 
     vector<IndexType> order4 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
     vector<IndexType> index_012345;
-    local_join(commGrid, index_02345, index_12, 5, 2, 1, 1, order2, index_012345);
+    local_join(commGrid, index_02345, index_12, 5, 2, 1, 1, order4, index_012345);
 
     send_local_results(commGrid, index_012345.size() / 6);
 }
