@@ -5,7 +5,7 @@
 #include <vector>
 #include <iterator>
 #include <fstream>
-#include "../include/Header1T.h"
+#include "../include/Header100k.h"
 #include "../include/CombBLAS.h"
 
 using namespace std;
@@ -44,6 +44,7 @@ void resgen_l1(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_D
     m_43.FreeMemory();
 
     local_join(commGrid, indl, indr, 2, 2, 1, 1, order1, indj);
+    send_local_results(commGrid, indj.size() / 3);
     local_redistribution(m_54, indj, 3, 2, indl);
 
     get_local_indices(m_54, indr);
@@ -51,6 +52,7 @@ void resgen_l1(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_D
     m_54.FreeMemory();
 
     local_join(commGrid, indl, indr, 3, 2, 2, 1, order2, indj);
+    send_local_results(commGrid, indj.size() / 4);
     local_redistribution(m_65, indj, 4, 3, indl);
 
     get_local_indices(m_65, indr);
@@ -58,6 +60,7 @@ void resgen_l1(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_D
     m_65.FreeMemory();
 
     local_filter(commGrid, indl, indr, 4, 2, 3, 1, 1, 0, order3, indj);
+    send_local_results(commGrid, indj.size() / 4);
     indl = indj;
 
     get_local_indices(m_15, indr);
@@ -65,6 +68,7 @@ void resgen_l1(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_D
     m_15.FreeMemory();
 
     local_join(commGrid, indl, indr, 4, 2, 3, 1, order4, indj);
+    send_local_results(commGrid, indj.size() / 5);
     local_redistribution(m_24, indj, 5, 3, indl);
 
     get_local_indices(m_24, indr);
@@ -76,7 +80,7 @@ void resgen_l1(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_D
     send_local_results(commGrid, indj.size() / 6);
 }
 
-void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -106,6 +110,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_30, r_30, Column, true);
+    m_30.PrintInfo();
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -120,6 +125,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t2_start = MPI_Wtime();
     diagonalizeV(m_30, dm, Row, 12);
     multDimApplyPrune(m_43, dm, Column, true);
+    m_43.PrintInfo();
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -134,6 +140,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t3_start = MPI_Wtime();
     diagonalizeV(m_43, dm, Row, 17);
     multDimApplyPrune(m_24, dm, Column, true);
+    m_24.PrintInfo();
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -147,6 +154,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t4_start = MPI_Wtime();
     multDimApplyPrune(m_24, l_24, Row, false);
+    m_24.PrintInfo();
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -161,6 +169,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t5_start = MPI_Wtime();
     diagonalizeV(m_24, dm, Column, 3);
     multDimApplyPrune(m_54, dm, Column, true);
+    m_54.PrintInfo();
     double t5_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -175,6 +184,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t6_start = MPI_Wtime();
     diagonalizeV(m_54, dm, Row, 17);
     multDimApplyPrune(m_15, dm, Column, true);
+    m_15.PrintInfo();
     double t6_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -188,6 +198,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t7_start = MPI_Wtime();
     multDimApplyPrune(m_15, l_15, Row, false);
+    m_15.PrintInfo();
     double t7_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -202,6 +213,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t8_start = MPI_Wtime();
     diagonalizeV(m_15, dm, Column, 14);
     multDimApplyPrune(m_65, dm, Column, true);
+    m_65.PrintInfo();
     double t8_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -216,6 +228,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t9_start = MPI_Wtime();
     diagonalizeV(m_43, dm, Column);
     multDimApplyPrune(m_65, dm, Row, false);
+    m_65.PrintInfo();
     double t9_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -230,6 +243,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t10_start = MPI_Wtime();
     diagonalizeV(m_65, dm);
     multDimApplyPrune(m_43, dm, Column, false);
+    m_43.PrintInfo();
     double t10_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -244,6 +258,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t11_start = MPI_Wtime();
     diagonalizeV(m_65, dm, Column);
     multDimApplyPrune(m_54, dm, Row, false);
+    m_54.PrintInfo();
     double t11_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -258,6 +273,7 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t12_start = MPI_Wtime();
     diagonalizeV(m_54, dm, Column);
     multDimApplyPrune(m_43, dm, Row, false);
+    m_43.PrintInfo();
     double t12_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -272,14 +288,13 @@ void lubm10240_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t13_start = MPI_Wtime();
     diagonalizeV(m_43, dm, Column);
     multDimApplyPrune(m_30, dm, Row, false);
+    m_30.PrintInfo();
     double t13_end = MPI_Wtime();
 
     if (myrank == 0) {
         cout << "step 13 (Total) : " << (t13_end - t13_start) << " s" << endl;
         cout << "---------------------------------------------------------------" << endl;
     }
-
-    // printReducedInfo(m_30);
 
     double resgen_start = MPI_Wtime();
     resgen_l1(m_30, m_43, m_24, m_54, m_15, m_65);
@@ -334,7 +349,7 @@ void resgen_l2(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
     send_local_results(commGrid, indj.size() / 3);
 }
 
-void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -362,6 +377,7 @@ void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_10, r_10, Column, true);
+    m_10.PrintInfo();
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -376,6 +392,7 @@ void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t2_start = MPI_Wtime();
     diagonalizeV(m_10, dm, Row, 9);
     multDimApplyPrune(m_21, dm, Column, true);
+    m_21.PrintInfo();
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -390,14 +407,13 @@ void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t3_start = MPI_Wtime();
     diagonalizeV(m_21, dm, Column);
     multDimApplyPrune(m_10, dm, Row, false);
+    m_10.PrintInfo();
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
         cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl;
         cout << "---------------------------------------------------------------" << endl;
     }
-
-    // printReducedInfo(m_10);
 
     double resgen_start = MPI_Wtime();
     resgen_l2(m_10, m_21);
@@ -415,7 +431,7 @@ void lubm10240_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
 }
 
-void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -445,6 +461,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_30, r_30, Column, true);
+    m_30.PrintInfo();
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -459,6 +476,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t2_start = MPI_Wtime();
     diagonalizeV(m_30, dm, Row, 12);
     multDimApplyPrune(m_43, dm, Column, true);
+    m_43.PrintInfo();
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -473,6 +491,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t3_start = MPI_Wtime();
     diagonalizeV(m_43, dm, Row, 17);
     multDimApplyPrune(m_24, dm, Column, true);
+    m_24.PrintInfo();
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -486,6 +505,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t4_start = MPI_Wtime();
     multDimApplyPrune(m_24, l_24, Row, false);
+    m_24.PrintInfo();
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -500,6 +520,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t5_start = MPI_Wtime();
     diagonalizeV(m_24, dm, Column, 3);
     multDimApplyPrune(m_54, dm, Column, true);
+    m_54.PrintInfo();
     double t5_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -514,6 +535,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t6_start = MPI_Wtime();
     diagonalizeV(m_54, dm, Row, 17);
     multDimApplyPrune(m_15, dm, Column, true);
+    m_15.PrintInfo();
     double t6_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -527,6 +549,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t7_start = MPI_Wtime();
     multDimApplyPrune(m_15, l_15, Row, false);
+    m_15.PrintInfo();
     double t7_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -541,6 +564,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t8_start = MPI_Wtime();
     diagonalizeV(m_15, dm, Column, 14);
     multDimApplyPrune(m_65, dm, Column, true);
+    m_65.PrintInfo();
     double t8_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -555,6 +579,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t9_start = MPI_Wtime();
     diagonalizeV(m_43, dm, Column);
     multDimApplyPrune(m_65, dm, Row, false);
+    m_65.PrintInfo();
     double t9_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -569,6 +594,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t10_start = MPI_Wtime();
     diagonalizeV(m_65, dm);
     multDimApplyPrune(m_43, dm, Column, false);
+    m_43.PrintInfo();
     double t10_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -583,6 +609,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t11_start = MPI_Wtime();
     diagonalizeV(m_65, dm, Column);
     multDimApplyPrune(m_54, dm, Row, false);
+    m_54.PrintInfo();
     double t11_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -597,6 +624,7 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t12_start = MPI_Wtime();
     diagonalizeV(m_54, dm, Column);
     multDimApplyPrune(m_43, dm, Row, false);
+    m_43.PrintInfo();
     double t12_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -611,14 +639,13 @@ void lubm10240_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t13_start = MPI_Wtime();
     diagonalizeV(m_43, dm, Column);
     multDimApplyPrune(m_30, dm, Row, false);
+    m_30.PrintInfo();
     double t13_end = MPI_Wtime();
 
     if (myrank == 0) {
         cout << "step 13 (Total) : " << (t13_end - t13_start) << " s" << endl;
         cout << "---------------------------------------------------------------" << endl;
     }
-
-    // printReducedInfo(m_30);
 
     double resgen_start = MPI_Wtime();
     if (myrank == 0) {
@@ -673,6 +700,7 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
     m_52.FreeMemory();
 
     local_join(commGrid, indl, indr, 2, 2, 1, 1, order1, indj);
+    send_local_results(commGrid, indj.size() / 3);
     indl = indj;
 
     get_local_indices(m_42, indr);
@@ -680,6 +708,7 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
     m_42.FreeMemory();
 
     local_join(commGrid, indl, indr, 3, 2, 1, 1, order2, indj);
+    send_local_results(commGrid, indj.size() / 4);
     indl = indj;
 
     get_local_indices(m_32, indr);
@@ -687,6 +716,7 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
     m_32.FreeMemory();
 
     local_join(commGrid, indl, indr, 4, 2, 1, 1, order3, indj);
+    send_local_results(commGrid, indj.size() / 5);
     indl = indj;
 
     get_local_indices(m_12, indr);
@@ -698,7 +728,7 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
     send_local_results(commGrid, indj.size() / 6);
 }
 
-void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -727,6 +757,7 @@ void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_20, r_20, Column, true);
+    m_20.PrintInfo();
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -741,6 +772,7 @@ void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t2_start = MPI_Wtime();
     diagonalizeV(m_20, dm, Row, 17);
     multDimApplyPrune(m_12, dm, Column, true);
+    m_12.PrintInfo();
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -754,6 +786,7 @@ void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t3_start = MPI_Wtime();
     multDimApplyPrune(m_12, l_12, Row, false);
+    m_12.PrintInfo();
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -768,6 +801,7 @@ void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t4_start = MPI_Wtime();
     diagonalizeV(m_12, dm, Column, 9);
     multDimApplyPrune(m_32, dm, Column, true);
+    m_32.PrintInfo();
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -782,6 +816,7 @@ void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t5_start = MPI_Wtime();
     diagonalizeV(m_32, dm, Column, 8);
     multDimApplyPrune(m_42, dm, Column, true);
+    m_42.PrintInfo();
     double t5_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -796,6 +831,7 @@ void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t6_start = MPI_Wtime();
     diagonalizeV(m_42, dm, Column, 2);
     multDimApplyPrune(m_52, dm, Column, true);
+    m_52.PrintInfo();
     double t6_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -810,14 +846,13 @@ void lubm10240_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t7_start = MPI_Wtime();
     diagonalizeV(m_52, dm, Column);
     multDimApplyPrune(m_20, dm, Row, true);
+    m_20.PrintInfo();
     double t7_end = MPI_Wtime();
 
     if (myrank == 0) {
         cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl;
         cout << "---------------------------------------------------------------" << endl;
     }
-
-    // printReducedInfo(m_20);
 
     double resgen_start = MPI_Wtime();
     resgen_l4(m_20, m_52, m_42, m_32, m_12);
@@ -871,7 +906,7 @@ void resgen_l5(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_12) {
     send_local_results(commGrid, indj.size() / 3);
 }
 
-void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -900,6 +935,7 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_20, r_20, Column, true);
+    m_20.PrintInfo();
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -914,6 +950,7 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t2_start = MPI_Wtime();
     diagonalizeV(m_20, dm, Row, 17);
     multDimApplyPrune(m_12, dm, Column, true);
+    m_12.PrintInfo();
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -927,6 +964,7 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t3_start = MPI_Wtime();
     multDimApplyPrune(m_12, l_12, Row, false);
+    m_12.PrintInfo();
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -941,14 +979,13 @@ void lubm10240_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t4_start = MPI_Wtime();
     diagonalizeV(m_12, dm, Column);
     multDimApplyPrune(m_20, dm, Row, true);
+    m_20.PrintInfo();
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
         cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl;
         cout << "---------------------------------------------------------------" << endl;
     }
-
-    // printReducedInfo(m_20);
 
     double resgen_start = MPI_Wtime();
     resgen_l5(m_20, m_12);
@@ -998,6 +1035,7 @@ void resgen_l6(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_D
     m_43.FreeMemory();
 
     local_join(commGrid, indl, indr, 2, 2, 1, 1, order1, indj);
+    send_local_results(commGrid, indj.size() / 3);
     local_redistribution(m_14, indj, 3, 2, indl);
 
     get_local_indices(m_24, indr);
@@ -1005,6 +1043,7 @@ void resgen_l6(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_D
     m_24.FreeMemory();
 
     local_join(commGrid, indl, indr, 3, 2, 2, 1, order2, indj);
+    send_local_results(commGrid, indj.size() / 4);
     indl = indj;
 
     get_local_indices(m_14, indr);
@@ -1016,7 +1055,7 @@ void resgen_l6(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_D
     send_local_results(commGrid, indj.size() / 5);
 }
 
-void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -1047,6 +1086,7 @@ void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_30, r_30, Column, true);
+    m_30.PrintInfo();
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1061,6 +1101,7 @@ void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t2_start = MPI_Wtime();
     diagonalizeV(m_30, dm, Row, 7);
     multDimApplyPrune(m_43, dm, Column, true);
+    m_43.PrintInfo();
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1075,6 +1116,7 @@ void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t3_start = MPI_Wtime();
     diagonalizeV(m_43, dm, Row, 3);
     multDimApplyPrune(m_14, dm, Column, true);
+    m_14.PrintInfo();
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1088,6 +1130,7 @@ void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t4_start = MPI_Wtime();
     multDimApplyPrune(m_14, l_14, Row, false);
+    m_14.PrintInfo();
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1102,6 +1145,7 @@ void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t5_start = MPI_Wtime();
     diagonalizeV(m_14, dm, Column, 17);
     multDimApplyPrune(m_24, dm, Column, true);
+    m_24.PrintInfo();
     double t5_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1115,6 +1159,7 @@ void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t6_start = MPI_Wtime();
     multDimApplyPrune(m_24, l_24, Row, false);
+    m_24.PrintInfo();
     double t6_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1129,6 +1174,7 @@ void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t7_start = MPI_Wtime();
     diagonalizeV(m_24, dm, Column);
     multDimApplyPrune(m_43, dm, Row, true);
+    m_43.PrintInfo();
     double t7_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1143,14 +1189,13 @@ void lubm10240_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t8_start = MPI_Wtime();
     diagonalizeV(m_43, dm, Column);
     multDimApplyPrune(m_30, dm, Row, true);
+    m_30.PrintInfo();
     double t8_end = MPI_Wtime();
 
     if (myrank == 0) {
         cout << "step 8 (Total) : " << (t8_end - t8_start) << " s" << endl;
         cout << "---------------------------------------------------------------" << endl;
     }
-
-    // printReducedInfo(m_30);
 
     double resgen_start = MPI_Wtime();
     resgen_l6(m_30, m_43, m_14, m_24);
@@ -1202,6 +1247,7 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     m_35.FreeMemory();
 
     local_join(commGrid, indl, indr, 2, 2, 1, 1, order1, indj);
+    send_local_results(commGrid, indj.size() / 3);
     local_redistribution(m_43, indj, 3, 1, indl);
 
     get_local_indices(m_43, indr);
@@ -1209,6 +1255,7 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     m_43.FreeMemory();
 
     local_join(commGrid, indl, indr, 3, 2, 1, 1, order2, indj);
+    send_local_results(commGrid, indj.size() / 4);
     local_redistribution(m_64, indj, 4, 2, indl);
 
     get_local_indices(m_64, indr);
@@ -1216,6 +1263,7 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     m_64.FreeMemory();
 
     local_filter(commGrid, indl, indr, 4, 2, 2, 3, 1, 0, order3, indj);
+    send_local_results(commGrid, indj.size() / 4);
     indl = indj;
 
     get_local_indices(m_24, indr);
@@ -1223,6 +1271,7 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     m_64.FreeMemory();
 
     local_join(commGrid, indl, indr, 4, 2, 2, 1, order4, indj);
+    send_local_results(commGrid, indj.size() / 5);
     local_redistribution(m_13, indj, 5, 2, indl);
 
     get_local_indices(m_13, indr);
@@ -1234,7 +1283,7 @@ void resgen_l7(PSpMat::MPI_DCCols &m_50, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     send_local_results(commGrid, indj.size() / 6);
 }
 
-void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
+void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -1265,6 +1314,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t1_start = MPI_Wtime();
     multDimApplyPrune(m_50, r_50, Column, true);
+    m_50.PrintInfo();
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1279,6 +1329,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t2_start = MPI_Wtime();
     diagonalizeV(m_50, dm, Row, 18);
     multDimApplyPrune(m_35, dm, Column, true);
+    m_35.PrintInfo();
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1293,6 +1344,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t3_start = MPI_Wtime();
     diagonalizeV(m_35, dm, Row, 17);
     multDimApplyPrune(m_13, dm, Column, true);
+    m_13.PrintInfo();
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1306,6 +1358,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t4_start = MPI_Wtime();
     multDimApplyPrune(m_13, l_13, Row, false);
+    m_13.PrintInfo();
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1320,6 +1373,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t5_start = MPI_Wtime();
     diagonalizeV(m_13, dm, Column, 4);
     multDimApplyPrune(m_43, dm, Column, true);
+    m_43.PrintInfo();
     double t5_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1334,6 +1388,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t6_start = MPI_Wtime();
     diagonalizeV(m_43, dm, Row, 17);
     multDimApplyPrune(m_24, dm, Column, true);
+    m_24.PrintInfo();
     double t6_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1347,6 +1402,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     }
     double t7_start = MPI_Wtime();
     multDimApplyPrune(m_24, l_24, Row, false);
+    m_24.PrintInfo();
     double t7_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1361,6 +1417,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t8_start = MPI_Wtime();
     diagonalizeV(m_24, dm, Column, 5);
     multDimApplyPrune(m_64, dm, Column, true);
+    m_64.PrintInfo();
     double t8_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1375,6 +1432,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t9_start = MPI_Wtime();
     diagonalizeV(m_35, dm, Column);
     multDimApplyPrune(m_64, dm, Row, false);
+    m_64.PrintInfo();
     double t9_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1389,6 +1447,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t10_start = MPI_Wtime();
     diagonalizeV(m_64, dm);
     multDimApplyPrune(m_35, dm, Column, false);
+    m_35.PrintInfo();
     double t10_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1403,6 +1462,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t11_start = MPI_Wtime();
     diagonalizeV(m_64, dm, Column);
     multDimApplyPrune(m_43, dm, Row, false);
+    m_43.PrintInfo();
     double t11_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1417,6 +1477,7 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t12_start = MPI_Wtime();
     diagonalizeV(m_43, dm, Column);
     multDimApplyPrune(m_35, dm, Row, false);
+    m_35.PrintInfo();
     double t12_end = MPI_Wtime();
 
     if (myrank == 0) {
@@ -1431,14 +1492,13 @@ void lubm10240_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG) {
     double t13_start = MPI_Wtime();
     diagonalizeV(m_35, dm, Column);
     multDimApplyPrune(m_50, dm, Row, false);
+    m_50.PrintInfo();
     double t13_end = MPI_Wtime();
 
     if (myrank == 0) {
         cout << "step 13 (Total) : " << (t13_end - t13_start) << " s" << endl;
         cout << "---------------------------------------------------------------" << endl;
     }
-
-    // printReducedInfo(m_50);
 
     double resgen_start = MPI_Wtime();
     resgen_l7(m_50, m_35, m_43, m_64, m_24, m_13);
@@ -1478,9 +1538,9 @@ int main(int argc, char *argv[]) {
     comp[13] = compInt5D;
     comp[14] = compInt5E;
 
-    if (argc < 1) {
+    if (argc < 2) {
         if (myrank == 0) {
-            cout << "Usage: ./encoded_lubm1T" << endl;
+            cout << "Usage: ./encoded_lubm1T file" << endl;
         }
         MPI_Finalize();
         return -1;
@@ -1495,13 +1555,13 @@ int main(int argc, char *argv[]) {
             cout << "Load Matrix" << endl;
             cout << "###############################################################" << endl;
             cout << "---------------------------------------------------------------" << endl;
-            cout << "starting reading lubm1T data......" << endl;
+            cout << "starting reading lubm data......" << endl;
         }
 
         PSpMat::MPI_DCCols G(MPI_COMM_WORLD);
         auto commWorld = G.getcommgrid();
 
-        string Mname("/scratch/cheny0l/trill_exp/data_striped_144/lubm1T/paracoder_lubm1T.nt");
+        string Mname(argv[1]);
 
         double t1 = MPI_Wtime();
         G.ParallelReadMM(Mname, true, selectSecond);
@@ -1527,13 +1587,20 @@ int main(int argc, char *argv[]) {
 
         // run 7 queries 5 times each
        for (int time = 1; time <= 5; time++) {
-            lubm10240_l1(G, tG);
-            lubm10240_l2(G, tG);
-            lubm10240_l3(G, tG);
-            lubm10240_l4(G, tG);
-            lubm10240_l5(G, tG);
-            lubm10240_l6(G, tG);
-            lubm10240_l7(G, tG);
+           try {    lubm_l1(G, tG);    }
+           catch (...) {    if (myrank == 0) {cout << "query 1 failed at iteration " << time; }     }
+           try {    lubm_l2(G, tG);    }
+           catch (...) {    if (myrank == 0) {cout << "query 2 failed at iteration " << time; }     }
+           try {    lubm_l3(G, tG);    }
+           catch (...) {    if (myrank == 0) {cout << "query 3 failed at iteration " << time; }     }
+           try {    lubm_l4(G, tG);    }
+           catch (...) {    if (myrank == 0) {cout << "query 4 failed at iteration " << time; }     }
+           try {    lubm_l5(G, tG);    }
+           catch (...) {    if (myrank == 0) {cout << "query 5 failed at iteration " << time; }     }
+           try {    lubm_l6(G, tG);    }
+           catch (...) {    if (myrank == 0) {cout << "query 6 failed at iteration " << time; }     }
+           try {    lubm_l7(G, tG);    }
+           catch (...) {    if (myrank == 0) {cout << "query 7 failed at iteration " << time; }     }
        }
     }
 
