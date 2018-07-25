@@ -14,8 +14,8 @@
 using namespace std;
 using namespace combblas;
 
-#define IndexType uint32_t
-#define ElementType uint16_t
+#define IndexType uint64_t
+#define ElementType uint8_t
 
 class PSpMat {
 public:
@@ -261,16 +261,13 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
         } else {    A.DimApply(dim, v, std::multiplies<ElementType>());     }
     double t2 = MPI_Wtime();
 
-    if (myrank == 0) {
-        total_dim_apply_time += (t2 - t1);
-        cout << "\tdim-apply takes: " << (t2 - t1) << " s" << endl;
-    }
-
     double t3 = MPI_Wtime();
     A.Prune(isZero);
     double t4 = MPI_Wtime();
 
     if (myrank == 0) {
+        total_dim_apply_time += (t2 - t1);
+        cout << "\tdim-apply takes: " << (t2 - t1) << " s" << endl;
         total_prune_time += (t4 - t3);
         cout << "\tprune takes: " << (t4 - t3) << " s" << endl;
     }
@@ -388,10 +385,6 @@ void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, In
 void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_indices) {
     double t1 = MPI_Wtime();
 
-    int nprocs, myrank;
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
     int colneighs = commGrid->GetGridRows();
     int colrank = commGrid->GetRankInProcCol();
 
@@ -424,7 +417,7 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
 
     double t2 = MPI_Wtime();
     total_send_local_indices_time += (t2 - t1);
-    if (myrank == 0) {
+    if (commGrid->GetRank() == 0) {
         cout << "\tsend local indices takes : " << (t2 - t1) << " s" << endl;
     }
 }
@@ -438,7 +431,7 @@ void put_tuple(vector<IndexType> &res, vector<IndexType> &source1, vector<IndexT
     }
 }
 
-// local join with special tables
+// local join with special tables, only processors in first row work
 void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
                 int pair_size2, int key1, int key2, vector<IndexType> &order, vector<IndexType> &res) {
     double t1 = MPI_Wtime();
@@ -446,12 +439,7 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
     res.clear();
     res.shrink_to_fit();
 
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    int colrank = commGrid->GetRankInProcCol();
-
-    if (colrank == 0) {
+    if (commGrid->GetRankInProcCol() == 0) {        // first row processors
         IndexType i1 = 0, i2 = 0;
         IndexType sz1 = indices1.size(), sz2 = indices2.size();
 
@@ -483,7 +471,7 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
 
     double t2 = MPI_Wtime();
     total_local_join_time += (t2 - t1);
-    if (myrank == 0) {
+    if (commGrid->GetRank() == 0) {
         cout << "\tlocal join takes : " << (t2 - t1) << " s\n" << endl;
     }
 }
@@ -496,12 +484,7 @@ void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, ve
     res.clear();
     res.shrink_to_fit();
 
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    int colrank = commGrid->GetRankInProcCol();
-
-    if (colrank == 0) {
+    if (commGrid->GetRankInProcCol() == 0) {
         IndexType i1 = 0, i2 = 0;
         IndexType sz1 = indices1.size(), sz2 = indices2.size();
 
@@ -539,7 +522,7 @@ void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, ve
 
     double t2 = MPI_Wtime();
     total_local_filter_time += (t2 - t1);
-    if (myrank == 0) {
+    if (commGrid->GetRank() == 0) {
         cout << "\tlocal filter takes : " << (t2 - t1) << " s\n" << endl;
     }
 }
@@ -561,7 +544,6 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     int rowneighs = commGrid->GetGridCols();
     IndexType coffset[rowneighs + 1];
 
-    int colrank = commGrid->GetRankInProcCol();
     int rowrank = commGrid->GetRankInProcRow();
 
     IndexType *locncols = new IndexType[rowneighs];  // number of rows is calculated by a reduction among the processor column
@@ -600,7 +582,7 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     displs[0] = 0;
 
     // only processors in first row enter here
-    if (colrank == 0) {
+    if (commGrid->GetRankInProcCol() == 0) {
         recvcount[myrank] = new int[rowneighs];
 
         // each process gathers recvcount from other processes
@@ -632,13 +614,10 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 }
 
 void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
     int rowneighs = commGrid->GetGridRows();
 
     // process in first row
-    if (myrank < rowneighs) {
+    if (commGrid->GetRank() < rowneighs) {
         if (commGrid->GetRank() != 0) {     // not myrank 0, send local result
             MPI_Send(&res_size, 1, MPIType<IndexType>(), 0, 0, commGrid->GetRowWorld());
         } else {                            // myrank 0, receive everything and output

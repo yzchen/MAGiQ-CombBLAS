@@ -150,7 +150,7 @@ int compInt5E(const void *elem1, const void *elem2) {
 int (*comp[15])(const void *, const void *);
 
 // for constructing diag matrix
-static FullyDistVec<IndexType, ElementType> *nonisov;
+static FullyDistVec<IndexType, IndexType> *nonisov;
 
 bool isZero(ElementType t) {    return t == 0;  }
 
@@ -195,14 +195,15 @@ void permute(PSpMat::MPI_DCCols &G) {
 
     // permute G
     double t_perm1 = MPI_Wtime();
-    FullyDistVec<IndexType, ElementType> *ColSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
-    FullyDistVec<IndexType, ElementType> *RowSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
-    G.Reduce(*ColSums, Column, plus<ElementType>(), static_cast<ElementType>(0));
-    G.Reduce(*RowSums, Row, plus<ElementType>(), static_cast<ElementType>(0));
-    ColSums->EWiseApply(*RowSums, plus<ElementType>());
+    // FullyDistVec<IndexType, ElementType> *ColSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
+    // FullyDistVec<IndexType, ElementType> *RowSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
+    // G.Reduce(*ColSums, Column, plus<ElementType>(), static_cast<ElementType>(0));
+    // G.Reduce(*RowSums, Row, plus<ElementType>(), static_cast<ElementType>(0));
+    // ColSums->EWiseApply(*RowSums, plus<ElementType>());
 
-    nonisov = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
-    *nonisov = ColSums->FindInds(bind2nd(greater<ElementType>(), static_cast<ElementType>(0)));
+    nonisov = new FullyDistVec<IndexType, IndexType>(G.getcommgrid());
+    nonisov->iota(G.getnrow(), 0);
+    // *nonisov = ColSums->FindInds(bind2nd(greater<ElementType>(), static_cast<ElementType>(0)));
 
     nonisov->RandPerm();
 
@@ -214,6 +215,14 @@ void permute(PSpMat::MPI_DCCols &G) {
         cout << "\tpermutation takes : " << (t_perm2 - t_perm1) << " s" << endl;
         cout << "\timbalance of permuted G : " << impG << endl;
     }
+}
+
+// reset all time reslated to query execution
+void clear_query_time() {
+    total_reduce_time = 0.0;
+    total_prune_time = 0.0;
+    total_mmul_scalar_time = 0.0;
+    total_dim_apply_time = 0.0;
 }
 
 PSpMat::MPI_DCCols transpose(const PSpMat::MPI_DCCols &M) {
@@ -281,6 +290,16 @@ void write_local_vector(vector<IndexType> &recs, string name, int step) {
             outFile << recs[i + ii] + 1 << "\t";
         outFile << "\n";
     }
+}
+
+// reset all time related to result generation
+void clear_result_time() {
+    total_get_local_indices_time = 0.0;
+    total_send_local_indices_time = 0.0;
+    total_local_join_time = 0.0;
+    total_local_filter_time = 0.0;
+    total_redistribution_time = 0.0;
+    total_send_result_time = 0.0;
 }
 
 // M should have same rows and cols
