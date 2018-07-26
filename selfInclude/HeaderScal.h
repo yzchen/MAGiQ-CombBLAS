@@ -1,15 +1,15 @@
 //
-// Created by cheny0l on 10/07/18.
+// Created by cheny0l on 24/07/18.
 //
 
-#ifndef COMBINATORIAL_BLAS_HEADER10240_H
-#define COMBINATORIAL_BLAS_HEADER10240_H
+#ifndef COMBINATORIAL_BLAS_HEADER1T_H
+#define COMBINATORIAL_BLAS_HEADER1T_H
 
 #include <iostream>
 #include <functional>
 #include <algorithm>
 #include <sstream>
-#include "CombBLAS.h"
+#include "../include/CombBLAS.h"
 
 using namespace std;
 using namespace combblas;
@@ -35,7 +35,6 @@ double total_send_local_indices_time = 0.0;
 double total_local_join_time = 0.0;
 double total_local_filter_time = 0.0;
 double total_redistribution_time = 0.0;
-double total_send_result_time = 0.0;
 
 // comparasion struct for qsort in result generation
 typedef struct {
@@ -162,60 +161,6 @@ ElementType rdf_multiply(ElementType a, ElementType b) {
 // handle duplicate in original loaded data
 ElementType selectSecond(ElementType a, ElementType b) { return b; }
 
-// for large dataset(i.e. lubm1T), avoid calling this function, because of overflow in M.Reduce
-void printReducedInfo(PSpMat::MPI_DCCols &M) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    double t1 = MPI_Wtime();
-
-    IndexType nnz1 = M.getnnz();
-
-    FullyDistVec<IndexType, ElementType> rowsums1(M.getcommgrid());
-    M.Reduce(rowsums1, Row, std::plus<ElementType>(), static_cast<ElementType>(0));
-    FullyDistVec<IndexType, ElementType> colsums1(M.getcommgrid());
-    M.Reduce(colsums1, Column, std::plus<ElementType>(), static_cast<ElementType>(0));
-    IndexType nnzrows1 = rowsums1.Count(isNotZero);
-    IndexType nnzcols1 = colsums1.Count(isNotZero);
-
-    double t2 = MPI_Wtime();
-
-    float imM = M.LoadImbalance();
-    if (myrank == 0) {
-        cout << nnz1 << " [ " << nnzrows1 << ", " << nnzcols1 << " ]" << endl;
-        cout << "\tenum takes " << (t2 - t1) << " s" << endl;
-        cout << "\timbalance : " << imM << endl;
-        cout << "---------------------------------------------------------------" << endl;
-    }
-}
-
-// not need for new dataset, already nicely permuted
-void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    // permute G
-    double t_perm1 = MPI_Wtime();
-    FullyDistVec<IndexType, ElementType> *ColSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
-    FullyDistVec<IndexType, ElementType> *RowSums = new FullyDistVec<IndexType, ElementType>(G.getcommgrid());
-    G.Reduce(*ColSums, Column, plus<ElementType>(), static_cast<ElementType>(0));
-    G.Reduce(*RowSums, Row, plus<ElementType>(), static_cast<ElementType>(0));
-    ColSums->EWiseApply(*RowSums, plus<ElementType>());
-
-    nonisov = ColSums->FindInds(bind2nd(greater<ElementType>(), static_cast<ElementType>(0)));
-
-    nonisov.RandPerm();
-
-    G(nonisov, nonisov, true);
-    double t_perm2 = MPI_Wtime();
-
-    float impG = G.LoadImbalance();
-    if (myrank == 0) {
-        cout << "\tpermutation takes : " << (t_perm2 - t_perm1) << " s" << endl;
-        cout << "\timbalance of permuted G : " << impG << endl;
-    }
-}
-
 PSpMat::MPI_DCCols transpose(const PSpMat::MPI_DCCols &M) {
     PSpMat::MPI_DCCols N(M);
     N.Transpose();
@@ -228,6 +173,27 @@ void clear_query_time() {
     total_prune_time = 0.0;
     total_mmul_scalar_time = 0.0;
     total_dim_apply_time = 0.0;
+}
+
+void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    // permute G
+    double t_perm1 = MPI_Wtime();
+
+    nonisov.iota(G.getnrow(), 0);
+
+    nonisov.RandPerm();
+
+    G(nonisov, nonisov, true);
+    double t_perm2 = MPI_Wtime();
+
+    float impG = G.LoadImbalance();
+    if (myrank == 0) {
+        cout << "\tpermutation takes : " << (t_perm2 - t_perm1) << " s" << endl;
+        cout << "\timbalance of permuted G : " << impG << endl;
+    }
 }
 
 // diagonalize based on Row/Column, then scale the FullyDistVec with scalar
@@ -258,7 +224,7 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
 
     double t1 = MPI_Wtime();
     if (isRDF) {    A.DimApply(dim, v, rdf_multiply);
-        } else {    A.DimApply(dim, v, std::multiplies<ElementType>());     }
+    } else {    A.DimApply(dim, v, std::multiplies<ElementType>());     }
     double t2 = MPI_Wtime();
 
     double t3 = MPI_Wtime();
@@ -273,22 +239,6 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
     }
 }
 
-// no need for super computer, for locally testing
-void write_local_vector(vector<IndexType> &recs, string name, IndexType step) {
-    int myrank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-    stringstream os;
-    os << "test/" << name << "/" << myrank << "_3.txt";
-
-    std::ofstream outFile(os.str());
-    for (IndexType i = 0; i < recs.size(); i += step) {
-        for (IndexType ii = 0; ii < step; ii++)
-            outFile << recs[i + ii] + 1 << "\t";
-        outFile << "\n";
-    }
-}
-
 // reset all time related to result generation
 void clear_result_time() {
     total_get_local_indices_time = 0.0;
@@ -296,7 +246,6 @@ void clear_result_time() {
     total_local_join_time = 0.0;
     total_local_filter_time = 0.0;
     total_redistribution_time = 0.0;
-    total_send_result_time = 0.0;
 }
 
 // M should have same rows and cols
@@ -356,7 +305,7 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
 // r1, r2 are not reachable
 // first should have enough size to contain the sorted data
 void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, IndexType l1, IndexType l2, IndexType r1, IndexType r2, int pair_size1,
-                    int pair_size2, int key1, int key2) {
+                         int pair_size2, int key1, int key2) {
     IndexType i = l1, j = l2;
 
     vector<IndexType> res;
@@ -422,18 +371,20 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
     }
 }
 
-void put_tuple(vector<IndexType> &res, vector<IndexType> &source1, vector<IndexType> &source2, 
-                    IndexType index1, IndexType index2, vector<IndexType> &order) {
+void put_tuple(vector<IndexType> &res, vector<IndexType> &source1, vector<IndexType> &source2,
+               IndexType index1, IndexType index2, vector<IndexType> &order) {
     for (IndexType oi = 0; oi < order.size(); oi += 2) {
         // order[oi] == 0 or 1, other choices will be treated as 1
         if (order[oi] == 0) {   res.push_back(source1[index1 + order[oi + 1]]);
-                    } else  {   res.push_back(source2[index2 + order[oi + 1]]); }
+        } else  {   res.push_back(source2[index2 + order[oi + 1]]); }
     }
 }
 
 // local join with special tables, only processors in first row work
 void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
                 int pair_size2, int key1, int key2, vector<IndexType> &order, vector<IndexType> &res) {
+
+    system("free -h | grep Mem >> mem_log");
     double t1 = MPI_Wtime();
 
     res.clear();
@@ -478,7 +429,7 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
 
 // key11 and key21 should be main keys, tables should be sorted based on them
 void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
-             int pair_size2, int key11, int key12, int key21, int key22, vector<IndexType> &order, vector<IndexType> &res) {
+                  int pair_size2, int key11, int key12, int key21, int key22, vector<IndexType> &order, vector<IndexType> &res) {
     double t1 = MPI_Wtime();
 
     res.clear();
@@ -636,4 +587,4 @@ void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
     }
 }
 
-#endif //COMBINATORIAL_BLAS_HEADER10240_H
+#endif //COMBINATORIAL_BLAS_HEADER1T_H
