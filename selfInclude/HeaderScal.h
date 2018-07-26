@@ -582,6 +582,7 @@ void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
             cout << "total send local indices time : " << total_send_local_indices_time << " s" << endl;
             cout << "total local join time : " << total_local_join_time << " s" << endl;
             cout << "total local filter time : " << total_local_filter_time << " s" << endl;
+            cout << "total local redistribution time : " << total_redistribution_time << " s" << endl;
             cout << "---------------------------------------------------------------" << endl;
         }
     }
