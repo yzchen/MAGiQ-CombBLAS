@@ -309,21 +309,6 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     resgen_l1(m_40, m_34, m_23, m_53, m_15, m_65);
     double resgen_end = MPI_Wtime();
 
-    // debug result generation time
-            double resgen_time = resgen_end - resgen_start;
-            int nprocs;
-            MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-            vector<double> all_times(nprocs);
-            MPI_Gather(&resgen_time, 1, MPI_DOUBLE, all_times.data(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-            if (myrank == 0) {
-                cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-                for (int i = 0; i < all_times.size(); ++i) {
-                    cout << "time for process " << i << " : " << all_times[i] << "\n";
-                }
-                cout << "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-            }
-    // debug result generation time
-
     // end count total time
     double total_computing_2 = MPI_Wtime();
 

@@ -150,8 +150,6 @@ int (*comp[15])(const void *, const void *);
 
 bool isZero(ElementType t) { return t == 0; }
 
-bool isNotZero(ElementType t) { return t != 0; }
-
 // special semiring for dimApply
 ElementType rdf_multiply(ElementType a, ElementType b) {
     if (a != 0 && b != 0 && a == b) {   return static_cast<ElementType>(1);
@@ -256,7 +254,6 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
     assert(M.getnrow() == M.getncol());
 
     indices.clear();
-    indices.shrink_to_fit();
 
     auto commGrid = M.getcommgrid();
     int colrank = commGrid->GetRankInProcCol();
@@ -281,6 +278,7 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
     // if there is nothing in current process, then d0 will be NULL pointer
     auto d0 = M.seq().GetInternal();
     if (d0 != NULL) {
+        indices.reserve(d0->nz);
         IndexType rind = 0;
         for (IndexType cind = 0; cind < d0->nzc; ++cind) {
             IndexType times = d0->cp[cind + 1] - d0->cp[cind];
@@ -383,8 +381,6 @@ void put_tuple(vector<IndexType> &res, vector<IndexType> &source1, vector<IndexT
 // local join with special tables, only processors in first row work
 void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
                 int pair_size2, int key1, int key2, vector<IndexType> &order, vector<IndexType> &res) {
-
-    system("free -h | grep Mem >> mem_log");
     double t1 = MPI_Wtime();
 
     res.clear();
@@ -433,7 +429,7 @@ void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, ve
     double t1 = MPI_Wtime();
 
     res.clear();
-    res.shrink_to_fit();
+    res.reserve(2000);      // 2000 is a magic number, just to somehow reserve memory
 
     if (commGrid->GetRankInProcCol() == 0) {
         IndexType i1 = 0, i2 = 0;
@@ -508,7 +504,9 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     coffset[rowneighs] = UINT32_MAX;
 
     // sort based on pivot
+    double t1_sort_start = MPI_Wtime();
     qsort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
+    double t1_sort_end = MPI_Wtime();
 
     vector<int> lens;
     lens.reserve(rowneighs + 1);
@@ -555,11 +553,15 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     }
 
     // sort merged vector
+    double t2_sort_start = MPI_Wtime();
     qsort(res.data(), res.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
+    double t2_sort_end = MPI_Wtime();
 
     double t2 = MPI_Wtime();
     total_redistribution_time += (t2 - t1);
     if (myrank == 0) {
+        cout << "\t sort 1 takes : " << (t1_sort_end - t1_sort_start) << " s" << endl;
+        cout << "\t sort 2 takes : " << (t2_sort_end - t2_sort_start) << " s" << endl;
         cout << "\tlocal redistribution takes : " << (t2 - t1) << " s\n" << endl;
     }
 }
