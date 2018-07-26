@@ -16,3 +16,4 @@ TESTDATA/*
 run/*
 !run/dimApply/
 .vscode/
+magiq_run/*
