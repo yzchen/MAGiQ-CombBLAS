@@ -36,39 +36,39 @@ void resgen_l1(PSpMat::MPI_DCCols &m_40, PSpMat::MPI_DCCols &m_34, PSpMat::MPI_D
 
     get_local_indices(m_40, indl);
     send_local_indices(commGrid, indl);
-    m_40.FreeMemory();
+    // m_40.FreeMemory();
 
     get_local_indices(m_34, indr);
     send_local_indices(commGrid, indr);
-    m_34.FreeMemory();
+    // m_34.FreeMemory();
 
     local_join(commGrid, indl, indr, 2, 2, 1, 1, order1, indj);
     local_redistribution(m_53, indj, 3, 1, indl);
 
     get_local_indices(m_53, indr);
     send_local_indices(commGrid, indr);
-    m_53.FreeMemory();
+    // m_53.FreeMemory();
 
     local_join(commGrid, indl, indr, 3, 2, 1, 1, order2, indj);
     local_redistribution(m_65, indj, 4, 3, indl);
 
     get_local_indices(m_65, indr);
     send_local_indices(commGrid, indr);
-    m_65.FreeMemory();
+    // m_65.FreeMemory();
 
     local_filter(commGrid, indl, indr, 4, 2, 3, 2, 1, 0, order3, indj);
     indl = indj;
 
     get_local_indices(m_15, indr);
     send_local_indices(commGrid, indr);
-    m_15.FreeMemory();
+    // m_15.FreeMemory();
 
     local_join(commGrid, indl, indr, 4, 2, 3, 1, order4, indj);
     local_redistribution(m_23, indj, 5, 2, indl);
 
     get_local_indices(m_23, indr);
     send_local_indices(commGrid, indr);
-    m_23.FreeMemory();
+    // m_23.FreeMemory();
 
     local_join(commGrid, indl, indr, 5, 2, 2, 1, order5, indj);
     send_local_results(commGrid, indj.size() / 6);
