@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <sstream>
 #include "../include/CombBLAS.h"
+#include "../pmergesort/src/pmergesort.h"
 
 using namespace std;
 using namespace combblas;
@@ -153,7 +154,7 @@ bool isZero(ElementType t) { return t == 0; }
 // special semiring for dimApply
 ElementType rdf_multiply(ElementType a, ElementType b) {
     if (a != 0 && b != 0 && a == b) {   return static_cast<ElementType>(1);
-                            } else {    return static_cast<ElementType>(0);     }
+    } else {    return static_cast<ElementType>(0);     }
 }
 
 // handle duplicate in original loaded data
@@ -505,7 +506,8 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 
     // sort based on pivot
     double t1_sort_start = MPI_Wtime();
-    qsort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
+    symmergesort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
+//    qsort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
     double t1_sort_end = MPI_Wtime();
 
     vector<int> lens;
@@ -554,7 +556,8 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 
     // sort merged vector
     double t2_sort_start = MPI_Wtime();
-    qsort(res.data(), res.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
+    symmergesort(res.data(), res.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
+//    qsort(res.data(), res.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
     double t2_sort_end = MPI_Wtime();
 
     double t2 = MPI_Wtime();
