@@ -2447,7 +2447,7 @@ void SpParMat< IT,NT,DER >::SparseCommon(std::vector< std::vector < std::tuple<L
 	int rpid1, rpid2, rpid3, rpid4;
 	rpid1 = std::rand() % nprocs; rpid2 = std::rand() % nprocs; rpid3 = std::rand() % nprocs; rpid4 = std::rand() % nprocs;
 	if(myrank == 0 || myrank == rpid1 || myrank == rpid2 || myrank == rpid3 || myrank == rpid4  ) {
-		std::cout << "---- p" << myrank << " will receive [" << totrecv << "] non-zeros" << std::endl;
+		std::cout << "---- p" << myrank << " will receive [" << totrecv << "] non-zeros" << std::endl << std::flush;
 	}
 	
 	IT max_recv_cnt, min_recv_cnt, avg_recv_cnt;
@@ -3512,10 +3512,10 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     MPI_Bcast(&nonzeros, 1, MPIType<int64_t>(), 0, commGrid->commWorld);
 
     // Permutation vector:
-	if(myrank == 0) std::cout << "----Constructing a permutation vector of size [" << nrows << "]..." << std::endl;
+	if(myrank == 0) std::cout << "----Constructing a permutation vector of size [" << nrows << "]..." << std::endl << std::flush;
     nonisov.iota(nrows, 0);
 	nonisov.RandPerm();
-	if(myrank == 0) std::cout << "----Finished constructing the permutation vector" << std::endl;
+	if(myrank == 0) std::cout << "----Finished constructing the permutation vector" << std::endl << std::flush;
 
     // Use fseek again to go backwards two bytes and check that byte with fgetc
     struct stat st;     // get file size
@@ -3527,7 +3527,7 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     MPI_Offset fpos, end_fpos, endofheader;
     if(commGrid->GetRank() == 0)    // the offset needs to be for this rank
     {
-        std::cout << "File is " << file_size << " bytes" << std::endl;
+        std::cout << "File is " << file_size << " bytes" << std::endl << std::flush;
 	fpos = ftell(f);
 	endofheader =  fpos;
     	MPI_Bcast(&endofheader, 1, MPIType<MPI_Offset>(), 0, commGrid->commWorld);

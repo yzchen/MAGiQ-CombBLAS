@@ -30,8 +30,8 @@ void resgen_l1(PSpMat::MPI_DCCols &m_40, PSpMat::MPI_DCCols &m_34, PSpMat::MPI_D
 
     double t1_end = MPI_Wtime();
     if (myrank == 0) {
-        cout << "begin result generation ......" << endl;
-        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl;
+        cout << "begin result generation ......" << endl << flush;
+        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl << flush;
     }
 
     get_local_indices(m_40, indl);
@@ -74,11 +74,11 @@ void resgen_l1(PSpMat::MPI_DCCols &m_40, PSpMat::MPI_DCCols &m_34, PSpMat::MPI_D
     send_local_results(commGrid, indj.size() / 6);
 }
 
-void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
+void lubm_l1(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-    if(myrank == 0) {cout << "ENTERED Q1!!" << endl << flush;}
+    if(myrank == 0) {cout << "ENTERED Q1!!" << endl << flush << flush;}
 
     clear_query_time();
 
@@ -96,7 +96,7 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     FullyDistVec<IndexType, ElementType> r_40(commWorld, G.getnrow(), 0), l_23(commWorld, G.getnrow(), 0), l_15(commWorld, G.getnrow(), 0);
 
-    if(myrank == 0) {cout << "Initialized FullyDistVec in Q1!!" << endl << flush;}
+    if(myrank == 0) {cout << "Initialized FullyDistVec in Q1!!" << endl << flush << flush;}
 
     r_40.SetElement(ind1, 17);
     l_23.SetElement(ind2, 1);
@@ -107,11 +107,11 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     // ==> step 1
     if (myrank == 0) {
-        cout << "\n###############################################################" << endl;
-        cout << "Query 1" << endl;
-        cout << "###############################################################" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(4,0) = G x {1@(103594630,103594630)}*17" << endl;
+        cout << "\n###############################################################" << endl << flush;
+        cout << "Query 1" << endl << flush;
+        cout << "###############################################################" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "step 1 : m_(4,0) = G x {1@(103594630,103594630)}*17" << endl << flush;
     }
     double t1_start = MPI_Wtime();
     auto m_40(G);
@@ -120,13 +120,13 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : m_(3,4) = G x m_(4, 0).D()*12" << endl;
+        cout << "step 2 : m_(3,4) = G x m_(4, 0).D()*12" << endl << flush;
     }
     double t2_start = MPI_Wtime();
     auto m_34(G);
@@ -136,29 +136,38 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(2,3) = G.T() x m_(3,4).D()*17" << endl;
+        cout << "step 3 : m_(2,3) = G.T() x m_(3,4).D()*17" << endl << flush;
     }
     double t3_start = MPI_Wtime();
-    auto m_23(tG);
+    // auto m_23(tG);
+    // diagonalizeV(m_34, dm, Row, 17);
+    // multDimApplyPrune(m_23, dm, Column, true);
+    // m_23.PrintInfo();
+
+    // YAN : no tG at step3 in l1
+    auto m_23(G);
     diagonalizeV(m_34, dm, Row, 17);
-    multDimApplyPrune(m_23, dm, Column, true);
+    multDimApplyPrune(m_23, dm, Row, true);
+    m_23.Transpose();
     m_23.PrintInfo();
+    // YAN : no tG at step3 in l1
+
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 4
     if (myrank == 0) {
-        cout << "step 4 : m_(2,3) = {1@(139306106,139306106)} x m_(2,3)" << endl;
+        cout << "step 4 : m_(2,3) = {1@(139306106,139306106)} x m_(2,3)" << endl << flush;
     }
     double t4_start = MPI_Wtime();
     multDimApplyPrune(m_23, l_23, Row, false);
@@ -166,45 +175,63 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 5
     if (myrank == 0) {
-        cout << "step 5 : m_(5,3) = G x m_(2,3).T().D()*14" << endl;
+        cout << "step 5 : m_(5,3) = G x m_(2,3).T().D()*14" << endl << flush;
     }
     double t5_start = MPI_Wtime();
-    auto m_53(tG);
+    // auto m_53(tG);
+    // diagonalizeV(m_23, dm, Column, 14);
+    // multDimApplyPrune(m_53, dm, Column, true);
+    // m_53.PrintInfo();
+
+    // YAN : no tG at step5 in l1
+    auto m_53(G);
     diagonalizeV(m_23, dm, Column, 14);
-    multDimApplyPrune(m_53, dm, Column, true);
+    multDimApplyPrune(m_53, dm, Row, true);
+    m_53.Transpose();
     m_53.PrintInfo();
+    // YAN : no tG at step5 in l1
+
     double t5_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 5 (Total) : " << (t5_end - t5_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 5 (Total) : " << (t5_end - t5_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 6
     if (myrank == 0) {
-        cout << "step 6 : m_(1,5) = G.T() x m_(5,3).D()*17" << endl;
+        cout << "step 6 : m_(1,5) = G.T() x m_(5,3).D()*17" << endl << flush;
     }
     double t6_start = MPI_Wtime();
-    auto m_15(tG); 
+    // auto m_15(tG); 
+    // diagonalizeV(m_53, dm, Row, 17);
+    // multDimApplyPrune(m_15, dm, Column, true);
+    // m_15.PrintInfo();
+
+    // YAN : no tG at step6 in l1
+    auto m_15(G); 
     diagonalizeV(m_53, dm, Row, 17);
-    multDimApplyPrune(m_15, dm, Column, true);
+    multDimApplyPrune(m_15, dm, Row, true);
+    m_15.Transpose();
     m_15.PrintInfo();
+    // YAN : no tG at step6 in l1
+
     double t6_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 6 (Total) : " << (t6_end - t6_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 6 (Total) : " << (t6_end - t6_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 7
     if (myrank == 0) {
-        cout << "step 7 : m_(1,5) = {1@(130768016,130768016)} x m_(1,5)" << endl;
+        cout << "step 7 : m_(1,5) = {1@(130768016,130768016)} x m_(1,5)" << endl << flush;
     }
     double t7_start = MPI_Wtime();
     multDimApplyPrune(m_15, l_15, Row, false);
@@ -212,29 +239,38 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t7_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 8
     if (myrank == 0) {
-        cout << "step 8 : m_(6,5) = G.T() x m_(1,5).T().D()*3" << endl;
+        cout << "step 8 : m_(6,5) = G.T() x m_(1,5).T().D()*3" << endl << flush;
     }
     double t8_start = MPI_Wtime();
-    auto m_65(tG);
+    // auto m_65(tG);
+    // diagonalizeV(m_15, dm, Column, 3);
+    // multDimApplyPrune(m_65, dm, Column, true);
+    // m_65.PrintInfo();
+
+    // YAN : no tG at step6 in l1
+    auto m_65(G);
     diagonalizeV(m_15, dm, Column, 3);
-    multDimApplyPrune(m_65, dm, Column, true);
+    multDimApplyPrune(m_65, dm, Row, true);
+    m_65.Transpose();
     m_65.PrintInfo();
+    // YAN : no tG at step6 in l1
+
     double t8_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 8 (Total) : " << (t8_end - t8_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 8 (Total) : " << (t8_end - t8_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 9
     if (myrank == 0) {
-        cout << "step 9 : m_(6,5) = m_(3,4).T().D() x m_(6,5)" << endl;
+        cout << "step 9 : m_(6,5) = m_(3,4).T().D() x m_(6,5)" << endl << flush;
     }
     double t9_start = MPI_Wtime();
     diagonalizeV(m_34, dm, Column);
@@ -243,13 +279,13 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t9_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 9 (Total) : " << (t9_end - t9_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 9 (Total) : " << (t9_end - t9_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 10
     if (myrank == 0) {
-        cout << "step 10 : m_(3,4) = m_(3,4) x m_(6,5).D()" << endl;
+        cout << "step 10 : m_(3,4) = m_(3,4) x m_(6,5).D()" << endl << flush;
     }
     double t10_start = MPI_Wtime();
     diagonalizeV(m_65, dm, Row);
@@ -258,13 +294,13 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t10_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 10 (Total) : " << (t10_end - t10_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 10 (Total) : " << (t10_end - t10_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 11
     if (myrank == 0) {
-        cout << "step 11 : m_(5,3) = m_(6,5).T().D() x m_(5,3)" << endl;
+        cout << "step 11 : m_(5,3) = m_(6,5).T().D() x m_(5,3)" << endl << flush;
     }
     double t11_start = MPI_Wtime();
     diagonalizeV(m_65, dm, Column);
@@ -273,13 +309,13 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t11_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 11 (Total) : " << (t11_end - t11_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 11 (Total) : " << (t11_end - t11_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 12
     if (myrank == 0) {
-        cout << "step 12 : m_(3,4) = m_(5,3).T().D() x m_(3,4)" << endl;
+        cout << "step 12 : m_(3,4) = m_(5,3).T().D() x m_(3,4)" << endl << flush;
     }
     double t12_start = MPI_Wtime();
     diagonalizeV(m_53, dm, Column);
@@ -288,13 +324,13 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t12_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 12 (Total) : " << (t12_end - t12_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 12 (Total) : " << (t12_end - t12_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 13
     if (myrank == 0) {
-        cout << "step 13 : m_(4,0) = m_(3,4).T().D() x m_(4,0)" << endl;
+        cout << "step 13 : m_(4,0) = m_(3,4).T().D() x m_(4,0)" << endl << flush;
     }
     double t13_start = MPI_Wtime();
     diagonalizeV(m_34, dm, Column);
@@ -303,19 +339,19 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t13_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 13 (Total) : " << (t13_end - t13_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 13 (Total) : " << (t13_end - t13_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double query_counting = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "query1 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl;
-        cout << "query1 prune time : " << total_prune_time << " s" << endl;
-        cout << "query1 diag_reduce time : " << total_reduce_time << " s" << endl;
-        cout << "query1 dim_apply time : " << total_dim_apply_time << " s" << endl;
-        cout << "query1 total query execution time : " << query_counting - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query1 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl << flush;
+        cout << "query1 prune time : " << total_prune_time << " s" << endl << flush;
+        cout << "query1 diag_reduce time : " << total_reduce_time << " s" << endl << flush;
+        cout << "query1 dim_apply time : " << total_dim_apply_time << " s" << endl << flush;
+        cout << "query1 total query execution time : " << query_counting - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double resgen_start = MPI_Wtime();
@@ -326,10 +362,10 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double total_computing_2 = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "query1 result_enum time : " << resgen_end - resgen_start << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "query1 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query1 result_enum time : " << resgen_end - resgen_start << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "query1 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 }
 
@@ -352,8 +388,8 @@ void resgen_l2(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
 
     double t1_end = MPI_Wtime();
     if (myrank == 0) {
-        cout << "begin result generation ......" << endl;
-        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl;
+        cout << "begin result generation ......" << endl << flush;
+        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl << flush;
     }
 
     get_local_indices(m_10, indl);
@@ -368,7 +404,7 @@ void resgen_l2(PSpMat::MPI_DCCols &m_10, PSpMat::MPI_DCCols &m_21) {
     send_local_results(commGrid, indj.size() / 3);
 }
 
-void lubm_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
+void lubm_l2(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -389,11 +425,11 @@ void lubm_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     // ==> step 1
     if (myrank == 0) {
-        cout << "\n###############################################################" << endl;
-        cout << "Query 2" << endl;
-        cout << "###############################################################" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(1,0) = G x {1@(235928023,235928023)}*17" << endl;
+        cout << "\n###############################################################" << endl << flush;
+        cout << "Query 2" << endl << flush;
+        cout << "###############################################################" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "step 1 : m_(1,0) = G x {1@(235928023,235928023)}*17" << endl << flush;
     }
     double t1_start = MPI_Wtime();
     auto m_10(G);
@@ -402,29 +438,38 @@ void lubm_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : m_(2,1) = G.T() * m_(1,0).D()*9" << endl;
+        cout << "step 2 : m_(2,1) = G.T() * m_(1,0).D()*9" << endl << flush;
     }
     double t2_start = MPI_Wtime();
-    auto m_21(tG);
+    // auto m_21(tG);
+    // diagonalizeV(m_10, dm, Row, 9);
+    // multDimApplyPrune(m_21, dm, Column, true);
+    // m_21.PrintInfo();
+
+    // YAN : no tG for step 2 in l2
+    auto m_21(G);
     diagonalizeV(m_10, dm, Row, 9);
-    multDimApplyPrune(m_21, dm, Column, true);
+    multDimApplyPrune(m_21, dm, Row, true);
+    m_21.Transpose();
     m_21.PrintInfo();
+    // YAN : no tG for step 2 in l2
+
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(1,0) = m_(2,1).T().D() x m_(1,0)" << endl;
+        cout << "step 3 : m_(1,0) = m_(2,1).T().D() x m_(1,0)" << endl << flush;
     }
     double t3_start = MPI_Wtime();
     diagonalizeV(m_21, dm, Column);
@@ -433,19 +478,19 @@ void lubm_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double query_counting = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "query2 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl;
-        cout << "query2 prune time : " << total_prune_time << " s" << endl;
-        cout << "query2 diag_reduce time : " << total_reduce_time << " s" << endl;
-        cout << "query2 dim_apply time : " << total_dim_apply_time << " s" << endl;
-        cout << "query2 total query execution time : " << query_counting - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query2 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl << flush;
+        cout << "query2 prune time : " << total_prune_time << " s" << endl << flush;
+        cout << "query2 diag_reduce time : " << total_reduce_time << " s" << endl << flush;
+        cout << "query2 dim_apply time : " << total_dim_apply_time << " s" << endl << flush;
+        cout << "query2 total query execution time : " << query_counting - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double resgen_start = MPI_Wtime();
@@ -455,14 +500,14 @@ void lubm_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     // end count time
     double total_computing_2 = MPI_Wtime();
     if (myrank == 0) {
-        cout << "query2 result_enum time : " << resgen_end - resgen_start << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "query2 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query2 result_enum time : " << resgen_end - resgen_start << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "query2 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 }
 
-void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
+void lubm_l3(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -489,11 +534,11 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     // ==> step 1
     if (myrank == 0) {
-        cout << "\n###############################################################" << endl;
-        cout << "Query 3" << endl;
-        cout << "###############################################################" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(4,0) = G x {1@(103594630,103594630)}*17" << endl;
+        cout << "\n###############################################################" << endl << flush;
+        cout << "Query 3" << endl << flush;
+        cout << "###############################################################" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "step 1 : m_(4,0) = G x {1@(103594630,103594630)}*17" << endl << flush;
     }
     double t1_start = MPI_Wtime();
     auto m_40(G);
@@ -502,13 +547,13 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : m_(3,4) = G x m_(4, 0).D()*12" << endl;
+        cout << "step 2 : m_(3,4) = G x m_(4, 0).D()*12" << endl << flush;
     }
     double t2_start = MPI_Wtime();
     auto m_34(G);
@@ -518,29 +563,37 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(2,3) = G.T() x m_(3,4).D()*17" << endl;
+        cout << "step 3 : m_(2,3) = G.T() x m_(3,4).D()*17" << endl << flush;
     }
     double t3_start = MPI_Wtime();
-    auto m_23(tG);
+    // auto m_23(tG);
+    // diagonalizeV(m_34, dm, Row, 17);
+    // multDimApplyPrune(m_23, dm, Column, true);
+    // m_23.PrintInfo();
+
+    // YAN : no tG for step 2 in l3
+    auto m_23(G);
     diagonalizeV(m_34, dm, Row, 17);
-    multDimApplyPrune(m_23, dm, Column, true);
+    multDimApplyPrune(m_23, dm, Row, true);
+    m_23.Transpose();
     m_23.PrintInfo();
+    // YAN : no tG for step 2 in l3
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 4
     if (myrank == 0) {
-        cout << "step 4 : m_(2,3) = {1@(223452631,223452631)} x m_(2,3)" << endl;
+        cout << "step 4 : m_(2,3) = {1@(223452631,223452631)} x m_(2,3)" << endl << flush;
     }
     double t4_start = MPI_Wtime();
     multDimApplyPrune(m_23, l_23, Row, false);
@@ -548,13 +601,13 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
 //    // ==> step 5
 //    if (myrank == 0) {
-//        cout << "step 5 : m_(5,3) = G x m_(2,3).T().D()*14" << endl;
+//        cout << "step 5 : m_(5,3) = G x m_(2,3).T().D()*14" << endl << flush;
 //    }
 //    double t5_start = MPI_Wtime();
 //    diagonalizeV(m_23, dm, Column, 14);
@@ -563,13 +616,13 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 //    double t5_end = MPI_Wtime();
 //
 //    if (myrank == 0) {
-//        cout << "step 5 (Total) : " << (t5_end - t5_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
+//        cout << "step 5 (Total) : " << (t5_end - t5_start) << " s" << endl << flush;
+//        cout << "---------------------------------------------------------------" << endl << flush;
 //    }
 //
 //    // ==> step 6
 //    if (myrank == 0) {
-//        cout << "step 6 : m_(1,5) = G.T() x m_(5,3).D()*17" << endl;
+//        cout << "step 6 : m_(1,5) = G.T() x m_(5,3).D()*17" << endl << flush;
 //    }
 //    double t6_start = MPI_Wtime();
 //    diagonalizeV(m_53, dm, Row, 17);
@@ -578,13 +631,13 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 //    double t6_end = MPI_Wtime();
 //
 //    if (myrank == 0) {
-//        cout << "step 6 (Total) : " << (t6_end - t6_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
+//        cout << "step 6 (Total) : " << (t6_end - t6_start) << " s" << endl << flush;
+//        cout << "---------------------------------------------------------------" << endl << flush;
 //    }
 //
 //    // ==> step 7
 //    if (myrank == 0) {
-//        cout << "step 7 : m_(1,5) = {1@(130768016,130768016)} x m_(1,5)" << endl;
+//        cout << "step 7 : m_(1,5) = {1@(130768016,130768016)} x m_(1,5)" << endl << flush;
 //    }
 //    double t7_start = MPI_Wtime();
 //    multDimApplyPrune(m_15, l_15, Row, false);
@@ -592,13 +645,13 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 //    double t7_end = MPI_Wtime();
 //
 //    if (myrank == 0) {
-//        cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
+//        cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl << flush;
+//        cout << "---------------------------------------------------------------" << endl << flush;
 //    }
 //
 //    // ==> step 8
 //    if (myrank == 0) {
-//        cout << "step 8 : m_(6,5) = G.T() x m_(1,5).T().D()*3" << endl;
+//        cout << "step 8 : m_(6,5) = G.T() x m_(1,5).T().D()*3" << endl << flush;
 //    }
 //    double t8_start = MPI_Wtime();
 //    diagonalizeV(m_15, dm, Column, 3);
@@ -607,13 +660,13 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 //    double t8_end = MPI_Wtime();
 //
 //    if (myrank == 0) {
-//        cout << "step 8 (Total) : " << (t8_end - t8_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
+//        cout << "step 8 (Total) : " << (t8_end - t8_start) << " s" << endl << flush;
+//        cout << "---------------------------------------------------------------" << endl << flush;
 //    }
 //
 //    // ==> step 9
 //    if (myrank == 0) {
-//        cout << "step 9 : m_(6,5) = m_(3,4).T().D() x m_(6,5)" << endl;
+//        cout << "step 9 : m_(6,5) = m_(3,4).T().D() x m_(6,5)" << endl << flush;
 //    }
 //    double t9_start = MPI_Wtime();
 //    diagonalizeV(m_34, dm, Column);
@@ -622,13 +675,13 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 //    double t9_end = MPI_Wtime();
 //
 //    if (myrank == 0) {
-//        cout << "step 9 (Total) : " << (t9_end - t9_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
+//        cout << "step 9 (Total) : " << (t9_end - t9_start) << " s" << endl << flush;
+//        cout << "---------------------------------------------------------------" << endl << flush;
 //    }
 //
 //    // ==> step 10
 //    if (myrank == 0) {
-//        cout << "step 10 : m_(3,4) = m_(3,4) x m_(6,5).D()" << endl;
+//        cout << "step 10 : m_(3,4) = m_(3,4) x m_(6,5).D()" << endl << flush;
 //    }
 //    double t10_start = MPI_Wtime();
 //    diagonalizeV(m_65, dm, Row);
@@ -637,13 +690,13 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 //    double t10_end = MPI_Wtime();
 //
 //    if (myrank == 0) {
-//        cout << "step 10 (Total) : " << (t10_end - t10_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
+//        cout << "step 10 (Total) : " << (t10_end - t10_start) << " s" << endl << flush;
+//        cout << "---------------------------------------------------------------" << endl << flush;
 //    }
 //
 //    // ==> step 11
 //    if (myrank == 0) {
-//        cout << "step 11 : m_(5,3) = m_(6,5).T().D() x m_(5,3)" << endl;
+//        cout << "step 11 : m_(5,3) = m_(6,5).T().D() x m_(5,3)" << endl << flush;
 //    }
 //    double t11_start = MPI_Wtime();
 //    diagonalizeV(m_65, dm, Column);
@@ -652,13 +705,13 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 //    double t11_end = MPI_Wtime();
 //
 //    if (myrank == 0) {
-//        cout << "step 11 (Total) : " << (t11_end - t11_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
+//        cout << "step 11 (Total) : " << (t11_end - t11_start) << " s" << endl << flush;
+//        cout << "---------------------------------------------------------------" << endl << flush;
 //    }
 //
 //    // ==> step 12
 //    if (myrank == 0) {
-//        cout << "step 12 : m_(3,4) = m_(5,3).T().D() x m_(3,4)" << endl;
+//        cout << "step 12 : m_(3,4) = m_(5,3).T().D() x m_(3,4)" << endl << flush;
 //    }
 //    double t12_start = MPI_Wtime();
 //    diagonalizeV(m_53, dm, Column);
@@ -667,13 +720,13 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 //    double t12_end = MPI_Wtime();
 //
 //    if (myrank == 0) {
-//        cout << "step 12 (Total) : " << (t12_end - t12_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
+//        cout << "step 12 (Total) : " << (t12_end - t12_start) << " s" << endl << flush;
+//        cout << "---------------------------------------------------------------" << endl << flush;
 //    }
 //
 //    // ==> step 13
 //    if (myrank == 0) {
-//        cout << "step 13 : m_(4,0) = m_(3,4).T().D() x m_(4,0)" << endl;
+//        cout << "step 13 : m_(4,0) = m_(3,4).T().D() x m_(4,0)" << endl << flush;
 //    }
 //    double t13_start = MPI_Wtime();
 //    diagonalizeV(m_34, dm, Column);
@@ -682,28 +735,28 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 //    double t13_end = MPI_Wtime();
 //
 //    if (myrank == 0) {
-//        cout << "step 13 (Total) : " << (t13_end - t13_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
+//        cout << "step 13 (Total) : " << (t13_end - t13_start) << " s" << endl << flush;
+//        cout << "---------------------------------------------------------------" << endl << flush;
 //    }
 
     double query_counting = MPI_Wtime();
     if (myrank == 0) {
-        cout << "query3 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl;
-        cout << "query3 prune time : " << total_prune_time << " s" << endl;
-        cout << "query3 diag_reduce time : " << total_reduce_time << " s" << endl;
-        cout << "query3 dim_apply time : " << total_dim_apply_time << " s" << endl;
-        cout << "query3 total query execution time : " << query_counting - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query3 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl << flush;
+        cout << "query3 prune time : " << total_prune_time << " s" << endl << flush;
+        cout << "query3 diag_reduce time : " << total_reduce_time << " s" << endl << flush;
+        cout << "query3 dim_apply time : " << total_dim_apply_time << " s" << endl << flush;
+        cout << "query3 total query execution time : " << query_counting - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double resgen_start = MPI_Wtime();
     if (myrank == 0) {
-        cout << "final size : 0" << endl;
-        cout << "total get local indices time : " << total_get_local_indices_time << " s" << endl;
-        cout << "total send local indices time : " << total_send_local_indices_time << " s" << endl;
-        cout << "total local join time : " << total_local_join_time << " s" << endl;
-        cout << "total local filter time : " << total_local_filter_time << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "final size : 0" << endl << flush;
+        cout << "total get local indices time : " << total_get_local_indices_time << " s" << endl << flush;
+        cout << "total send local indices time : " << total_send_local_indices_time << " s" << endl << flush;
+        cout << "total local join time : " << total_local_join_time << " s" << endl << flush;
+        cout << "total local filter time : " << total_local_filter_time << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
     double resgen_end = MPI_Wtime();
 
@@ -711,10 +764,10 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double total_computing_2 = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "query3 result_enum time : " << resgen_end - resgen_start << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "query3 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query3 result_enum time : " << resgen_end - resgen_start << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "query3 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 }
 
@@ -738,8 +791,8 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
 
     double t1_end = MPI_Wtime();
     if (myrank == 0) {
-        cout << "begin result generation ......" << endl;
-        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl;
+        cout << "begin result generation ......" << endl << flush;
+        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl << flush;
     }
 
     get_local_indices(m_20, indl);
@@ -775,7 +828,7 @@ void resgen_l4(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_52, PSpMat::MPI_D
     send_local_results(commGrid, indj.size() / 6);
 }
 
-void lubm_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
+void lubm_l4(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -799,11 +852,11 @@ void lubm_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     // ==> step 1
     if (myrank == 0) {
-        cout << "\n###############################################################" << endl;
-        cout << "Query 4" << endl;
-        cout << "###############################################################" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(2,0) = G x {1@(2808777,2808777)}*7" << endl;
+        cout << "\n###############################################################" << endl << flush;
+        cout << "Query 4" << endl << flush;
+        cout << "###############################################################" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "step 1 : m_(2,0) = G x {1@(2808777,2808777)}*7" << endl << flush;
     }
     double t1_start = MPI_Wtime();
     auto m_20(G);
@@ -812,29 +865,38 @@ void lubm_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : m_(1,2) = G.T() x m_(2,0).D()*17" << endl;
+        cout << "step 2 : m_(1,2) = G.T() x m_(2,0).D()*17" << endl << flush;
     }
     double t2_start = MPI_Wtime();
-    auto m_12(tG);
+    // auto m_12(tG);
+    // diagonalizeV(m_20, dm, Row, 17);
+    // multDimApplyPrune(m_12, dm, Column, true);
+    // m_12.PrintInfo();
+
+    // YAN : no tG for step 2 in l4
+    auto m_12(G);
     diagonalizeV(m_20, dm, Row, 17);
-    multDimApplyPrune(m_12, dm, Column, true);
+    multDimApplyPrune(m_12, dm, Row, true);
+    m_12.Transpose();
     m_12.PrintInfo();
+    // YAN : no tG for step 2 in l4
+
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(1,2) = {1@(291959481,291959481)} x m_(1,2)" << endl;
+        cout << "step 3 : m_(1,2) = {1@(291959481,291959481)} x m_(1,2)" << endl << flush;
     }
     double t3_start = MPI_Wtime();
     multDimApplyPrune(m_12, l_12, Row, false);
@@ -842,61 +904,88 @@ void lubm_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 4
     if (myrank == 0) {
-        cout << "step 4 : m_(3,2) = G.T() x m_(1,2).T().D()*9" << endl;
+        cout << "step 4 : m_(3,2) = G.T() x m_(1,2).T().D()*9" << endl << flush;
     }
     double t4_start = MPI_Wtime();
-    auto m_32(tG);
+    // auto m_32(tG);
+    // diagonalizeV(m_12, dm, Column, 9);
+    // multDimApplyPrune(m_32, dm, Column, true);
+    // m_32.PrintInfo();
+
+    // YAN : no tG for step 2 in l4
+    auto m_32(G);
     diagonalizeV(m_12, dm, Column, 9);
-    multDimApplyPrune(m_32, dm, Column, true);
+    multDimApplyPrune(m_32, dm, Row, true);
+    m_32.Transpose();
     m_32.PrintInfo();
+    // YAN : no tG for step 2 in l4
+
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 5
     if (myrank == 0) {
-        cout << "step 5 : m_(4,2) = G.T() x m_(3,2).T().D()*8" << endl;
+        cout << "step 5 : m_(4,2) = G.T() x m_(3,2).T().D()*8" << endl << flush;
     }
     double t5_start = MPI_Wtime();
-    auto m_42(tG);
+    // auto m_42(tG);
+    // diagonalizeV(m_32, dm, Column, 8);
+    // multDimApplyPrune(m_42, dm, Column, true);
+    // m_42.PrintInfo();
+
+    // YAN : no tG for step 2 in l4
+    auto m_42(G);
     diagonalizeV(m_32, dm, Column, 8);
-    multDimApplyPrune(m_42, dm, Column, true);
+    multDimApplyPrune(m_42, dm, Row, true);
+    m_42.Transpose();
     m_42.PrintInfo();
+    // YAN : no tG for step 2 in l4
+
     double t5_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 5 (Total) : " << (t5_end - t5_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 5 (Total) : " << (t5_end - t5_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 6
     if (myrank == 0) {
-        cout << "step 6 : m_(5,2) = G.T() x m_(4,2).T().D()*2" << endl;
+        cout << "step 6 : m_(5,2) = G.T() x m_(4,2).T().D()*2" << endl << flush;
     }
     double t6_start = MPI_Wtime();
-    auto m_52(tG);
+    // auto m_52(tG);
+    // diagonalizeV(m_42, dm, Column, 2);
+    // multDimApplyPrune(m_52, dm, Column, true);
+    // m_52.PrintInfo();
+
+    // YAN : no tG for step 2 in l4
+    auto m_52(G);
     diagonalizeV(m_42, dm, Column, 2);
-    multDimApplyPrune(m_52, dm, Column, true);
+    multDimApplyPrune(m_52, dm, Row, true);
+    m_52.Transpose();
     m_52.PrintInfo();
+    // YAN : no tG for step 2 in l4
+
     double t6_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 6 (Total) : " << (t6_end - t6_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 6 (Total) : " << (t6_end - t6_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 7
     if (myrank == 0) {
-        cout << "step 7 : m_(2,0) = m_(5,2).T().D() x m_(2,0)" << endl;
+        cout << "step 7 : m_(2,0) = m_(5,2).T().D() x m_(2,0)" << endl << flush;
     }
     double t7_start = MPI_Wtime();
     diagonalizeV(m_52, dm, Column);
@@ -905,19 +994,19 @@ void lubm_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t7_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double query_counting = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "query4 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl;
-        cout << "query4 prune time : " << total_prune_time << " s" << endl;
-        cout << "query4 diag_reduce time : " << total_reduce_time << " s" << endl;
-        cout << "query4 dim_apply time : " << total_dim_apply_time << " s" << endl;
-        cout << "query4 total query execution time : " << query_counting - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query4 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl << flush;
+        cout << "query4 prune time : " << total_prune_time << " s" << endl << flush;
+        cout << "query4 diag_reduce time : " << total_reduce_time << " s" << endl << flush;
+        cout << "query4 dim_apply time : " << total_dim_apply_time << " s" << endl << flush;
+        cout << "query4 total query execution time : " << query_counting - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double resgen_start = MPI_Wtime();
@@ -927,10 +1016,10 @@ void lubm_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     // end count time
     double total_computing_2 = MPI_Wtime();
     if (myrank == 0) {
-        cout << "query4 result_enum time : " << resgen_end - resgen_start << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "query4 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query4 result_enum time : " << resgen_end - resgen_start << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "query4 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 }
 
@@ -953,8 +1042,8 @@ void resgen_l5(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_12) {
 
     double t1_end = MPI_Wtime();
     if (myrank == 0) {
-        cout << "begin result generation ......" << endl;
-        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl;
+        cout << "begin result generation ......" << endl << flush;
+        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl << flush;
     }
 
     get_local_indices(m_20, indl);
@@ -969,7 +1058,7 @@ void resgen_l5(PSpMat::MPI_DCCols &m_20, PSpMat::MPI_DCCols &m_12) {
     send_local_results(commGrid, indj.size() / 3);
 }
 
-void lubm_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
+void lubm_l5(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -993,11 +1082,11 @@ void lubm_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     // ==> step 1
     if (myrank == 0) {
-        cout << "\n###############################################################" << endl;
-        cout << "Query 5" << endl;
-        cout << "###############################################################" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(2,0) = G x {1@(191176245,191176245)}*17" << endl;
+        cout << "\n###############################################################" << endl << flush;
+        cout << "Query 5" << endl << flush;
+        cout << "###############################################################" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "step 1 : m_(2,0) = G x {1@(191176245,191176245)}*17" << endl << flush;
     }
     double t1_start = MPI_Wtime();
     auto m_20(G);
@@ -1006,29 +1095,38 @@ void lubm_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : G.T() x m_(2,0).D()*3" << endl;
+        cout << "step 2 : G.T() x m_(2,0).D()*3" << endl << flush;
     }
     double t2_start = MPI_Wtime();
-    auto m_12(tG);
+    // auto m_12(tG);
+    // diagonalizeV(m_20, dm, Row, 3);
+    // multDimApplyPrune(m_12, dm, Column, true);
+    // m_12.PrintInfo();
+
+    // YAN : no tG for step 2 in l5
+    auto m_12(G);
     diagonalizeV(m_20, dm, Row, 3);
-    multDimApplyPrune(m_12, dm, Column, true);
+    multDimApplyPrune(m_12, dm, Row, true);
+    m_12.Transpose();
     m_12.PrintInfo();
+    // YAN : no tG for step 2 in l5
+
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(1,2) = {1@(2808777,2808777)} x m_(1,2)" << endl;
+        cout << "step 3 : m_(1,2) = {1@(2808777,2808777)} x m_(1,2)" << endl << flush;
     }
     double t3_start = MPI_Wtime();
     multDimApplyPrune(m_12, l_12, Row, false);
@@ -1036,13 +1134,13 @@ void lubm_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 4
     if (myrank == 0) {
-        cout << "step 4 : m_(2,0) = m_(1,2).T().D() x m_(2,0)" << endl;
+        cout << "step 4 : m_(2,0) = m_(1,2).T().D() x m_(2,0)" << endl << flush;
     }
     double t4_start = MPI_Wtime();
     diagonalizeV(m_12, dm, Column);
@@ -1051,19 +1149,19 @@ void lubm_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double query_counting = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "query5 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl;
-        cout << "query5 prune time : " << total_prune_time << " s" << endl;
-        cout << "query5 diag_reduce time : " << total_reduce_time << " s" << endl;
-        cout << "query5 dim_apply time : " << total_dim_apply_time << " s" << endl;
-        cout << "query5 total query execution time : " << query_counting - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query5 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl << flush;
+        cout << "query5 prune time : " << total_prune_time << " s" << endl << flush;
+        cout << "query5 diag_reduce time : " << total_reduce_time << " s" << endl << flush;
+        cout << "query5 dim_apply time : " << total_dim_apply_time << " s" << endl << flush;
+        cout << "query5 total query execution time : " << query_counting - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double resgen_start = MPI_Wtime();
@@ -1073,10 +1171,10 @@ void lubm_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     // end count time
     double total_computing_2 = MPI_Wtime();
     if (myrank == 0) {
-        cout << "query5 result_enum time : " << resgen_end - resgen_start << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "query5 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query5 result_enum time : " << resgen_end - resgen_start << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "query5 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 }
 
@@ -1099,8 +1197,8 @@ void resgen_l6(PSpMat::MPI_DCCols &m_40, PSpMat::MPI_DCCols &m_14, PSpMat::MPI_D
 
     double t1_end = MPI_Wtime();
     if (myrank == 0) {
-        cout << "begin result generation ......" << endl;
-        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl;
+        cout << "begin result generation ......" << endl << flush;
+        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl << flush;
     }
 
     get_local_indices(m_40, indl);
@@ -1129,7 +1227,7 @@ void resgen_l6(PSpMat::MPI_DCCols &m_40, PSpMat::MPI_DCCols &m_14, PSpMat::MPI_D
     send_local_results(commGrid, indj.size() / 5);
 }
 
-void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
+void lubm_l6(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -1157,11 +1255,11 @@ void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     // ==> step 1
     if (myrank == 0) {
-        cout << "\n###############################################################" << endl;
-        cout << "Query 6" << endl;
-        cout << "###############################################################" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(4,0) = G x {1@(130768016,130768016)}*17" << endl;
+        cout << "\n###############################################################" << endl << flush;
+        cout << "Query 6" << endl << flush;
+        cout << "###############################################################" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "step 1 : m_(4,0) = G x {1@(130768016,130768016)}*17" << endl << flush;
     }
     double t1_start = MPI_Wtime();
     auto m_40(G);
@@ -1170,29 +1268,38 @@ void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : m_(1,4) = G.T() x m_(4,0).D()*3" << endl;
+        cout << "step 2 : m_(1,4) = G.T() x m_(4,0).D()*3" << endl << flush;
     }
     double t2_start = MPI_Wtime();
-    auto m_14(tG);
+    // auto m_14(tG);
+    // diagonalizeV(m_40, dm, Row, 3);
+    // multDimApplyPrune(m_14, dm, Column, true);
+    // m_14.PrintInfo();
+
+    // YAN : no tG for step 2 in l6
+    auto m_14(G);
     diagonalizeV(m_40, dm, Row, 3);
-    multDimApplyPrune(m_14, dm, Column, true);
+    multDimApplyPrune(m_14, dm, Row, true);
+    m_14.Transpose();
     m_14.PrintInfo();
+    // YAN : no tG for step 2 in l6
+
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(1,4) = {1@(267261320,267261320)} x m_(1,4)" << endl;
+        cout << "step 3 : m_(1,4) = {1@(267261320,267261320)} x m_(1,4)" << endl << flush;
     }
     double t3_start = MPI_Wtime();
     multDimApplyPrune(m_14, l_14, Row, false);
@@ -1200,13 +1307,13 @@ void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 4
     if (myrank == 0) {
-        cout << "step 4 : m_(3,4) = G x m_(1,4).T().D()*7" << endl;
+        cout << "step 4 : m_(3,4) = G x m_(1,4).T().D()*7" << endl << flush;
     }
     double t4_start = MPI_Wtime();
     auto m_34(G);
@@ -1216,29 +1323,38 @@ void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 5 (Total) : " << (t4_end - t4_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 5 (Total) : " << (t4_end - t4_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 5
     if (myrank == 0) {
-        cout << "step 5 : m_(2,3) = G.T() x m_(3,4).D()*17" << endl;
+        cout << "step 5 : m_(2,3) = G.T() x m_(3,4).D()*17" << endl << flush;
     }
     double t5_start = MPI_Wtime();
-    auto m_23(tG);
+    // auto m_23(tG);
+    // diagonalizeV(m_34, dm, Row, 17);
+    // multDimApplyPrune(m_23, dm, Column, true);
+    // m_23.PrintInfo();
+
+    // YAN : no tG for step 5 in l6
+    auto m_23(G);
     diagonalizeV(m_34, dm, Row, 17);
-    multDimApplyPrune(m_23, dm, Column, true);
+    multDimApplyPrune(m_23, dm, Row, true);
+    m_23.Transpose();
     m_23.PrintInfo();
+    // YAN : no tG for step 5 in l6
+
     double t5_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 3 (Total) : " << (t5_end - t5_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 3 (Total) : " << (t5_end - t5_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 6
     if (myrank == 0) {
-        cout << "step 6 : m_(2,3) = {1@(291959481,291959481)} x m_(2,3)" << endl;
+        cout << "step 6 : m_(2,3) = {1@(291959481,291959481)} x m_(2,3)" << endl << flush;
     }
     double t6_start = MPI_Wtime();
     multDimApplyPrune(m_23, l_23, Row, false);
@@ -1246,13 +1362,13 @@ void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t6_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 6 (Total) : " << (t6_end - t6_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 6 (Total) : " << (t6_end - t6_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 7
     if (myrank == 0) {
-        cout << "step 7 : m_(3,4) = m_(2,3).T().D() x m_(3,4)" << endl;
+        cout << "step 7 : m_(3,4) = m_(2,3).T().D() x m_(3,4)" << endl << flush;
     }
     double t7_start = MPI_Wtime();
     diagonalizeV(m_23, dm, Column);
@@ -1261,13 +1377,13 @@ void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t7_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 8
     if (myrank == 0) {
-        cout << "step 8 : m_(4,0) = m_(3,4).T().D() x m_(4,0)" << endl;
+        cout << "step 8 : m_(4,0) = m_(3,4).T().D() x m_(4,0)" << endl << flush;
     }
     double t8_start = MPI_Wtime();
     diagonalizeV(m_34, dm, Column);
@@ -1276,19 +1392,19 @@ void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t8_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 8 (Total) : " << (t8_end - t8_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 8 (Total) : " << (t8_end - t8_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double query_counting = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "query6 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl;
-        cout << "query6 prune time : " << total_prune_time << " s" << endl;
-        cout << "query6 diag_reduce time : " << total_reduce_time << " s" << endl;
-        cout << "query6 dim_apply time : " << total_dim_apply_time << " s" << endl;
-        cout << "query6 total query execution time : " << query_counting - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query6 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl << flush;
+        cout << "query6 prune time : " << total_prune_time << " s" << endl << flush;
+        cout << "query6 diag_reduce time : " << total_reduce_time << " s" << endl << flush;
+        cout << "query6 dim_apply time : " << total_dim_apply_time << " s" << endl << flush;
+        cout << "query6 total query execution time : " << query_counting - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double resgen_start = MPI_Wtime();
@@ -1298,10 +1414,10 @@ void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     // end count time
     double total_computing_2 = MPI_Wtime();
     if (myrank == 0) {
-        cout << "query6 result_enum time : " << resgen_end - resgen_start << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "query6 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query6 result_enum time : " << resgen_end - resgen_start << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "query6 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 }
 
@@ -1326,8 +1442,8 @@ void resgen_l7(PSpMat::MPI_DCCols &m_52, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
 
     double t1_end = MPI_Wtime();
     if (myrank == 0) {
-        cout << "begin result generation ......" << endl;
-        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl;
+        cout << "begin result generation ......" << endl << flush;
+        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl << flush;
     }
 
     get_local_indices(m_52, indl);
@@ -1374,7 +1490,7 @@ void resgen_l7(PSpMat::MPI_DCCols &m_52, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_D
     send_local_results(commGrid, indj.size() / 6);
 }
 
-void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
+void lubm_l7(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -1406,11 +1522,11 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     // ==> step 1
     if (myrank == 0) {
-        cout << "\n###############################################################" << endl;
-        cout << "Query 7" << endl;
-        cout << "###############################################################" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "step 1 : m_(5,2) = G x {1@(291959481,291959481)}*17" << endl;
+        cout << "\n###############################################################" << endl << flush;
+        cout << "Query 7" << endl << flush;
+        cout << "###############################################################" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "step 1 : m_(5,2) = G x {1@(291959481,291959481)}*17" << endl << flush;
     }
     double t1_start = MPI_Wtime();
     auto m_52(G);
@@ -1419,13 +1535,13 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t1_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 2
     if (myrank == 0) {
-        cout << "step 2 : m_(3,5) = G x m_(5,2).D()*18" << endl;
+        cout << "step 2 : m_(3,5) = G x m_(5,2).D()*18" << endl << flush;
     }
     double t2_start = MPI_Wtime();
     auto m_35(G);
@@ -1435,29 +1551,38 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t2_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 3
     if (myrank == 0) {
-        cout << "step 3 : m_(0,3) = G.T() x m_(3,5).D()*17" << endl;
+        cout << "step 3 : m_(0,3) = G.T() x m_(3,5).D()*17" << endl << flush;
     }
     double t3_start = MPI_Wtime();
-    auto m_03(tG);
+    // auto m_03(tG);
+    // diagonalizeV(m_35, dm, Row, 17);
+    // multDimApplyPrune(m_03, dm, Column, true);
+    // m_03.PrintInfo();
+
+    // YAN : no tG for step 3 in l7
+    auto m_03(G);
     diagonalizeV(m_35, dm, Row, 17);
-    multDimApplyPrune(m_03, dm, Column, true);
+    multDimApplyPrune(m_03, dm, Row, true);
+    m_03.Transpose();
     m_03.PrintInfo();
+    // YAN : no tG for step 3 in l7
+
     double t3_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 4
     if (myrank == 0) {
-        cout << "step 4 : m_(0,3) = {1@(223452631,223452631)} x m_(0,3)" << endl;
+        cout << "step 4 : m_(0,3) = {1@(223452631,223452631)} x m_(0,3)" << endl << flush;
     }
     double t4_start = MPI_Wtime();
     multDimApplyPrune(m_03, l_03, Row, false);
@@ -1465,45 +1590,63 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t4_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 5
     if (myrank == 0) {
-        cout << "step 5 : m_(4,3) = G.T() x m_(0,3).T().D()*4" << endl;
+        cout << "step 5 : m_(4,3) = G.T() x m_(0,3).T().D()*4" << endl << flush;
     }
     double t5_start = MPI_Wtime();
-    auto m_43(tG);
+    // auto m_43(tG);
+    // diagonalizeV(m_03, dm, Column, 4);
+    // multDimApplyPrune(m_43, dm, Column, true);
+    // m_43.PrintInfo();
+
+    // YAN : no tG for step 5 in l7
+    auto m_43(G);
     diagonalizeV(m_03, dm, Column, 4);
-    multDimApplyPrune(m_43, dm, Column, true);
+    multDimApplyPrune(m_43, dm, Row, true);
+    m_43.Transpose();
     m_43.PrintInfo();
+    // YAN : no tG for step 5 in l7
+
     double t5_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 5 (Total) : " << (t5_end - t5_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 5 (Total) : " << (t5_end - t5_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 6
     if (myrank == 0) {
-        cout << "step 6 : m_(1,4) = G.T() x m_(4,3).D()*17" << endl;
+        cout << "step 6 : m_(1,4) = G.T() x m_(4,3).D()*17" << endl << flush;
     }
     double t6_start = MPI_Wtime();
-    auto m_14(tG);
+    // auto m_14(tG);
+    // diagonalizeV(m_43, dm, Row, 17);
+    // multDimApplyPrune(m_14, dm, Column, true);
+    // m_14.PrintInfo();
+
+    // YAN : no tG for step 6 in l7
+    auto m_14(G);
     diagonalizeV(m_43, dm, Row, 17);
-    multDimApplyPrune(m_14, dm, Column, true);
+    multDimApplyPrune(m_14, dm, Row, true);
+    m_14.Transpose();
     m_14.PrintInfo();
+    // YAN : no tG for step 6 in l7
+
     double t6_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 6 (Total) : " << (t6_end - t6_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 6 (Total) : " << (t6_end - t6_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 7
     if (myrank == 0) {
-        cout << "step 7 : m_(1,4) = {1@(235928023,235928023)} x m_(1,4)" << endl;
+        cout << "step 7 : m_(1,4) = {1@(235928023,235928023)} x m_(1,4)" << endl << flush;
     }
     double t7_start = MPI_Wtime();
     multDimApplyPrune(m_14, l_14, Row, false);
@@ -1511,13 +1654,13 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t7_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 8
     if (myrank == 0) {
-        cout << "step 8 : m_(6,4) = G x m_(1,4).T().D()*5" << endl;
+        cout << "step 8 : m_(6,4) = G x m_(1,4).T().D()*5" << endl << flush;
     }
     double t8_start = MPI_Wtime();
     auto m_64(G);
@@ -1527,13 +1670,13 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t8_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 8 (Total) : " << (t8_end - t8_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 8 (Total) : " << (t8_end - t8_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 9
     if (myrank == 0) {
-        cout << "step 9 : m_(6,4) = m_(3,5).T().D() x m_(6,4)" << endl;
+        cout << "step 9 : m_(6,4) = m_(3,5).T().D() x m_(6,4)" << endl << flush;
     }
     double t9_start = MPI_Wtime();
     diagonalizeV(m_35, dm, Column);
@@ -1542,13 +1685,13 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t9_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 9 (Total) : " << (t9_end - t9_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 9 (Total) : " << (t9_end - t9_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 10
     if (myrank == 0) {
-        cout << "step 10 : m_(3,5) = m_(3,5) x m_(6,4).D()" << endl;
+        cout << "step 10 : m_(3,5) = m_(3,5) x m_(6,4).D()" << endl << flush;
     }
     double t10_start = MPI_Wtime();
     diagonalizeV(m_64, dm);
@@ -1557,13 +1700,13 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t10_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 10 (Total) : " << (t10_end - t10_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 10 (Total) : " << (t10_end - t10_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 11
     if (myrank == 0) {
-        cout << "step 11 : m_(4,3) = m_(6,4).T().D() x m_(4,3)" << endl;
+        cout << "step 11 : m_(4,3) = m_(6,4).T().D() x m_(4,3)" << endl << flush;
     }
     double t11_start = MPI_Wtime();
     diagonalizeV(m_64, dm, Column);
@@ -1572,13 +1715,13 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t11_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 11 (Total) : " << (t11_end - t11_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 11 (Total) : " << (t11_end - t11_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 12
     if (myrank == 0) {
-        cout << "step 12 : m_(3,5) = m_(4,3).T().D() x m_(3,5)" << endl;
+        cout << "step 12 : m_(3,5) = m_(4,3).T().D() x m_(3,5)" << endl << flush;
     }
     double t12_start = MPI_Wtime();
     diagonalizeV(m_43, dm, Column);
@@ -1587,13 +1730,13 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t12_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 12 (Total) : " << (t12_end - t12_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 12 (Total) : " << (t12_end - t12_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     // ==> step 13
     if (myrank == 0) {
-        cout << "step 13 : m_(5,2) = m_(3,5).T().D() x m_(5,2)" << endl;
+        cout << "step 13 : m_(5,2) = m_(3,5).T().D() x m_(5,2)" << endl << flush;
     }
     double t13_start = MPI_Wtime();
     diagonalizeV(m_35, dm, Column);
@@ -1602,19 +1745,19 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     double t13_end = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "step 13 (Total) : " << (t13_end - t13_start) << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "step 13 (Total) : " << (t13_end - t13_start) << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double query_counting = MPI_Wtime();
 
     if (myrank == 0) {
-        cout << "query7 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl;
-        cout << "query7 prune time : " << total_prune_time << " s" << endl;
-        cout << "query7 diag_reduce time : " << total_reduce_time << " s" << endl;
-        cout << "query7 dim_apply time : " << total_dim_apply_time << " s" << endl;
-        cout << "query7 total query execution time : " << query_counting - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query7 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl << flush;
+        cout << "query7 prune time : " << total_prune_time << " s" << endl << flush;
+        cout << "query7 diag_reduce time : " << total_reduce_time << " s" << endl << flush;
+        cout << "query7 dim_apply time : " << total_dim_apply_time << " s" << endl << flush;
+        cout << "query7 total query execution time : " << query_counting - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 
     double resgen_start = MPI_Wtime();
@@ -1624,10 +1767,10 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     // end count time
     double total_computing_2 = MPI_Wtime();
     if (myrank == 0) {
-        cout << "query7 result_enum time : " << resgen_end - resgen_start << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
-        cout << "query7 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl;
-        cout << "---------------------------------------------------------------" << endl;
+        cout << "query7 result_enum time : " << resgen_end - resgen_start << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
+        cout << "query7 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl << flush;
+        cout << "---------------------------------------------------------------" << endl << flush;
     }
 }
 
@@ -1655,7 +1798,7 @@ int main(int argc, char *argv[]) {
 
     if (argc < 2) {
         if (myrank == 0) {
-            cout << "Usage: ./lubm_scal file" << endl;
+            cout << "Usage: ./lubm_scal file" << endl << flush;
         }
         MPI_Finalize();
         return -1;
@@ -1667,11 +1810,11 @@ int main(int argc, char *argv[]) {
         string Mname(argv[1]);
         
         if (myrank == 0) {
-            cout << "###############################################################" << endl;
-            cout << "Load Matrix" << endl;
-            cout << "###############################################################" << endl;
-            cout << "---------------------------------------------------------------" << endl;
-            cout << "All procs reading and permuting input graph [" << Mname << "]..." << endl;
+            cout << "###############################################################" << endl << flush;
+            cout << "Load Matrix" << endl << flush;
+            cout << "###############################################################" << endl << flush;
+            cout << "---------------------------------------------------------------" << endl << flush;
+            cout << "All procs reading and permuting input graph [" << Mname << "]..." << endl << flush;
         }
 
         PSpMat::MPI_DCCols G(MPI_COMM_WORLD);
@@ -1679,8 +1822,6 @@ int main(int argc, char *argv[]) {
 
         // permute vector 
         FullyDistVec<IndexType, IndexType> nonisov(commWorld);
-
-        
 
         double t1 = MPI_Wtime();
         G.ParallelReadMM(Mname, true, selectSecond, nonisov);
@@ -1690,50 +1831,49 @@ int main(int argc, char *argv[]) {
         float imG = G.LoadImbalance();
 
         if (myrank == 0) {
-            cout << "\tread and permute graph took : " << (t2 - t1) << " s" << endl;
-            cout << "\timbalance of G (after random permutation) : " << imG << endl;
+            cout << "\tread and permute graph took : " << (t2 - t1) << " s" << endl << flush;
+            cout << "\timbalance of G (after random permutation) : " << imG << endl << flush;
         }
         
         // permute(G, nonisov);
 
-        double t1_trans = MPI_Wtime();
-        auto tG = transpose(G);
+        // double t1_trans = MPI_Wtime();
+        // auto tG = transpose(G);
         double t2_trans = MPI_Wtime();
 
         if (myrank == 0) {
-            cout << "\ttranspose G takes : " << (t2_trans - t1_trans) << " s" << endl;
-            cout << "graph load (Total) : " << (t2_trans - t1) << " s" << endl;
-            cout << "---------------------------------------------------------------" << endl << flush;;
+            // cout << "\ttranspose G takes : " << (t2_trans - t1_trans) << " s" << endl << flush;
+            cout << "graph load (Total) : " << (t2_trans - t1) << " s" << endl << flush;
+            cout << "---------------------------------------------------------------" << endl << flush << flush;;
         }
 
         // run 7 queries 5 times each
         for (int triall = 1; triall <= 5; triall++) {
-            if(myrank == 0) {cout << "Doing iter " << triall << " of queries..." << endl << "=============================" << endl << flush;}
-            lubm_l1(G, tG, nonisov);
-            lubm_l2(G, tG, nonisov);
-            lubm_l3(G, tG, nonisov);
-            lubm_l4(G, tG, nonisov);
-            lubm_l5(G, tG, nonisov);
-            lubm_l6(G, tG, nonisov);
-            lubm_l7(G, tG, nonisov);
+            if(myrank == 0) {cout << "Doing iter " << triall << " of queries..." << endl << flush << "=============================" << endl << flush << flush;}
+            lubm_l1(G, nonisov);
+            lubm_l2(G, nonisov);
+            lubm_l3(G, nonisov);
+            lubm_l4(G, nonisov);
+            lubm_l5(G, nonisov);
+            lubm_l6(G, nonisov);
+            lubm_l7(G, nonisov);
         }
-
 
         // for (int triall = 1; triall <= 5; triall++) {
         //     try {    lubm_l1(G, tG, nonisov);    }
-        //     catch (...) {    if (myrank == 0) {cout << "query 1 failed at iteration " << triall << endl; }     }
+        //     catch (...) {    if (myrank == 0) {cout << "query 1 failed at iteration " << triall << endl << flush; }     }
         //     try {    lubm_l2(G, tG, nonisov);    }
-        //     catch (...) {    if (myrank == 0) {cout << "query 2 failed at iteration " << triall << endl; }     }
+        //     catch (...) {    if (myrank == 0) {cout << "query 2 failed at iteration " << triall << endl << flush; }     }
         //     try {    lubm_l3(G, tG, nonisov);    }
-        //     catch (...) {    if (myrank == 0) {cout << "query 3 failed at iteration " << triall << endl; }     }
+        //     catch (...) {    if (myrank == 0) {cout << "query 3 failed at iteration " << triall << endl << flush; }     }
         //     try {    lubm_l4(G, tG, nonisov);    }
-        //     catch (...) {    if (myrank == 0) {cout << "query 4 failed at iteration " << triall << endl; }     }
+        //     catch (...) {    if (myrank == 0) {cout << "query 4 failed at iteration " << triall << endl << flush; }     }
         //     try {    lubm_l5(G, tG, nonisov);    }
-        //     catch (...) {    if (myrank == 0) {cout << "query 5 failed at iteration " << triall << endl; }     }
+        //     catch (...) {    if (myrank == 0) {cout << "query 5 failed at iteration " << triall << endl << flush; }     }
         //     try {    lubm_l6(G, tG, nonisov);    }
-        //     catch (...) {    if (myrank == 0) {cout << "query 6 failed at iteration " << triall << endl; }     }
+        //     catch (...) {    if (myrank == 0) {cout << "query 6 failed at iteration " << triall << endl << flush; }     }
         //     try {    lubm_l7(G, tG, nonisov);    }
-        //     catch (...) {    if (myrank == 0) {cout << "query 7 failed at iteration " << triall << endl; }     }
+        //     catch (...) {    if (myrank == 0) {cout << "query 7 failed at iteration " << triall << endl << flush; }     }
         // }
     }
 
