@@ -3550,11 +3550,17 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     std::vector<LIT> cols;
     std::vector<NT> vals;
 
+	//size_t dbg_cnt = 0;	
+
     std::vector<std::string> lines;
     bool finished = SpParHelper::FetchBatch(mpi_fh, fpos, end_fpos, true, lines, myrank);
     int64_t entriesread = lines.size();
+	if(myrank == 0) {std::cout << "---- SpHelper::ProcessLines will be called first time..." << std::endl << std::flush;}
     SpHelper::ProcessLines(rows, cols, vals, lines, symmetric, type, nonisov, onebased);
+	if(myrank == 0) {std::cout << "---- First call to SpHelper::ProcessLines finished..." << std::endl << std::flush;}
     MPI_Barrier(commGrid->commWorld);
+
+	//dbg_cnt += lines.size();
 
 	// after first processing, check correctness
 
@@ -3564,12 +3570,16 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
         entriesread += lines.size();
         SpHelper::ProcessLines(rows, cols, vals, lines, symmetric, type, nonisov, onebased);
 
+		//dbg_cnt += lines.size();
+		// bool do_it = false;
+		// if(dbg_cnt >= TENMILLION) {
+		// 	dbg_cnt -= TENMILLION;
+		// 	do_it = true;
+		// }
 		int rpid1, rpid2, rpid3, rpid4;
 		rpid1 = std::rand() % nprocs; rpid2 = std::rand() % nprocs; rpid3 = std::rand() % nprocs; rpid4 = std::rand() % nprocs;
 		if(myrank == 0 || myrank == rpid1 || myrank == rpid2 || myrank == rpid3 || myrank == rpid4  ) {
-			if(entriesread % TENMILLION == 0) {
-				std::cout << "---- p" << myrank << " read [" << entriesread << "] lines so far" << std::endl;
-			}
+			std::cout << "____ p" << myrank << " read [" << entriesread << "] lines so far" << std::endl << std::flush;
 		}
     }
 

@@ -847,7 +847,7 @@ inline bool SpParHelper::FetchBatch(MPI_File & infile, MPI_Offset & curpos, MPI_
 {
     //size_t bytes2fetch = ONEMILLION;    // we might read more than needed but no problem as we won't process them
     //FUAD
-    size_t bytes2fetch = FIFTYMILLION;
+    size_t bytes2fetch = TENMILLION;
     
     MPI_Status status;
     int bytes_read;
