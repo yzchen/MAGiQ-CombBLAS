@@ -845,7 +845,10 @@ inline void SpParHelper::check_newline(int *bytes_read, int bytes_requested, cha
 
 inline bool SpParHelper::FetchBatch(MPI_File & infile, MPI_Offset & curpos, MPI_Offset end_fpos, bool firstcall, std::vector<std::string> & lines, int myrank)
 {
-    size_t bytes2fetch = ONEMILLION;    // we might read more than needed but no problem as we won't process them
+    //size_t bytes2fetch = ONEMILLION;    // we might read more than needed but no problem as we won't process them
+    //FUAD
+    size_t bytes2fetch = FIFTYMILLION;
+    
     MPI_Status status;
     int bytes_read;
     if(firstcall && myrank != 0)

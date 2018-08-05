@@ -273,6 +273,9 @@ public:
 	using FullyDist<IT,NT,typename combblas::disable_if< combblas::is_boolean<NT>::value, NT >::type>::glen; 
 	using FullyDist<IT,NT,typename combblas::disable_if< combblas::is_boolean<NT>::value, NT >::type>::commGrid; 
 
+	//FUAD
+	void   GetElements (std::vector<IT>& indx_vec, std::vector<NT>& out_vec) const;
+
 private:
 	std::vector< NT > arr;
 

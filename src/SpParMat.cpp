@@ -2437,11 +2437,29 @@ void SpParMat< IT,NT,DER >::SparseCommon(std::vector< std::vector < std::tuple<L
 	std::partial_sum(sendcnt, sendcnt+nprocs-1, sdispls+1);
 	std::partial_sum(recvcnt, recvcnt+nprocs-1, rdispls+1);
 	IT totrecv = std::accumulate(recvcnt,recvcnt+nprocs, static_cast<IT>(0));
-	IT totsent = std::accumulate(sendcnt,sendcnt+nprocs, static_cast<IT>(0));	
+	IT totsent = std::accumulate(sendcnt,sendcnt+nprocs, static_cast<IT>(0));
 	
 	assert((totsent < std::numeric_limits<int>::max()));	
 	assert((totrecv < std::numeric_limits<int>::max()));
+
+	int myrank = commGrid->GetRank();
+	if(myrank == 0) {std::cout << "---- All procs will exchange non-zeros..." << std::endl << std::flush;}
+	int rpid1, rpid2, rpid3, rpid4;
+	rpid1 = std::rand() % nprocs; rpid2 = std::rand() % nprocs; rpid3 = std::rand() % nprocs; rpid4 = std::rand() % nprocs;
+	if(myrank == 0 || myrank == rpid1 || myrank == rpid2 || myrank == rpid3 || myrank == rpid4  ) {
+		std::cout << "---- p" << myrank << " will receive [" << totrecv << "] non-zeros" << std::endl;
+	}
 	
+	IT max_recv_cnt, min_recv_cnt, avg_recv_cnt;
+    MPI_Reduce(&totrecv, &max_recv_cnt, 1, MPIType<IT>(), MPI_MAX, 0, commGrid->commWorld);
+	MPI_Reduce(&totrecv, &min_recv_cnt, 1, MPIType<IT>(), MPI_MIN, 0, commGrid->commWorld);
+	MPI_Reduce(&totrecv, &avg_recv_cnt, 1, MPIType<IT>(), MPI_SUM, 0, commGrid->commWorld);
+	avg_recv_cnt /= nprocs;
+	if(myrank == 0) {
+		std::cout << "Max receive count [" << max_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
+		std::cout << "Min receive count [" << min_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
+		std::cout << "Avg receive count [" << avg_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
+	}
 
 #if 0 
 	ofstream oput;
@@ -2468,12 +2486,15 @@ void SpParMat< IT,NT,DER >::SparseCommon(std::vector< std::vector < std::tuple<L
 		data[i].clear();	// clear memory
 		data[i].shrink_to_fit();
 	}
+
 	MPI_Datatype MPI_triple;
 	MPI_Type_contiguous(sizeof(std::tuple<LIT,LIT,NT>), MPI_CHAR, &MPI_triple);
 	MPI_Type_commit(&MPI_triple);
 
 	std::tuple<LIT,LIT,NT> * recvdata = new std::tuple<LIT,LIT,NT>[totrecv];	
+
 	MPI_Alltoallv(senddata, sendcnt, sdispls, MPI_triple, recvdata, recvcnt, rdispls, MPI_triple, commGrid->GetWorld());
+
 
 	DeleteAll(senddata, sendcnt, recvcnt, sdispls, rdispls);
 	MPI_Type_free(&MPI_triple);
@@ -2490,12 +2511,25 @@ void SpParMat< IT,NT,DER >::SparseCommon(std::vector< std::vector < std::tuple<L
 	if(myproccol != s-1)	loccols = n_perproc;
 	else	loccols = total_n - myproccol * n_perproc;
     
+
+	// YAN DBG: dump tuples to file for myrank 0
+	// if (commGrid->GetRank() == 0) {
+	// 	std::cout << "------------------------------------------------------------------------------------\n" << std::flush; 
+	// 	for (size_t i = 0; i < std::min(totrecv, static_cast<IT>(100)); i++) {
+	// 		std::cout << std::get<0>(recvdata[i]) << "\t" << std::get<1>(recvdata[i]) << "\t" << static_cast<IT>(std::get<2>(recvdata[i])) << "\n" << std::flush; 
+	// 	}
+	// 	std::cout << "------------------------------------------------------------------------------------\n" << std::flush; 
+	// }
+	// YAN DBG dump tuples to file for myrank 0
+
 	SpTuples<LIT,NT> A(totrecv, locrows, loccols, recvdata);	// It is ~SpTuples's job to deallocate
-	
-    	// the previous constructor sorts based on columns-first (but that doesn't matter as long as they are sorted one way or another)
-    	A.RemoveDuplicates(BinOp);
-	
+
+    // the previous constructor sorts based on columns-first (but that doesn't matter as long as they are sorted one way or another)
+
+	A.RemoveDuplicates(BinOp);
+
   	spSeq = new DER(A,false);        // Convert SpTuples to DER
+	if(myrank == 0) {std::cout << "---- All procs finished exchange (alltoall)..." << std::endl << std::flush;}
 }
 
 
@@ -3414,7 +3448,7 @@ FullyDistVec<IT,std::array<char, MAXVERTNAME> > SpParMat< IT,NT,DER >::ReadGener
 //! Replaces ReadDistribute for properly load balanced input in matrix market format
 template <class IT, class NT, class DER>
 template <typename _BinaryOperation>
-void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool onebased, _BinaryOperation BinOp)
+void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool onebased, _BinaryOperation BinOp, FullyDistVec<IT, IT> &nonisov)
 {
     int32_t type = -1;
     int32_t symmetric = 0;
@@ -3467,8 +3501,8 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
         int ret_code;
         if ((ret_code = mm_read_mtx_crd_size(f, &nrows, &ncols, &nonzeros, &linesread)) !=0)  // ABAB: mm_read_mtx_crd_size made 64-bit friendly
             exit(1);
-    
-        std::cout << "Total number of nonzeros expected across all processors is " << nonzeros << std::endl;
+
+        std::cout << "Total number of nonzeros expected across all processors is " << nonzeros << "\n" << std::flush;
 
     }
     MPI_Bcast(&type, 1, MPI_INT, 0, commGrid->commWorld);
@@ -3476,6 +3510,12 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     MPI_Bcast(&nrows, 1, MPIType<int64_t>(), 0, commGrid->commWorld);
     MPI_Bcast(&ncols, 1, MPIType<int64_t>(), 0, commGrid->commWorld);
     MPI_Bcast(&nonzeros, 1, MPIType<int64_t>(), 0, commGrid->commWorld);
+
+    // Permutation vector:
+	if(myrank == 0) std::cout << "----Constructing a permutation vector of size [" << nrows << "]..." << std::endl;
+    nonisov.iota(nrows, 0);
+	nonisov.RandPerm();
+	if(myrank == 0) std::cout << "----Finished constructing the permutation vector" << std::endl;
 
     // Use fseek again to go backwards two bytes and check that byte with fgetc
     struct stat st;     // get file size
@@ -3513,21 +3553,31 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     std::vector<std::string> lines;
     bool finished = SpParHelper::FetchBatch(mpi_fh, fpos, end_fpos, true, lines, myrank);
     int64_t entriesread = lines.size();
-    SpHelper::ProcessLines(rows, cols, vals, lines, symmetric, type, onebased);
+    SpHelper::ProcessLines(rows, cols, vals, lines, symmetric, type, nonisov, onebased);
     MPI_Barrier(commGrid->commWorld);
+
+	// after first processing, check correctness
 
     while(!finished)
     {
         finished = SpParHelper::FetchBatch(mpi_fh, fpos, end_fpos, false, lines, myrank);
         entriesread += lines.size();
-        SpHelper::ProcessLines(rows, cols, vals, lines, symmetric, type, onebased);
+        SpHelper::ProcessLines(rows, cols, vals, lines, symmetric, type, nonisov, onebased);
+
+		int rpid1, rpid2, rpid3, rpid4;
+		rpid1 = std::rand() % nprocs; rpid2 = std::rand() % nprocs; rpid3 = std::rand() % nprocs; rpid4 = std::rand() % nprocs;
+		if(myrank == 0 || myrank == rpid1 || myrank == rpid2 || myrank == rpid3 || myrank == rpid4  ) {
+			if(entriesread % TENMILLION == 0) {
+				std::cout << "---- p" << myrank << " read [" << entriesread << "] lines so far" << std::endl;
+			}
+		}
     }
+
     int64_t allentriesread;
     MPI_Reduce(&entriesread, &allentriesread, 1, MPIType<int64_t>(), MPI_SUM, 0, commGrid->commWorld);
-#ifdef COMBBLAS_DEBUG
+
     if(myrank == 0)
-        std::cout << "Reading finished. Total number of entries read across all processors is " << allentriesread << std::endl;
-#endif
+        std::cout << "Reading finished. Total number of entries read across all processors is " << allentriesread << "\n" << std::flush;
 
     std::vector< std::vector < std::tuple<LIT,LIT,NT> > > data(nprocs);
     
@@ -3542,10 +3592,8 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     std::vector<LIT>().swap(cols);
     std::vector<NT>().swap(vals);	
 
-#ifdef COMBBLAS_DEBUG
     if(myrank == 0)
-        std::cout << "Packing to recepients finished, about to send..." << std::endl;
-#endif
+        std::cout << "Packing to recepients finished, about to send...\n" << std::flush;
     
     if(spSeq)   delete spSeq;
     SparseCommon(data, locsize, nrows, ncols, BinOp);

@@ -30,6 +30,16 @@
 #include "../include/FullyDistSpVec.h"
 #include "../include/Operations.h"
 
+//FUAD
+#include <boost/mpi/environment.hpp>
+#include <boost/mpi/communicator.hpp>
+#include <boost/mpi/collectives.hpp>
+#include <boost/mpi/timer.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+boost::mpi::environment    env;
+boost::mpi::communicator   world;
+
 namespace combblas {
 
 template <class IT, class NT>
@@ -586,6 +596,56 @@ NT FullyDistVec<IT,NT>::GetElement (IT indx) const
 	MPI_Bcast(&ret, 1, MPIType<NT>(), owner, World);
 	return ret;
 }
+
+
+//FUAD
+//~ // Each process calls with indices to retrieve, and gets an out_vec with the value for each index
+template <class IT, class NT>
+void FullyDistVec<IT,NT>::GetElements (std::vector<IT>& index_vec, std::vector<NT>& out_vec) const
+{
+	MPI_Comm World = commGrid->GetWorld();
+	int rank   = commGrid->GetRank();
+	int nprocs = commGrid->GetSize();
+	
+	
+	std::vector<std::vector<IT>> data(nprocs);
+	std::vector<std::vector<size_t>> idx_vec(nprocs); // one2one in data to maintain index within index_vec, to produce out_vec with one2one with index_vec
+	for(size_t i = 0; i < index_vec.size(); ++i) {
+		IT locind;
+		int owner_rank = Owner(index_vec[i], locind);
+		data[owner_rank].push_back(index_vec[i]);
+		idx_vec[owner_rank].push_back(i);
+	}
+	std::vector<std::vector<IT>> recvdata(nprocs);
+	boost::mpi::all_to_all(world, data, recvdata);
+ 	for(int i = 0; i < nprocs; ++i) {
+		for(size_t j = 0; j < recvdata[i].size(); ++j) {
+			IT locind;
+			int owner = Owner(recvdata[i][j], locind);
+			recvdata[i][j] = arr[locind];
+		}
+	}
+	std::vector<std::vector<IT>> final_recvdata(nprocs);
+	boost::mpi::all_to_all(world, recvdata, final_recvdata);
+	out_vec.clear();
+	out_vec.resize(index_vec.size());
+	for(int i = 0; i < nprocs; ++i) {
+		for(size_t j = 0; j < final_recvdata[i].size(); ++j) {
+			size_t idx = idx_vec[i][j];
+			out_vec[idx] = final_recvdata[i][j];
+		}
+	}
+    //~ if(rank == 0) {
+        //~ std::cout << "----GetELements: after filling output" << std::endl << std::flush;
+    //~ }
+    
+    //DBG
+    //~ if(rank == 0) {
+        //~ std::cout << "Size of NT: " << sizeof(NT) << std::endl << std::flush;
+    //~ }
+}
+
+
 
 // Write to file using MPI-2
 template <class IT, class NT>

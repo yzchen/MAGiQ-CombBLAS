@@ -36,39 +36,39 @@ void resgen_l1(PSpMat::MPI_DCCols &m_40, PSpMat::MPI_DCCols &m_34, PSpMat::MPI_D
 
     get_local_indices(m_40, indl);
     send_local_indices(commGrid, indl);
-    // m_40.FreeMemory();
+    m_40.FreeMemory();
 
     get_local_indices(m_34, indr);
     send_local_indices(commGrid, indr);
-    // m_34.FreeMemory();
+    m_34.FreeMemory();
 
     local_join(commGrid, indl, indr, 2, 2, 1, 1, order1, indj);
     local_redistribution(m_53, indj, 3, 1, indl);
 
     get_local_indices(m_53, indr);
     send_local_indices(commGrid, indr);
-    // m_53.FreeMemory();
+    m_53.FreeMemory();
 
     local_join(commGrid, indl, indr, 3, 2, 1, 1, order2, indj);
     local_redistribution(m_65, indj, 4, 3, indl);
 
     get_local_indices(m_65, indr);
     send_local_indices(commGrid, indr);
-    // m_65.FreeMemory();
+    m_65.FreeMemory();
 
     local_filter(commGrid, indl, indr, 4, 2, 3, 2, 1, 0, order3, indj);
     indl = indj;
 
     get_local_indices(m_15, indr);
     send_local_indices(commGrid, indr);
-    // m_15.FreeMemory();
+    m_15.FreeMemory();
 
     local_join(commGrid, indl, indr, 4, 2, 3, 1, order4, indj);
     local_redistribution(m_23, indj, 5, 2, indl);
 
     get_local_indices(m_23, indr);
     send_local_indices(commGrid, indr);
-    // m_23.FreeMemory();
+    m_23.FreeMemory();
 
     local_join(commGrid, indl, indr, 5, 2, 2, 1, order5, indj);
     send_local_results(commGrid, indj.size() / 6);
@@ -86,9 +86,12 @@ void lubm_l1(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     auto m_40(G), m_34(G), m_23(tG), m_53(tG), m_15(tG), m_65(tG);
 
-    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(103594630)))[0];
-    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(139306106)))[0];
-    IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(130768016)))[0];
+    // IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(103594630)))[0];
+    IndexType ind1 = nonisov[103594630];
+    // IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(139306106)))[0];
+    IndexType ind2 = nonisov[139306106];
+    // IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(130768016)))[0];
+    IndexType ind3 = nonisov[130768016];
 
     FullyDistVec<IndexType, ElementType> r_40(commWorld, G.getnrow(), 0), l_23(commWorld, G.getnrow(), 0), l_15(commWorld, G.getnrow(), 0);
     r_40.SetElement(ind1, 17);
@@ -367,7 +370,8 @@ void lubm_l2(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     auto m_10(G), m_21(tG);
 
-    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(235928023)))[0];
+    // IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(235928023)))[0];
+    IndexType ind1 = nonisov[235928023];
 
     FullyDistVec<IndexType, ElementType> r_10(commWorld, G.getnrow(), 0);
     r_10.SetElement(ind1, 17);
@@ -460,9 +464,12 @@ void lubm_l3(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     auto m_40(G), m_34(G), m_23(tG), m_53(tG), m_15(tG), m_65(tG);
 
-    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(103594630)))[0];
-    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(223452631)))[0];
-    IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(130768016)))[0];
+    // IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(103594630)))[0];
+    IndexType ind1 = nonisov[103594630];
+    // IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(223452631)))[0];
+    IndexType ind2 = nonisov[223452631];
+    // IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(130768016)))[0];
+    IndexType ind3 = nonisov[130768016];
 
     FullyDistVec<IndexType, ElementType> r_40(commWorld, G.getnrow(), 0), l_23(commWorld, G.getnrow(), 0), l_15(commWorld, G.getnrow(), 0);
     r_40.SetElement(ind1, 17);
@@ -769,8 +776,10 @@ void lubm_l4(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     auto m_20(G), m_12(tG), m_32(tG), m_42(tG), m_52(tG);
 
-    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(2808777)))[0];
-    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(291959481)))[0];
+    // IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(2808777)))[0];
+    IndexType ind1 = nonisov[2808777];
+    // IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(291959481)))[0];
+    IndexType ind2 = nonisov[291959481];
 
     FullyDistVec<IndexType, ElementType> r_20(commWorld, G.getnrow(), 0), l_12(commWorld, G.getnrow(), 0);
     r_20.SetElement(ind1, 7);
@@ -958,8 +967,10 @@ void lubm_l5(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     auto m_20(G), m_12(tG);
 
-    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(191176245)))[0];
-    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(2808777)))[0];
+    // IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(191176245)))[0];
+    IndexType ind1 = nonisov[191176245];
+    // IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(2808777)))[0];
+    IndexType ind2 = nonisov[2808777];
 
     FullyDistVec<IndexType, ElementType> r_20(commWorld, G.getnrow(), 0), l_12(commWorld, G.getnrow(), 0);
     r_20.SetElement(ind1, 17);
@@ -1116,9 +1127,12 @@ void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
 
     auto m_40(G), m_14(tG), m_34(G), m_23(tG);
 
-    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(130768016)))[0];
-    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(267261320)))[0];
-    IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(291959481)))[0];
+    // IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(130768016)))[0];
+    IndexType ind1 = nonisov[130768016];
+    // IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(267261320)))[0];
+    IndexType ind2 = nonisov[267261320];
+    // IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(291959481)))[0];
+    IndexType ind3 = nonisov[291959481];
 
     FullyDistVec<IndexType, ElementType> r_40(commWorld, G.getnrow(), 0), l_14(commWorld, G.getnrow(), 0), l_23(
             commWorld, G.getnrow(), 0);
@@ -1275,321 +1289,6 @@ void lubm_l6(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     }
 }
 
-//void resgen_l7(PSpMat::MPI_DCCols &m_30, PSpMat::MPI_DCCols &m_43, PSpMat::MPI_DCCols &m_14, PSpMat::MPI_DCCols &m_54,
-//               PSpMat::MPI_DCCols &m_25, PSpMat::MPI_DCCols &m_65) {
-//    int myrank;
-//    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-//
-//    double t1_start = MPI_Wtime();
-//
-//    clear_result_time();
-//
-//    auto commGrid = m_30.getcommgrid();
-//
-//    // m_30 becoms m_03
-//    m_30.Transpose();
-//
-//    vector<IndexType> indl, indr, indj;
-//
-//    vector<IndexType> order1 = {0, 0, 0, 1, 1, 0}, order2 = {0, 0, 0, 1, 0, 2, 1, 0}, order3 = {0, 0, 0, 1, 0, 2, 0, 3},
-//            order4 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3}, order5 = {0, 0, 1, 0, 0, 1, 0, 2, 0, 3, 0, 4};
-//
-//    double t1_end = MPI_Wtime();
-//    if (myrank == 0) {
-//        cout << "begin result generation ......" << endl;
-//        cout << "\ttranspose matrix and declarations take : " << (t1_end - t1_start) << " s\n" << endl;
-//    }
-//
-//    get_local_indices(m_30, indl);
-//    send_local_indices(commGrid, indl);
-//    m_30.FreeMemory();
-//
-//    get_local_indices(m_43, indr);
-//    send_local_indices(commGrid, indr);
-//    m_43.FreeMemory();
-//
-//    local_join(commGrid, indl, indr, 2, 2, 1, 1, order1, indj);
-//    send_local_results(commGrid, indj.size() / 3);
-//    local_redistribution(m_54, indj, 3, 2, indl);
-//
-//    get_local_indices(m_54, indr);
-//    send_local_indices(commGrid, indr);
-//    m_54.FreeMemory();
-//
-//    local_join(commGrid, indl, indr, 3, 2, 2, 1, order2, indj);
-//    send_local_results(commGrid, indj.size() / 4);
-//    local_redistribution(m_65, indj, 4, 3, indl);
-//
-//    get_local_indices(m_65, indr);
-//    send_local_indices(commGrid, indr);
-//    m_65.FreeMemory();
-//
-//    local_filter(commGrid, indl, indr, 4, 2, 3, 1, 1, 0, order3, indj);
-//    send_local_results(commGrid, indj.size() / 4);
-//    indl = indj;
-//
-//    get_local_indices(m_25, indr);
-//    send_local_indices(commGrid, indr);
-//    m_25.FreeMemory();
-//
-//    local_join(commGrid, indl, indr, 4, 2, 3, 1, order4, indj);
-//    send_local_results(commGrid, indj.size() / 5);
-//    local_redistribution(m_14, indj, 5, 3, indl);
-//
-//    get_local_indices(m_14, indr);
-//    send_local_indices(commGrid, indr);
-//    m_14.FreeMemory();
-//
-//    local_join(commGrid, indl, indr, 5, 2, 3, 1, order5, indj);
-//    send_local_results(commGrid, indj.size() / 6);
-//}
-//
-//void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexType, IndexType> &nonisov) {
-//    int myrank;
-//    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-//
-//    clear_query_time();
-//
-//    auto commWorld = G.getcommgrid();
-//
-//    FullyDistVec<IndexType, ElementType> dm(commWorld);
-//
-//    auto m_30(G), m_43(tG), m_14(tG), m_54(G), m_25(tG), m_65(G);
-//
-//    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(223452631)))[0];
-//    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(235928023)))[0];
-//    IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(291959481)))[0];
-//
-//    FullyDistVec<IndexType, ElementType> r_30(commWorld, G.getnrow(), 0), l_14(commWorld, G.getnrow(), 0), l_25(
-//            commWorld, G.getnrow(), 0);
-//    r_30.SetElement(ind1, 17);
-//    l_14.SetElement(ind2, 1);
-//    l_25.SetElement(ind3, 1);
-//
-//    // start count time
-//    double total_computing_1 = MPI_Wtime();
-//
-//    // ==> step 1
-//    if (myrank == 0) {
-//        cout << "\n###############################################################" << endl;
-//        cout << "Query 7" << endl;
-//        cout << "###############################################################" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//        cout << "step 1 : m_(3,0) = G x {1@(223452631,223452631)}*17" << endl;
-//    }
-//    double t1_start = MPI_Wtime();
-//    multDimApplyPrune(m_30, r_30, Column, true);
-//    m_30.PrintInfo();
-//    double t1_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 1 (Total) : " << (t1_end - t1_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 2
-//    if (myrank == 0) {
-//        cout << "step 2 : m_(4,3) = G.T() x m_(3,0).D()*4" << endl;
-//    }
-//    double t2_start = MPI_Wtime();
-//    diagonalizeV(m_30, dm, Row, 4);
-//    multDimApplyPrune(m_43, dm, Column, true);
-//    m_43.PrintInfo();
-//    double t2_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 2 (Total) : " << (t2_end - t2_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 3
-//    if (myrank == 0) {
-//        cout << "step 3 : m_(1,4) = G.T() x m_(4,3).D()*17" << endl;
-//    }
-//    double t3_start = MPI_Wtime();
-//    diagonalizeV(m_43, dm, Row, 17);
-//    multDimApplyPrune(m_14, dm, Column, true);
-//    m_14.PrintInfo();
-//    double t3_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 3 (Total) : " << (t3_end - t3_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 4
-//    if (myrank == 0) {
-//        cout << "step 4 : m_(1,4) = {1@(235928023,235928023)} x m_(1,4)" << endl;
-//    }
-//    double t4_start = MPI_Wtime();
-//    multDimApplyPrune(m_14, l_14, Row, false);
-//    m_14.PrintInfo();
-//    double t4_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 4 (Total) : " << (t4_end - t4_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 5
-//    if (myrank == 0) {
-//        cout << "step 5 : m_(5,4) = G x m_(1,4).T().D()*5" << endl;
-//    }
-//    double t5_start = MPI_Wtime();
-//    diagonalizeV(m_14, dm, Column, 5);
-//    multDimApplyPrune(m_54, dm, Column, true);
-//    m_54.PrintInfo();
-//    double t5_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 5 (Total) : " << (t5_end - t5_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 6
-//    if (myrank == 0) {
-//        cout << "step 6 : m_(2,5) = G.T() x m_(5,4).D()*17" << endl;
-//    }
-//    double t6_start = MPI_Wtime();
-//    diagonalizeV(m_54, dm, Row, 17);
-//    multDimApplyPrune(m_25, dm, Column, true);
-//    m_25.PrintInfo();
-//    double t6_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 6 (Total) : " << (t6_end - t6_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 7
-//    if (myrank == 0) {
-//        cout << "step 7 : m_(2,5) = {1@(291959481,291959481)} x m_(2,5)" << endl;
-//    }
-//    double t7_start = MPI_Wtime();
-//    multDimApplyPrune(m_25, l_25, Row, false);
-//    m_25.PrintInfo();
-//    double t7_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 7 (Total) : " << (t7_end - t7_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 8
-//    if (myrank == 0) {
-//        cout << "step 8 : m_(6,5) = G x m_(2,5).T().D()*18" << endl;
-//    }
-//    double t8_start = MPI_Wtime();
-//    diagonalizeV(m_25, dm, Column, 18);
-//    multDimApplyPrune(m_65, dm, Column, true);
-//    m_65.PrintInfo();
-//    double t8_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 8 (Total) : " << (t8_end - t8_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 9
-//    if (myrank == 0) {
-//        cout << "step 9 : m_(6,5) = m_(4,3).T().D() x m_(6,5)" << endl;
-//    }
-//    double t9_start = MPI_Wtime();
-//    diagonalizeV(m_43, dm, Column);
-//    multDimApplyPrune(m_65, dm, Row, false);
-//    m_65.PrintInfo();
-//    double t9_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 9 (Total) : " << (t9_end - t9_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 10
-//    if (myrank == 0) {
-//        cout << "step 10 : m_(4,3) = m_(4,3) x m_(6,5).D()" << endl;
-//    }
-//    double t10_start = MPI_Wtime();
-//    diagonalizeV(m_65, dm);
-//    multDimApplyPrune(m_43, dm, Column, false);
-//    m_43.PrintInfo();
-//    double t10_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 10 (Total) : " << (t10_end - t10_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 11
-//    if (myrank == 0) {
-//        cout << "step 11 : m_(5,4) = m_(6,5).T().D() x m_(5,4)" << endl;
-//    }
-//    double t11_start = MPI_Wtime();
-//    diagonalizeV(m_65, dm, Column);
-//    multDimApplyPrune(m_54, dm, Row, false);
-//    m_54.PrintInfo();
-//    double t11_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 11 (Total) : " << (t11_end - t11_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 12
-//    if (myrank == 0) {
-//        cout << "step 12 : m_(4,3) = m_(5,4).T().D() x m_(4,3)" << endl;
-//    }
-//    double t12_start = MPI_Wtime();
-//    diagonalizeV(m_54, dm, Column);
-//    multDimApplyPrune(m_43, dm, Row, false);
-//    m_43.PrintInfo();
-//    double t12_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 12 (Total) : " << (t12_end - t12_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    // ==> step 13
-//    if (myrank == 0) {
-//        cout << "step 13 : m_(3,0) = m_(4,3).T().D() x m_(3,0)" << endl;
-//    }
-//    double t13_start = MPI_Wtime();
-//    diagonalizeV(m_43, dm, Column);
-//    multDimApplyPrune(m_30, dm, Row, false);
-//    m_30.PrintInfo();
-//    double t13_end = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "step 13 (Total) : " << (t13_end - t13_start) << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    double query_counting = MPI_Wtime();
-//
-//    if (myrank == 0) {
-//        cout << "query7 mmul_scalar time : " << total_mmul_scalar_time << " s" << endl;
-//        cout << "query7 prune time : " << total_prune_time << " s" << endl;
-//        cout << "query7 diag_reduce time : " << total_reduce_time << " s" << endl;
-//        cout << "query7 dim_apply time : " << total_dim_apply_time << " s" << endl;
-//        cout << "query7 total query execution time : " << query_counting - total_computing_1 << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//
-//    double resgen_start = MPI_Wtime();
-//    resgen_l7(m_30, m_43, m_14, m_54, m_25, m_65);
-//    double resgen_end = MPI_Wtime();
-//
-//    // end count time
-//    double total_computing_2 = MPI_Wtime();
-//    if (myrank == 0) {
-//        cout << "query7 result_enum time : " << resgen_end - resgen_start << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//        cout << "query7 time (Total) : " << total_computing_2 - total_computing_1 << " s" << endl;
-//        cout << "---------------------------------------------------------------" << endl;
-//    }
-//}
-
 void resgen_l7(PSpMat::MPI_DCCols &m_52, PSpMat::MPI_DCCols &m_35, PSpMat::MPI_DCCols &m_03, PSpMat::MPI_DCCols &m_43,
                  PSpMat::MPI_DCCols &m_14, PSpMat::MPI_DCCols &m_64) {
     int myrank;
@@ -1668,12 +1367,19 @@ void lubm_l7(PSpMat::MPI_DCCols &G, PSpMat::MPI_DCCols &tG, FullyDistVec<IndexTy
     auto commWorld = G.getcommgrid();
 
     FullyDistVec<IndexType, ElementType> dm(commWorld);
+    int64_t nnodes = G.getnrow();
 
     auto m_52(G), m_35(G), m_03(tG), m_43(tG), m_14(tG), m_64(G);
 
-    IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(291959481)))[0];
-    IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(223452631)))[0];
-    IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(235928023)))[0];
+    // IndexType ind1 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(291959481)))[0];
+    IndexType ind1 = nonisov[291959481];
+    // IndexType ind1 = SpHelper::hashfun(291959481, nnodes);
+    // IndexType ind2 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(223452631)))[0];
+    IndexType ind2 = nonisov[223452631];
+    // IndexType ind2 = SpHelper::hashfun(223452631, nnodes);
+    // IndexType ind3 = nonisov.FindInds(std::bind2nd(std::equal_to<IndexType>(), static_cast<IndexType>(235928023)))[0];
+    IndexType ind3 = nonisov[235928023];
+    // IndexType ind3 = SpHelper::hashfun(235928023, nnodes);
 
     FullyDistVec<IndexType, ElementType> r_52(commWorld, G.getnrow(), 0), l_03(commWorld, G.getnrow(), 0), l_14(
             commWorld, G.getnrow(), 0);
@@ -1938,34 +1644,37 @@ int main(int argc, char *argv[]) {
     {
         // initialization phase
         MPI_Barrier(MPI_COMM_WORLD);
-
+        string Mname(argv[1]);
+        
         if (myrank == 0) {
             cout << "###############################################################" << endl;
             cout << "Load Matrix" << endl;
             cout << "###############################################################" << endl;
             cout << "---------------------------------------------------------------" << endl;
-            cout << "starting reading lubm data......" << endl;
+            cout << "All procs reading and permuting input graph [" << Mname << "]..." << endl;
         }
 
         PSpMat::MPI_DCCols G(MPI_COMM_WORLD);
         auto commWorld = G.getcommgrid();
 
-        string Mname(argv[1]);
+        // permute vector 
+        FullyDistVec<IndexType, IndexType> nonisov(commWorld);
+
+        
 
         double t1 = MPI_Wtime();
-        G.ParallelReadMM(Mname, true, selectSecond);
+        G.ParallelReadMM(Mname, true, selectSecond, nonisov);
         double t2 = MPI_Wtime();
 
         G.PrintInfo();
         float imG = G.LoadImbalance();
 
         if (myrank == 0) {
-            cout << "\tread file takes : " << (t2 - t1) << " s" << endl;
-            cout << "\toriginal imbalance of G : " << imG << endl;
+            cout << "\tread and permute graph took : " << (t2 - t1) << " s" << endl;
+            cout << "\timbalance of G (after random permutation) : " << imG << endl;
         }
-
-        FullyDistVec<IndexType, IndexType> nonisov(commWorld);
-        permute(G, nonisov);
+        
+        // permute(G, nonisov);
 
         double t1_trans = MPI_Wtime();
         auto tG = transpose(G);
@@ -1978,7 +1687,7 @@ int main(int argc, char *argv[]) {
         }
 
         // run 7 queries 5 times each
-        for (int time = 1; time <= 5; time++) {
+        // for (int time = 1; time <= 5; time++) {
             try {    lubm_l1(G, tG, nonisov);    }
             catch (...) {    if (myrank == 0) {cout << "query 1 failed at iteration " << time << endl; }     }
             try {    lubm_l2(G, tG, nonisov);    }
@@ -1993,7 +1702,7 @@ int main(int argc, char *argv[]) {
             catch (...) {    if (myrank == 0) {cout << "query 6 failed at iteration " << time << endl; }     }
             try {    lubm_l7(G, tG, nonisov);    }
             catch (...) {    if (myrank == 0) {cout << "query 7 failed at iteration " << time << endl; }     }
-        }
+        // }
     }
 
     MPI_Finalize();

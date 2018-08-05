@@ -36,6 +36,7 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <unordered_map>
 #include "SpDefs.h"
 #include "StackEntry.h"
 #include "promote.h"
@@ -48,6 +49,8 @@ namespace combblas {
 
 template <class IT, class NT>
 class Dcsc;
+template <class IT, class NT>
+class FullyDistVec;
 
 class SpHelper
 {
@@ -141,11 +144,16 @@ public:
         lines.clear();	
     }
 
-
+	// get hash of string
+	static int64_t hashfun(int64_t label, int64_t nnodes) {
+		std::hash<std::string> hasher;
+		return (hasher(std::to_string(label)) % nnodes);
+	}
 
     template <typename IT1, typename NT1>
-    static void ProcessLines(std::vector<IT1> & rows, std::vector<IT1> & cols, std::vector<NT1> & vals, std::vector<std::string> & lines, int symmetric, int type, bool onebased = true)
+    static void ProcessLines(std::vector<IT1> & rows, std::vector<IT1> & cols, std::vector<NT1> & vals, std::vector<std::string> & lines, int symmetric, int type, FullyDistVec<IT1, IT1> &nonisov, bool onebased = true)
     {
+		std::vector<IT1> tmpii, tmpjj;
         if(type == 0)   // real
         {
             int64_t ii, jj;
@@ -160,10 +168,18 @@ public:
         else if(type == 1) // integer
         {
             int64_t ii, jj, vv;
+				// int myrank;
+				// MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+				// if (myrank == 0) {
+				// 	std::cout << "in integer\n" << std::flush;
+				// }
             for (auto itr=lines.begin(); itr != lines.end(); ++itr)
             {
                 sscanf(itr->c_str(), "%lld %lld %lld", &ii, &jj, &vv);
-                SpHelper::push_to_vectors(rows, cols, vals, ii, jj, vv, symmetric, onebased);
+				tmpii.push_back(ii - 1);
+				tmpjj.push_back(jj - 1);
+				vals.push_back(vv);
+                // SpHelper::push_to_vectors(rows, cols, vals, nonisov[ii], nonisov[jj], vv, symmetric, onebased);
             }
         }
         else if(type == 2) // pattern
@@ -180,6 +196,21 @@ public:
             std::cout << "COMBBLAS: Unrecognized matrix market scalar type" << std::endl;
         }
         lines.clear();
+        //FUAD
+        // ==============================
+        // all to all to exchange permuted ids
+        std::vector<IT1> vals_ii, vals_jj;
+		nonisov.GetElements(tmpii, vals_ii);
+		nonisov.GetElements(tmpjj, vals_jj);
+		rows.insert(rows.end(), vals_ii.begin(), vals_ii.end());
+		cols.insert(cols.end(), vals_jj.begin(), vals_jj.end());
+        // ==============================
+        
+        int myrank;
+		MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+        
+        assert(rows.size() == vals.size() && cols.size() == vals.size());
+
     }
 
 

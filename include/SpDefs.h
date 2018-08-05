@@ -58,6 +58,13 @@ extern int cblas_splits; // TODO: move this inside namespace
 namespace combblas {
 
 #define ONEMILLION 1000000
+
+//FUAD
+#define TENMILLION 10000000
+#define FIFTYMILLION 50000000
+#define HUNDREDMILLION 100000000
+
+
 #define MAXLINELENGTH 200
 #define MINLINELENGTH 2
 #define PRINT_LIMIT 50
