@@ -2,8 +2,8 @@
 // Created by cheny0l on 24/07/18.
 //
 
-#ifndef COMBINATORIAL_BLAS_HEADER1T_H
-#define COMBINATORIAL_BLAS_HEADER1T_H
+#ifndef COMBINATORIAL_BLAS_HEADER_SCAL_H
+#define COMBINATORIAL_BLAS_HEADER_SCAL_H
 
 #include <iostream>
 #include <functional>
@@ -154,7 +154,7 @@ bool isZero(ElementType t) { return t == 0; }
 // special semiring for dimApply
 ElementType rdf_multiply(ElementType a, ElementType b) {
     if (a != 0 && b != 0 && a == b) {   return static_cast<ElementType>(1);
-    } else {    return static_cast<ElementType>(0);     }
+                            } else {    return static_cast<ElementType>(0);     }
 }
 
 // handle duplicate in original loaded data
@@ -182,7 +182,6 @@ void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov)
     double t_perm1 = MPI_Wtime();
 
     nonisov.iota(G.getnrow(), 0);
-
     nonisov.RandPerm();
 
     G(nonisov, nonisov, true);
@@ -223,7 +222,7 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
 
     double t1 = MPI_Wtime();
     if (isRDF) {    A.DimApply(dim, v, rdf_multiply);
-    } else {    A.DimApply(dim, v, std::multiplies<ElementType>());     }
+        } else {    A.DimApply(dim, v, std::multiplies<ElementType>());     }
     double t2 = MPI_Wtime();
 
     double t3 = MPI_Wtime();
@@ -291,7 +290,7 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
             }
         }
         // if does not have same size, must be wrong
-        assert(I.size() == J.size());
+        assert(I.size() == J.size() && "When get local indices, I and J should have same size.");
     }
 
     double t2 = MPI_Wtime();
@@ -303,8 +302,8 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
 
 // r1, r2 are not reachable
 // first should have enough size to contain the sorted data
-void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, IndexType l1, IndexType l2, IndexType r1, IndexType r2, int pair_size1,
-                         int pair_size2, int key1, int key2) {
+void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, IndexType l1, IndexType l2, IndexType r1, IndexType r2, 
+                        int pair_size1, int pair_size2, int key1, int key2) {
     IndexType i = l1, j = l2;
 
     vector<IndexType> res;
@@ -346,8 +345,7 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
 
             int receiver = colrank - ceil(p / 2);
             MPI_Send(&number_count, 1, MPIType<int>(), receiver, 0, commGrid->GetColWorld());
-            MPI_Send(local_indices.data(), number_count, MPIType<IndexType>(), receiver, 0,
-                     commGrid->GetColWorld());
+            MPI_Send(local_indices.data(), number_count, MPIType<IndexType>(), receiver, 0, commGrid->GetColWorld());
         } else if (colrank % p == 0) {      // this processor is a receiver in this round
             std::vector<IndexType> recv_I;
 
@@ -481,7 +479,7 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     double t1 = MPI_Wtime();
 
     res.clear();
-    res.shrink_to_fit();
+    vector<IndexType>().swap(res);
 
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -507,7 +505,6 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     // sort based on pivot
     double t1_sort_start = MPI_Wtime();
     symmergesort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
-//    qsort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
     double t1_sort_end = MPI_Wtime();
 
     vector<int> lens;
@@ -557,7 +554,6 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     // sort merged vector
     double t2_sort_start = MPI_Wtime();
     symmergesort(res.data(), res.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
-//    qsort(res.data(), res.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
     double t2_sort_end = MPI_Wtime();
 
     double t2 = MPI_Wtime();
@@ -593,4 +589,4 @@ void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
     }
 }
 
-#endif //COMBINATORIAL_BLAS_HEADER1T_H
+#endif //COMBINATORIAL_BLAS_HEADER_SCAL_H
