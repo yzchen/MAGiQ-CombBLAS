@@ -11,11 +11,11 @@ module load cray-mpich
 
 ### magiq_src
 
-contains src file for mqgiq(combBLAS) implementation
+contains src file for magiq(combBLAS) implementation
 
 ### magiq_include
 
-contains header file for mqgiq(combBLAS) implementation
+contains header file for magiq(combBLAS) implementation
 
 ### magiq_run
 
