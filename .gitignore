@@ -12,3 +12,12 @@ TESTDATA/*
 run/*
 .vscode/
 magiq_run/*
+
+parser/bin/*
+!parser/bin/.gitkeep
+
+parser/include/*
+!parser/include/.gitkeep
+
+parser/src/*
+!parser/src/main.cc
