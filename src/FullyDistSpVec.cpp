@@ -41,7 +41,7 @@
 #include <parallel/numeric>
 #endif
 
-#include "../usort/include/parUtils.h"
+#include "../external/usort/include/parUtils.h"
 
 namespace combblas {
 

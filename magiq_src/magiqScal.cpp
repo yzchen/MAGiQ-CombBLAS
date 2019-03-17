@@ -1650,7 +1650,7 @@ int main(int argc, char *argv[]) {
 
     if (argc < 2) {
         if (myrank == 0) {
-            cout << "Usage: ./lubm_scal file" << endl << flush;
+            cout << "Usage: ./magiqScal file" << endl << flush;
         }
         MPI_Finalize();
         return -1;

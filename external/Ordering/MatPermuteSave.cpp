@@ -7,7 +7,7 @@
 #include <omp.h>
 #endif
 
-#include "../include/CombBLAS.h"
+#include "../../include/CombBLAS.h"
 #include <mpi.h>
 #include <sys/time.h>
 #include <iostream>

@@ -5,7 +5,8 @@ build/*
 output.txt
 .idea
 cmake-build-debug
-._*
+*.~
+*~
 logs/
 TESTDATA/*
 run/*

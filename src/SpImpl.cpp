@@ -29,8 +29,8 @@
 
 #include "../include/SpImpl.h"
 #include "../include/SpParHelper.h"
-#include "../PBBS/radixSort.h"
-#include "../Tommy/tommyhashdyn.h"
+#include "../external/PBBS/radixSort.h"
+#include "../external/Tommy/tommyhashdyn.h"
 
 namespace combblas {
 

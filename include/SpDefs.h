@@ -47,10 +47,10 @@
 
 #include <cmath>
 #include <limits.h>
-#include "../SequenceHeaps/knheap.C"
-#include "../psort-1.0/src/psort.h"
-#include "../psort-1.0/src/psort_samplesort.h"
-#include "../psort-1.0/driver/MersenneTwister.h"
+#include "../external/SequenceHeaps/knheap.C"
+#include "../external/psort-1.0/src/psort.h"
+#include "../external/psort-1.0/src/psort_samplesort.h"
+#include "../external/psort-1.0/driver/MersenneTwister.h"
 #include "../include/CommGrid.h"
 
 extern int cblas_splits; // TODO: move this inside namespace

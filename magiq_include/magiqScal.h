@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <sstream>
 #include "../include/CombBLAS.h"
-#include "../pmergesort/src/pmergesort.h"
+#include "../external/pmergesort/src/pmergesort.h"
 
 using namespace std;
 using namespace combblas;
