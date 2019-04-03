@@ -17,7 +17,9 @@ parser/bin/*
 !parser/bin/.gitkeep
 
 parser/include/*
-!parser/include/.gitkeep
+!parser/include/magiqScal.h
 
 parser/src/*
 !parser/src/main.cc
+
+a.out
