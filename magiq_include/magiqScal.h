@@ -252,6 +252,10 @@ void clear_result_time() {
     total_redistribution_time = 0.0;
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+//                          Result Generation Phase                             //
+//////////////////////////////////////////////////////////////////////////////////
+
 // M should have same rows and cols
 // before this function call, indices should be empty
 // after this function call, indices size should be even, I and J are together
@@ -605,6 +609,236 @@ void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
 #endif
         }
     }
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//                           Sparsql Parse Phase                                //
+//////////////////////////////////////////////////////////////////////////////////
+
+// default line buffer size, 100
+static const size_t lineSize = 100;
+
+void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices, 
+        map<string, FullyDistVec<IndexType, ElementType> > vectors,
+        PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm) {
+    
+    // get common world
+    auto commWorld = G.getcommgrid();
+    
+    // remove all spaces in the string
+    line.erase(remove(line.begin(), line.end(), ' '), line.end());
+    // if the last character is new line, then remove it
+    if (line.back() == '\n')
+        line.pop_back();
+    cout << line << endl;
+
+    // find the assignment operation
+    int eqOp = line.find('=');
+    if (eqOp == string::npos) {
+        // there is no '=', error
+    }
+
+    // sermiring multiplication, by default is true
+    bool isSermiring = true;
+    // columnDiag = true : Column in diagonalizeV
+    // columnDiag = false : Row in diagonalizeV
+    bool columnDiag = true;
+    // scale for diagonalizeV
+    int scale = 1;
+    // columnApply = true : Column in multDimApplyPrune
+    // columnApplu = false : Row in multDimApplyPrune
+    bool columnApply = true;
+    
+    // ⊗ : 3 chars
+    // × : 2 chars
+    int multOp = line.find("⊗");
+    if (multOp == -1) {
+        multOp = line.find("×");
+        isSermiring = false;
+    }
+
+    // cout << eqOp << "\t" << multOp << endl;
+
+    string interMat = line.substr(0, eqOp);
+    string mult1 = line.substr(eqOp + 1, multOp - eqOp - 1);
+    string mult2 = line.substr(multOp + 2 + isSermiring);
+
+    cout << interMat << "\t" << mult1 << "\t" << mult2 << endl;
+
+    // interMat is always m_x_x, there is need to parse it
+
+    // start parsing from mult1
+    if (mult1[0] == 'G') {  // G or G.T
+        if (mult1 == "G") {
+            matrices[interMat] = PSpMat::MPI_DCCols(G);
+        } else if (mult1 == "G.T") {
+            matrices[interMat] = PSpMat::MPI_DCCols(G);
+            columnApply = false;
+        } else {
+            // error, only G and G.T are accepted here
+        }
+
+        // parse mult2
+        if (mult2[0] == 'I') {
+            int dimOp = mult2.find('^');
+            if (dimOp == string::npos) {
+                // there must be ^ to indicate where the value is
+            }
+            int scaleOp = mult2.find('*');
+            int pos = atoi(mult2.substr(dimOp + 1, scaleOp - dimOp - 1).c_str());
+            
+            if (scaleOp != string::npos) {
+                scale *= atoi(mult2.substr(scaleOp + 1).c_str());
+            }
+
+            FullyDistVec<IndexType, ElementType> rt(commWorld, G.getnrow(), 0);
+            rt.SetElement(pos, scale);
+
+            // parameters : matrix *, fullyvec, columnApply, sermiring
+            multDimApplyPrune(matrices[interMat], rt, columnApply ? Column : Row, isSermiring);
+
+        } else if (mult2[0] == 'm') {
+            int dot1 = mult2.find('.');
+            int dot2 = mult2.rfind('.');
+            int scaleOp = mult2.find('*');
+
+            string mat = mult2.substr(0, dot1);
+            if (dot1 != string::npos) {
+                if (dot2 != dot1) {
+                    // fst : T, snd : D
+                    string fst = mult2.substr(dot1 + 1, dot2 - dot1 - 1);
+                    string snd = mult2.substr(dot2 + 1, scaleOp != string::npos?scaleOp - dot2 - 1:scaleOp);
+                    if (fst.compare("T") != 0 || snd.compare("D") != 0) {
+                        // error, m_x_x.T.D is only one acceptable
+                    }
+                    // m_x_x.T.D
+                } else {
+                    // fst : T or D
+                    string fst = mult2.substr(dot1 + 1, scaleOp != string::npos?scaleOp - dot1 - 1:scaleOp);
+                    if (fst.compare("T") == 0) {
+                        // error, should be D always
+                    } else
+                        columnDiag = false;
+                }
+            } else {
+                // error, there shoulw be dot1
+            }
+
+            if (scaleOp != string::npos) {
+                scale *= atoi(mult2.substr(scaleOp + 1).c_str());
+            }
+
+            diagonalizeV(matrices[mat], dm, columnDiag ? Column : Row, scale);
+            multDimApplyPrune(matrices[interMat], dm, columnApply ? Column : Row, isSermiring);
+
+        } else {
+            // error, only I^xxxx*xxxx and m_x_x(.T).D*xxxx are good
+        }
+
+    } else if (mult1[0] == 'I') {   // I^xxxx*xxxx
+        // mult2 should be the same as interMat
+        if (interMat == mult2) {
+            columnApply = false;
+            isSermiring = false;
+
+            int dimOp = mult1.find('^');
+            if (dimOp == string::npos) {
+                // there must be ^ to indicate where the value is
+            }
+            int scaleOp = mult1.find('*');
+            int pos = atoi(mult1.substr(dimOp + 1, scaleOp - dimOp - 1).c_str());
+            
+            if (scaleOp != string::npos) {
+                scale *= atoi(mult1.substr(scaleOp + 1).c_str());
+            }
+
+            FullyDistVec<IndexType, ElementType> rt(commWorld, G.getnrow(), 0);
+            rt.SetElement(pos, scale);
+
+            multDimApplyPrune(matrices[interMat], rt, columnApply ? Column : Row, isSermiring);
+        } else {
+            // error, if mult1 is I, then should have mult2 == interMat
+        }
+
+    } else if (mult1[0] == 'm') {   // m_x_x, m_x_x.T, m_x_x.D*xxx or m_x_x.T.D*xxxx
+        if (mult2 == interMat) {
+            columnApply = false;
+
+            int dot1 = mult1.find('.');
+            int dot2 = mult1.rfind('.');
+
+            if (dot2 != dot1) {
+                string fst = mult2.substr(dot1 + 1, dot2 - dot1 - 1);
+                string snd = mult2.substr(dot2 + 1);
+                if (fst.compare("T") != 0 || snd.compare("D") != 0) {
+                    // error, m_x_x.T.D is only one acceptable
+                }
+                columnDiag = false;
+            } else {
+                string fst = mult2.substr(dot1 + 1);
+                if (fst.compare("D") == 0) {
+                    // error, if only one dot found, then it should be D
+                }
+            }
+
+            string mat = mult1.substr(0, dot1);
+            diagonalizeV(matrices[mat], dm, columnDiag ? Column : Row, scale);
+            multDimApplyPrune(matrices[interMat], dm, columnApply ? Column : Row, isSermiring);
+
+        } else {
+            int dot1 = mult2.find('.');
+            int dot2 = mult2.rfind('.');
+
+            if (dot2 != dot1) {
+                string fst = mult2.substr(dot1 + 1, dot2 - dot1 - 1);
+                string snd = mult2.substr(dot2 + 1);
+                if (fst.compare("T") != 0 || snd.compare("D") != 0) {
+                    // error, m_x_x.T.D is only one acceptable
+                }
+                columnDiag = false;
+            } else {
+                string fst = mult2.substr(dot1 + 1);
+            }
+
+            string mat = mult2.substr(0, dot1);
+            diagonalizeV(matrices[mat], dm, columnDiag ? Column : Row, scale);
+            multDimApplyPrune(matrices[interMat], dm, columnApply ? Column : Row, isSermiring);
+
+        }
+    } else {
+        // error, there should be one of (mult1, mult2) that equals to interMat
+    }
+    // end of function call
+}
+
+int parseSparql(const char* sparqlFile, 
+        map<string, PSpMat::MPI_DCCols> &matrices, 
+        map<string, FullyDistVec<IndexType, ElementType> > &vectors,
+        PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm) {
+    //open and get the file handle
+    FILE *fh;
+    fh = fopen(sparqlFile, "r");
+
+    //check if file exists
+    if (fh == NULL){
+        printf("file does not exists : %s\n", sparqlFile);
+        return 0;
+    }
+
+    printf("starting reading sparql file ...\n");
+
+    // line buffer
+    char* line = (char *)malloc(lineSize);
+
+    while (fgets(line, lineSize, fh) != NULL) {
+        string str(line);
+        parseLine(str, matrices, vectors, G, dm);
+    }
+
+    // free momery
+    free(line);
+
+    return 0;
 }
 
 #endif //COMBINATORIAL_BLAS_HEADER_SCAL_H
