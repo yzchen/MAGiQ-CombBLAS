@@ -12,14 +12,5 @@ TESTDATA/*
 run/*
 .vscode/
 magiq_run/*
-
-parser/bin/*
-!parser/bin/.gitkeep
-
-parser/include/*
-!parser/include/magiqScal.h
-
-parser/src/*
-!parser/src/main.cc
-
 a.out
+data/*

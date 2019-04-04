@@ -15,9 +15,13 @@
 using namespace std;
 using namespace combblas;
 
+// IndexType is used for index in CombBLAS sparse matrix and dense vectors,
+// for dataset which has less than 2^32-1(= 4B) vertices, can change it to uint32_t,
+// starting from lubm13B, uint64_t is needed
 #define IndexType uint64_t
 #define ElementType uint8_t
 
+// Sparse matrix definition
 class PSpMat {
 public:
     typedef SpDCCols<IndexType, ElementType> DCCols;
@@ -620,7 +624,8 @@ static const size_t lineSize = 100;
 
 void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices, 
         map<string, FullyDistVec<IndexType, ElementType> > vectors,
-        PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm) {
+        PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm，
+        FullyDistVec<IndexType, IndexType> ＆nonisov) {
     
     // get common world
     auto commWorld = G.getcommgrid();
@@ -644,7 +649,7 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
     // columnDiag = false : Row in diagonalizeV
     bool columnDiag = true;
     // scale for diagonalizeV
-    int scale = 1;
+    ElementType scale = 1;
     // columnApply = true : Column in multDimApplyPrune
     // columnApplu = false : Row in multDimApplyPrune
     bool columnApply = true;
@@ -665,7 +670,7 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
 
     cout << interMat << "\t" << mult1 << "\t" << mult2 << endl;
 
-    // interMat is always m_x_x, there is need to parse it
+    // interMat is always m_x_x, there is no need to parse it
 
     // start parsing from mult1
     if (mult1[0] == 'G') {  // G or G.T
@@ -692,7 +697,8 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
             }
 
             FullyDistVec<IndexType, ElementType> rt(commWorld, G.getnrow(), 0);
-            rt.SetElement(pos, scale);
+            IndexType ind = nonisov[ind];
+            rt.SetElement(ind, scale);
 
             // parameters : matrix *, fullyvec, columnApply, sermiring
             multDimApplyPrune(matrices[interMat], rt, columnApply ? Column : Row, isSermiring);
@@ -753,7 +759,8 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
             }
 
             FullyDistVec<IndexType, ElementType> rt(commWorld, G.getnrow(), 0);
-            rt.SetElement(pos, scale);
+            IndexType ind = nonisov[pos];
+            rt.SetElement(ind, scale);
 
             multDimApplyPrune(matrices[interMat], rt, columnApply ? Column : Row, isSermiring);
         } else {
@@ -814,7 +821,13 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
 int parseSparql(const char* sparqlFile, 
         map<string, PSpMat::MPI_DCCols> &matrices, 
         map<string, FullyDistVec<IndexType, ElementType> > &vectors,
-        PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm) {
+        PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm,
+        FullyDistVec<IndexType, IndexType> ＆nonisov) {
+    // get common world
+    auto commWorld = G.getcommgrid();
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
     //open and get the file handle
     FILE *fh;
     fh = fopen(sparqlFile, "r");
@@ -830,9 +843,24 @@ int parseSparql(const char* sparqlFile,
     // line buffer
     char* line = (char *)malloc(lineSize);
 
+    int cntLines = 1;
     while (fgets(line, lineSize, fh) != NULL) {
         string str(line);
+        if (myrank == 0) {
+            if (cntLines == 1) {
+                cout << "###############################################################" << endl << flush;
+                cout << "Start Running query..." << endl << flush;
+                cout << "###############################################################" << endl << flush;
+            }
+            cout << "---------------------------------------------------------------" << endl << flush;
+            cout << "step " << cntLines << " : " << str << endl << flush;
+
+        }
         parseLine(str, matrices, vectors, G, dm);
+        if (myrank == 0) {
+            cout << "---------------------------------------------------------------" << endl << flush;
+        }
+        cntLines++;
     }
 
     // free momery

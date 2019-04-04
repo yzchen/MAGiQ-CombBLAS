@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
         map<string, PSpMat::MPI_DCCols> matrices;
         map<string, FullyDistVec<IndexType, ElementType> > vectors;
         FullyDistVec<IndexType, ElementType> dm;
-        parseSparql(sparqlFile.c_str(), matrices, vectors, G, dm);
+        parseSparql(sparqlFile.c_str(), matrices, vectors, G, dm, nonisov);
     }
 
     MPI_Finalize();
