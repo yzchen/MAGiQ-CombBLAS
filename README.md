@@ -1,5 +1,34 @@
 # MAGiQ(CombBLAS)
 
+[Combinatorial BLAS](https://people.eecs.berkeley.edu/~aydin/CombBLAS/html/index.html)(version 1.6.1, Jan 2018)
+
+## Compile && Run
+
+```
+mkdir -p ../build
+cd ../build && cmake .. && make
+```
+
+Or to use `COMBBLAS_DEBUG` mode to enable combblas debug information output:
+
+```
+mkdir -p ../build
+cd ../build && cmake -D COMBBLAS_DEBUG=ON .. && make
+```
+
+Or to use `MAGIQ_DEBUG` mode to enable magiq debug information output:
+
+```
+mkdir -p ../build
+cd ../build && cmake -D MAGIQ_DEBUG=ON .. && make
+```
+
+Run(in `$MAGiQ_ROOT/build`):
+
+```
+mpirun -np 16 ./magiq_src/magiqScal ../data/paracoder_lubm1B.nt
+```
+
 ## Running on Shaheen
 
 ```

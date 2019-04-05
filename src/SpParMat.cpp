@@ -2393,7 +2393,7 @@ void SpParMat<IT,NT,DER>::PrintInfo() const
 	if (commGrid->myrank == 0)	
 		std::cout << "As a whole: " << mm << " rows and "<< nn <<" columns and "<<  nznz << " nonzeros" << std::endl;
     
-#ifdef DEBUG
+#ifdef COMBBLAS_DEBUG
 	IT allprocs = commGrid->grrows * commGrid->grcols;
 	for(IT i=0; i< allprocs; ++i)
 	{
@@ -2443,23 +2443,29 @@ void SpParMat< IT,NT,DER >::SparseCommon(std::vector< std::vector < std::tuple<L
 	assert((totrecv < std::numeric_limits<int>::max()));
 
 	int myrank = commGrid->GetRank();
+#ifdef MAGIQ_DEBUG
 	if(myrank == 0) {std::cout << "---- All procs will exchange non-zeros..." << std::endl << std::flush;}
+#endif
 	int rpid1, rpid2, rpid3, rpid4;
 	rpid1 = std::rand() % nprocs; rpid2 = std::rand() % nprocs; rpid3 = std::rand() % nprocs; rpid4 = std::rand() % nprocs;
+#ifdef MAGIQ_DEBUG
 	if(myrank == 0 || myrank == rpid1 || myrank == rpid2 || myrank == rpid3 || myrank == rpid4  ) {
 		std::cout << "---- p" << myrank << " will receive [" << totrecv << "] non-zeros" << std::endl << std::flush;
 	}
-	
+#endif
+
 	IT max_recv_cnt, min_recv_cnt, avg_recv_cnt;
     MPI_Reduce(&totrecv, &max_recv_cnt, 1, MPIType<IT>(), MPI_MAX, 0, commGrid->commWorld);
 	MPI_Reduce(&totrecv, &min_recv_cnt, 1, MPIType<IT>(), MPI_MIN, 0, commGrid->commWorld);
 	MPI_Reduce(&totrecv, &avg_recv_cnt, 1, MPIType<IT>(), MPI_SUM, 0, commGrid->commWorld);
 	avg_recv_cnt /= nprocs;
+#ifdef MAGIQ_DEBUG
 	if(myrank == 0) {
 		std::cout << "Max receive count [" << max_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
 		std::cout << "Min receive count [" << min_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
 		std::cout << "Avg receive count [" << avg_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
 	}
+#endif
 
 #if 0 
 	ofstream oput;
@@ -2529,7 +2535,9 @@ void SpParMat< IT,NT,DER >::SparseCommon(std::vector< std::vector < std::tuple<L
 	A.RemoveDuplicates(BinOp);
 
   	spSeq = new DER(A,false);        // Convert SpTuples to DER
+#ifdef MAGIQ_DEBUG
 	if(myrank == 0) {std::cout << "---- All procs finished exchange (alltoall)..." << std::endl << std::flush;}
+#endif
 }
 
 
@@ -3190,10 +3198,12 @@ MPI_File SpParMat< IT,NT,DER >::TupleRead1stPassNExchange (const std::string & f
         MPI_Abort(MPI_COMM_WORLD, NOFILE);
     }
     int64_t file_size = st.st_size;
+#ifdef MAGIQ_DEBUG
     if(myrank == 0)    // the offset needs to be for this rank
     {
-        std::cout << "File is " << file_size << " bytes" << std::endl;
+        std::cout << "---- File is " << file_size << " bytes" << std::endl;
     }
+#endif
     fpos = myrank * file_size / nprocs;
 
     if(myrank != (nprocs-1)) end_fpos = (myrank + 1) * file_size / nprocs;
@@ -3512,10 +3522,14 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     MPI_Bcast(&nonzeros, 1, MPIType<int64_t>(), 0, commGrid->commWorld);
 
     // Permutation vector:
-	if(myrank == 0) std::cout << "----Constructing a permutation vector of size [" << nrows << "]..." << std::endl << std::flush;
+#ifdef MAGIQ_DEBUG
+	if(myrank == 0) std::cout << "---- permutation vector of size [" << nrows << "]..." << std::endl << std::flush;
+#endif
     nonisov.iota(nrows, 0);
 	nonisov.RandPerm();
-	if(myrank == 0) std::cout << "----Finished constructing the permutation vector" << std::endl << std::flush;
+#ifdef MAGIQ_DEBUG
+	if(myrank == 0) std::cout << "---- Finished constructing the permutation vector" << std::endl << std::flush;
+#endif
 
     // Use fseek again to go backwards two bytes and check that byte with fgetc
     struct stat st;     // get file size
@@ -3555,9 +3569,13 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     std::vector<std::string> lines;
     bool finished = SpParHelper::FetchBatch(mpi_fh, fpos, end_fpos, true, lines, myrank);
     int64_t entriesread = lines.size();
+#ifdef MAGIQ_DEBUG
 	if(myrank == 0) {std::cout << "---- SpHelper::ProcessLines will be called first time..." << std::endl << std::flush;}
+#endif
     SpHelper::ProcessLines(rows, cols, vals, lines, symmetric, type, nonisov, onebased);
+#ifdef MAGIQ_DEBUG
 	if(myrank == 0) {std::cout << "---- First call to SpHelper::ProcessLines finished..." << std::endl << std::flush;}
+#endif
     MPI_Barrier(commGrid->commWorld);
 
 	//dbg_cnt += lines.size();
@@ -3576,11 +3594,13 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
 		// 	dbg_cnt -= TENMILLION;
 		// 	do_it = true;
 		// }
+#ifdef MAGIQ_DEBUG
 		int rpid1, rpid2, rpid3, rpid4;
 		rpid1 = std::rand() % nprocs; rpid2 = std::rand() % nprocs; rpid3 = std::rand() % nprocs; rpid4 = std::rand() % nprocs;
 		if(myrank == 0 || myrank == rpid1 || myrank == rpid2 || myrank == rpid3 || myrank == rpid4  ) {
 			std::cout << "____ p" << myrank << " read [" << entriesread << "] lines so far" << std::endl << std::flush;
 		}
+#endif
     }
 
     int64_t allentriesread;

@@ -695,6 +695,7 @@ void lubm_l3(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov)
     }
 
     double resgen_start = MPI_Wtime();
+#ifdef MAGIQ_DEBUG
     if (myrank == 0) {
         cout << "final size : 0" << endl << flush;
         cout << "total get local indices time : " << total_get_local_indices_time << " s" << endl << flush;
@@ -703,6 +704,7 @@ void lubm_l3(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov)
         cout << "total local filter time : " << total_local_filter_time << " s" << endl << flush;
         cout << "---------------------------------------------------------------" << endl << flush;
     }
+#endif
     double resgen_end = MPI_Wtime();
 
     // end count time

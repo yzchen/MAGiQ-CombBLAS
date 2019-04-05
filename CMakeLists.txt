@@ -11,6 +11,22 @@ INCLUDE(TestCXXAcceptsFlag.cmake)
 # set(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -std=c++14 -fopenmp -fPIC -O0 -g3 -ggdb")
 CHECK_CXX_ACCEPTS_FLAG("-std=c++11 -std=c++14" C14)
 
+OPTION(COMBBLAS_DEBUG
+	"Add Macro COMBBLAS_DEBUG"
+	OFF)
+IF(COMBBLAS_DEBUG)
+	MESSAGE("Adding CombBLAS Debug flag...")
+	ADD_DEFINITIONS(-DDEBUG)
+ENDIF(COMBBLAS_DEBUG)
+
+OPTION(MAGIQ_DEBUG
+	"Add Macro MAGIQ_DEBUG"
+	OFF)
+IF(MAGIQ_DEBUG)
+	MESSAGE("Adding MAGiQ Debug flag...")
+	ADD_DEFINITIONS(-DMAGIQ_DEBUG)
+ENDIF(MAGIQ_DEBUG)
+
 if (NOT C14)
        MESSAGE(FATAL_ERROR "Your compiler does not support C++14")
 else (NOT C14)

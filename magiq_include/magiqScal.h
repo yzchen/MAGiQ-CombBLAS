@@ -25,17 +25,17 @@ public:
 };
 
 // time for running queries
-double total_reduce_time = 0.0;
-double total_prune_time = 0.0;
-double total_mmul_scalar_time = 0.0;
-double total_dim_apply_time = 0.0;
+static double total_reduce_time = 0.0;
+static double total_prune_time = 0.0;
+static double total_mmul_scalar_time = 0.0;
+static double total_dim_apply_time = 0.0;
 
 // time for result generation
-double total_get_local_indices_time = 0.0;
-double total_send_local_indices_time = 0.0;
-double total_local_join_time = 0.0;
-double total_local_filter_time = 0.0;
-double total_redistribution_time = 0.0;
+static double total_get_local_indices_time = 0.0;
+static double total_send_local_indices_time = 0.0;
+static double total_local_join_time = 0.0;
+static double total_local_filter_time = 0.0;
+static double total_redistribution_time = 0.0;
 
 // comparasion struct for qsort in result generation
 typedef struct {
@@ -188,10 +188,12 @@ void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov)
     double t_perm2 = MPI_Wtime();
 
     float impG = G.LoadImbalance();
+#ifdef MAGIQ_DEBUG
     if (myrank == 0) {
         cout << "\tpermutation takes : " << (t_perm2 - t_perm1) << " s" << endl;
         cout << "\timbalance of permuted G : " << impG << endl;
     }
+#endif
 }
 
 // diagonalize based on Row/Column, then scale the FullyDistVec with scalar
@@ -207,12 +209,14 @@ void diagonalizeV(const PSpMat::MPI_DCCols &M, FullyDistVec<IndexType, ElementTy
     if (scalar != 1) {      diag.Apply(bind2nd(multiplies<ElementType>(), scalar));     }
     double t4 = MPI_Wtime();
 
+    total_reduce_time += (t2 - t1);
+    total_mmul_scalar_time += (t4 - t3);
+#ifdef MAGIQ_DEBUG
     if (myrank == 0) {
-        total_reduce_time += (t2 - t1);
-        total_mmul_scalar_time += (t4 - t3);
         cout << "\tdiag-reduce takes : " << (t2 - t1) << " s" << endl;
         cout << "\tmmul-scalar takes : " << (t4 - t3) << " s" << endl;
     }
+#endif
 }
 
 // dimApply and prune, isRDF indicates the semiring
@@ -229,12 +233,14 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
     A.Prune(isZero);
     double t4 = MPI_Wtime();
 
+    total_dim_apply_time += (t2 - t1);
+    total_prune_time += (t4 - t3);
+#ifdef MAGIQ_DEBUG
     if (myrank == 0) {
-        total_dim_apply_time += (t2 - t1);
         cout << "\tdim-apply takes: " << (t2 - t1) << " s" << endl;
-        total_prune_time += (t4 - t3);
         cout << "\tprune takes: " << (t4 - t3) << " s" << endl;
     }
+#endif
 }
 
 // reset all time related to result generation
@@ -290,13 +296,15 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
             }
         }
         // if does not have same size, must be wrong
-        assert(I.size() == J.size() && "When get local indices, I and J should have same size.");
+        // assert(I.size() == J.size() && "When get local indices, I and J should have same size.");
     }
 
     double t2 = MPI_Wtime();
+#ifdef MAGIQ_DEBUG
     if (commGrid->GetRank() == 0) {
         cout << "\tget local indices takes : " << (t2 - t1) << " s" << endl;
     }
+#endif
     total_get_local_indices_time += (t2 - t1);
 }
 
@@ -363,9 +371,11 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
 
     double t2 = MPI_Wtime();
     total_send_local_indices_time += (t2 - t1);
+#ifdef MAGIQ_DEBUG
     if (commGrid->GetRank() == 0) {
         cout << "\tsend local indices takes : " << (t2 - t1) << " s" << endl;
     }
+#endif
 }
 
 void put_tuple(vector<IndexType> &res, vector<IndexType> &source1, vector<IndexType> &source2,
@@ -417,9 +427,11 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
 
     double t2 = MPI_Wtime();
     total_local_join_time += (t2 - t1);
+#ifdef MAGIQ_DEBUG
     if (commGrid->GetRank() == 0) {
         cout << "\tlocal join takes : " << (t2 - t1) << " s\n" << endl;
     }
+#endif
 }
 
 // key11 and key21 should be main keys, tables should be sorted based on them
@@ -469,7 +481,9 @@ void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, ve
     double t2 = MPI_Wtime();
     total_local_filter_time += (t2 - t1);
     if (commGrid->GetRank() == 0) {
+#ifdef MAGIQ_DEBUG
         cout << "\tlocal filter takes : " << (t2 - t1) << " s\n" << endl;
+#endif
     }
 }
 
@@ -558,11 +572,13 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 
     double t2 = MPI_Wtime();
     total_redistribution_time += (t2 - t1);
+#ifdef MAGIQ_DEBUG
     if (myrank == 0) {
         cout << "\t sort 1 takes : " << (t1_sort_end - t1_sort_start) << " s" << endl;
         cout << "\t sort 2 takes : " << (t2_sort_end - t2_sort_start) << " s" << endl;
         cout << "\tlocal redistribution takes : " << (t2 - t1) << " s\n" << endl;
     }
+#endif
 }
 
 void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
@@ -579,12 +595,14 @@ void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
                 res_size += recv_size;
             }
             cout << "final size : " << res_size << endl;
+#ifdef MAGIQ_DEBUG
             cout << "total get local indices time : " << total_get_local_indices_time << " s" << endl;
             cout << "total send local indices time : " << total_send_local_indices_time << " s" << endl;
             cout << "total local join time : " << total_local_join_time << " s" << endl;
             cout << "total local filter time : " << total_local_filter_time << " s" << endl;
             cout << "total local redistribution time : " << total_redistribution_time << " s" << endl;
             cout << "---------------------------------------------------------------" << endl;
+#endif
         }
     }
 }
