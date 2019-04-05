@@ -93,7 +93,7 @@ inline HeaderInfo ParseHeader(const std::string & inputname, FILE * & f, int & s
 	} 
 	else
 	{
-	#ifdef DEBUG
+	#ifdef COMBBALS_DEBUG
     std::cout << "Version " << hinfo.version << ", object size " << hinfo.objsize << std::endl;
     std::cout << "Rows " << hinfo.m << ", columns " << hinfo.m << ", nonzeros " << hinfo.nnz << std::endl;
 	#endif

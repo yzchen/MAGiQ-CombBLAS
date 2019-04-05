@@ -476,7 +476,7 @@ bool Dcsc<IT,NT>::operator==(const Dcsc<IT,NT> & rhs)
 	same = same && std::equal(jc, jc+nzc, rhs.jc);
 	same = same && std::equal(ir, ir+nz, rhs.ir);
 	
-#ifdef DEBUG
+#ifdef COMBBALS_DEBUG
   std::vector<NT> error(nz);
   std::transform(numx, numx+nz, rhs.numx, error.begin(), absdiff<NT>());
   std::vector< std::pair<NT, NT> > error_original_pair(nz);

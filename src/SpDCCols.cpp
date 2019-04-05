@@ -711,7 +711,7 @@ void SpDCCols<IT,NT>::CreateImpl(IT size, IT nRow, IT nCol, std::tuple<IT, IT, N
 	SpTuples<IT,NT> tuples(size, nRow, nCol, mytuples);        
 	tuples.SortColBased();
 	
-#ifdef DEBUG
+#ifdef COMBBLAS_DEBUG
   std::pair<IT,IT> rlim = tuples.RowLimits(); 
   std::pair<IT,IT> clim = tuples.ColLimits();
 
@@ -956,7 +956,7 @@ void SpDCCols<IT,NT>::ColConcatenate(std::vector< SpDCCols<IT,NT> > & matrices)
     
     if(nonempties.size() < 1)
     {
-#ifdef DEBUG
+#ifdef COMBBLAS_DEBUG
         std::cout << "Nothing to ColConcatenate" << std::endl;
 #endif
         n = runningoffset;

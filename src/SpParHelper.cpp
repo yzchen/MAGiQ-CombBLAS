@@ -138,7 +138,7 @@ void SpParHelper::MemoryEfficientPSort(std::pair<KEY,VAL> * array, IT length, IT
 					dist_in[indin++] = (long) dist[i];	
 			}
 		
-			#ifdef DEBUG	
+			#ifdef COMBBALS_DEBUG	
       std::ostringstream outs;
 			outs << "To exclude indices: ";
       std::copy(dist_out, dist_out+indout, std::ostream_iterator<int>(outs, " ")); outs << std::endl;
@@ -238,7 +238,7 @@ std::vector<std::pair<KEY,VAL>> SpParHelper::KeyValuePSort(std::pair<KEY,VAL> * 
                 dist_in[indin++] = (long) dist[i];
         }
         
-#ifdef DEBUG
+#ifdef COMBBALS_DEBUG
         std::ostringstream outs;
         outs << "To exclude indices: ";
         std::copy(dist_out, dist_out+indout, std::ostream_iterator<int>(outs, " ")); outs << std::endl;

@@ -312,7 +312,7 @@ void PermEdges(DistEdgeList<IT> & DEL)
 #endif
 	for(IT s=0; s< stages; ++s)
 	{
-		#ifdef DEBUG
+		#ifdef COMBBALS_DEBUG
 		SpParHelper::Print("PermEdges stage starting\n");	
 		double st = MPI_Wtime();
 		#endif
@@ -340,7 +340,7 @@ void PermEdges(DistEdgeList<IT> & DEL)
 			DEL.edges[2*(i+n_sofar)+1] = vecpair[i].second.second;
 		}
 		delete [] vecpair;
-		#ifdef DEBUG
+		#ifdef COMBBALS_DEBUG
 		double et = MPI_Wtime();
     std::ostringstream timeinfo;
 		timeinfo << "Stage " << s << " in " << et-st << " seconds" << std::endl;

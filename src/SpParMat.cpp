@@ -4078,7 +4078,7 @@ void SpParMat<IT,NT,DER>::ReadAllMine(FILE * binfile, IT * & rows, IT * & cols, 
 				MPI_Allreduce( &finishedlocal, &finishedglobal, 1, MPI_INT, MPI_BAND, commGrid->colWorld);
 				while(!finishedglobal)
 				{
-					#ifdef DEBUG
+					#ifdef COMBBALS_DEBUG
           std::ofstream oput;
 					commGrid->OpenDebugFile("Read", oput);
 					oput << "To column neighbors: ";
