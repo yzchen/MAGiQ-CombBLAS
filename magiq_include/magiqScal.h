@@ -240,6 +240,9 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
     total_dim_apply_time += (t2 - t1);
     total_prune_time += (t4 - t3);
 #ifdef MAGIQ_DEBUG
+    // printInfo after each computation step
+    A.PrintInfo();
+
     if (myrank == 0) {
         cout << "\tdim-apply takes: " << (t2 - t1) << " s" << endl;
         cout << "\tprune takes: " << (t4 - t3) << " s" << endl;
@@ -622,20 +625,23 @@ void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
 // default line buffer size, 100
 static const size_t lineSize = 100;
 
-void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices, 
+int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices, 
         map<string, FullyDistVec<IndexType, ElementType> > vectors,
         PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm,
         bool isPerm, FullyDistVec<IndexType, IndexType> &nonisov) {
     
     // get common world
     auto commWorld = G.getcommgrid();
+    int myrank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     
     // remove all spaces in the string
     line.erase(remove(line.begin(), line.end(), ' '), line.end());
     // if the last character is new line, then remove it
     if (line.back() == '\n')
         line.pop_back();
-    cout << line << endl;
+    // if (myrank == 0)
+    //     cout << line << endl;
 
     // find the assignment operation
     int eqOp = line.find('=');
@@ -653,6 +659,8 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
     // columnApply = true : Column in multDimApplyPrune
     // columnApplu = false : Row in multDimApplyPrune
     bool columnApply = true;
+    // this is used only when G.T is used
+    bool afterTranspose = false;
     
     // ⊗ : 3 chars
     // × : 2 chars
@@ -668,7 +676,9 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
     string mult1 = line.substr(eqOp + 1, multOp - eqOp - 1);
     string mult2 = line.substr(multOp + 2 + isSermiring);
 
-    cout << interMat << "\t" << mult1 << "\t" << mult2 << endl;
+    // if (myrank == 0) {
+    //     cout << interMat << "\t" << mult1 << "\t" << mult2 << endl;
+    // }
 
     // interMat is always m_x_x, there is no need to parse it
 
@@ -679,6 +689,7 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
         } else if (mult1 == "G.T") {
             matrices[interMat] = PSpMat::MPI_DCCols(G);
             columnApply = false;
+            afterTranspose = true;
         } else {
             // error, only G and G.T are accepted here
         }
@@ -697,11 +708,14 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
             }
 
             FullyDistVec<IndexType, ElementType> rt(commWorld, G.getnrow(), 0);
-            IndexType ind = nonisov[ind];
+            IndexType ind = nonisov[pos];
             rt.SetElement(ind, scale);
 
             // parameters : matrix *, fullyvec, columnApply, sermiring
             multDimApplyPrune(matrices[interMat], rt, columnApply ? Column : Row, isSermiring);
+            if (afterTranspose)
+                matrices[interMat].Transpose();
+            return matrices[interMat].getnnz();
 
         } else if (mult2[0] == 'm') {
             int dot1 = mult2.find('.');
@@ -736,6 +750,9 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
 
             diagonalizeV(matrices[mat], dm, columnDiag ? Column : Row, scale);
             multDimApplyPrune(matrices[interMat], dm, columnApply ? Column : Row, isSermiring);
+            if (afterTranspose)
+                matrices[interMat].Transpose();
+            return matrices[interMat].getnnz();
 
         } else {
             // error, only I^xxxx*xxxx and m_x_x(.T).D*xxxx are good
@@ -763,6 +780,10 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
             rt.SetElement(ind, scale);
 
             multDimApplyPrune(matrices[interMat], rt, columnApply ? Column : Row, isSermiring);
+            if (afterTranspose)
+                matrices[interMat].Transpose();
+            return matrices[interMat].getnnz();
+
         } else {
             // error, if mult1 is I, then should have mult2 == interMat
         }
@@ -775,24 +796,27 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
             int dot2 = mult1.rfind('.');
 
             if (dot2 != dot1) {
-                string fst = mult2.substr(dot1 + 1, dot2 - dot1 - 1);
-                string snd = mult2.substr(dot2 + 1);
+                string fst = mult1.substr(dot1 + 1, dot2 - dot1 - 1);
+                string snd = mult1.substr(dot2 + 1);
                 if (fst.compare("T") != 0 || snd.compare("D") != 0) {
                     // error, m_x_x.T.D is only one acceptable
                 }
-                columnDiag = false;
             } else {
-                string fst = mult2.substr(dot1 + 1);
+                string fst = mult1.substr(dot1 + 1);
                 if (fst.compare("D") == 0) {
                     // error, if only one dot found, then it should be D
                 }
+                columnDiag = false;
             }
 
             string mat = mult1.substr(0, dot1);
             diagonalizeV(matrices[mat], dm, columnDiag ? Column : Row, scale);
             multDimApplyPrune(matrices[interMat], dm, columnApply ? Column : Row, isSermiring);
+            if (afterTranspose)
+                matrices[interMat].Transpose();
+            return matrices[interMat].getnnz();
 
-        } else {
+        } else if (mult1 == interMat) {
             int dot1 = mult2.find('.');
             int dot2 = mult2.rfind('.');
 
@@ -802,15 +826,23 @@ void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
                 if (fst.compare("T") != 0 || snd.compare("D") != 0) {
                     // error, m_x_x.T.D is only one acceptable
                 }
-                columnDiag = false;
             } else {
                 string fst = mult2.substr(dot1 + 1);
+                if (fst.compare("D") == 0) {
+                    // error, if only one dot found, then it should be D
+                }
+                columnDiag = false;
             }
 
             string mat = mult2.substr(0, dot1);
             diagonalizeV(matrices[mat], dm, columnDiag ? Column : Row, scale);
             multDimApplyPrune(matrices[interMat], dm, columnApply ? Column : Row, isSermiring);
+            if (afterTranspose)
+                matrices[interMat].Transpose();
+            return matrices[interMat].getnnz();
 
+        } else {
+            // error, mult1 = interMat or mult2 = interMat
         }
     } else {
         // error, there should be one of (mult1, mult2) that equals to interMat
@@ -834,11 +866,15 @@ int parseSparql(const char* sparqlFile,
 
     //check if file exists
     if (fh == NULL){
-        printf("file does not exists : %s\n", sparqlFile);
-        return 0;
+        if (myrank == 0) {
+            printf("file does not exists : %s\n", sparqlFile);
+            return 0;
+        }
     }
 
-    printf("starting reading sparql file ...\n");
+    if (myrank == 0) {
+        printf("Start reading sparql file ...\n");
+    }
 
     // line buffer
     char* line = (char *)malloc(lineSize);
@@ -854,11 +890,18 @@ int parseSparql(const char* sparqlFile,
             }
             cout << "---------------------------------------------------------------" << endl << flush;
             cout << "step " << cntLines << " : " << str << endl << flush;
-
         }
-        parseLine(str, matrices, vectors, G, dm, isPerm, nonisov);
+        int ret = parseLine(str, matrices, vectors, G, dm, isPerm, nonisov);
         if (myrank == 0) {
             cout << "---------------------------------------------------------------" << endl << flush;
+        }
+
+        if (ret == 0) {
+            // early stop
+            return 0;
+        } else if (ret < 0) {
+            // error happened
+            return -1;
         }
         cntLines++;
     }
