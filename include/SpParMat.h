@@ -251,7 +251,7 @@ public:
 	};
 	
    	template <typename _BinaryOperation>
-    	void ParallelReadMM (const std::string & filename, bool onebased, _BinaryOperation BinOp, FullyDistVec<IT, IT> &nonisov);
+    	void ParallelReadMM (const std::string & filename, bool onebased, _BinaryOperation BinOp, bool isPerm, FullyDistVec<IT, IT> &nonisov);
 
     	template <typename _BinaryOperation>
     	FullyDistVec<IT,std::array<char, MAXVERTNAME>> ReadGeneralizedTuples(const std::string&, _BinaryOperation);

@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 
     if (argc < 3) {
         if (myrank == 0) {
-            cout << "Usage: ./magiqParse dataFile sparqlFile" << endl << flush;
+            cout << "Usage: ./magiqParse dataFile sparqlFile isPerm" << endl << flush;
         }
         MPI_Finalize();
         return -1;
@@ -44,6 +44,9 @@ int main(int argc, char *argv[]) {
         // initialization phase
         MPI_Barrier(MPI_COMM_WORLD);
         string dataName(argv[1]), sparqlFile(argv[2]);
+        int isPerm = 0;
+        if (argc > 3)
+            isPerm = atoi(argv[3]);
         
         if (myrank == 0) {
             cout << "###############################################################" << endl << flush;
@@ -60,7 +63,8 @@ int main(int argc, char *argv[]) {
         FullyDistVec<IndexType, IndexType> nonisov(commWorld);
 
         double t1 = MPI_Wtime();
-        G.ParallelReadMM(dataName, true, selectSecond, nonisov);
+        // second true : isPerm
+        G.ParallelReadMM(dataName, true, selectSecond, isPerm > 0, nonisov);
         double t2 = MPI_Wtime();
 
         G.PrintInfo();
@@ -81,7 +85,8 @@ int main(int argc, char *argv[]) {
         map<string, PSpMat::MPI_DCCols> matrices;
         map<string, FullyDistVec<IndexType, ElementType> > vectors;
         FullyDistVec<IndexType, ElementType> dm;
-        parseSparql(sparqlFile.c_str(), matrices, vectors, G, dm, nonisov);
+        // true : isPerm
+        parseSparql(sparqlFile.c_str(), matrices, vectors, G, dm, isPerm > 0, nonisov);
     }
 
     MPI_Finalize();

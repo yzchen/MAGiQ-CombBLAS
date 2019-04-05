@@ -1678,7 +1678,8 @@ int main(int argc, char *argv[]) {
         FullyDistVec<IndexType, IndexType> nonisov(commWorld);
 
         double t1 = MPI_Wtime();
-        G.ParallelReadMM(Mname, true, selectSecond, nonisov);
+        // second true : isPerm
+        G.ParallelReadMM(Mname, true, selectSecond, true, nonisov);
         double t2 = MPI_Wtime();
 
         G.PrintInfo();

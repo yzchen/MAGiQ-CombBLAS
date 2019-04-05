@@ -151,7 +151,7 @@ public:
 	}
 
     template <typename IT1, typename NT1>
-    static void ProcessLines(std::vector<IT1> & rows, std::vector<IT1> & cols, std::vector<NT1> & vals, std::vector<std::string> & lines, int symmetric, int type, FullyDistVec<IT1, IT1> &nonisov, bool onebased = true)
+    static void ProcessLines(std::vector<IT1> & rows, std::vector<IT1> & cols, std::vector<NT1> & vals, std::vector<std::string> & lines, int symmetric, int type, bool isPerm, FullyDistVec<IT1, IT1> &nonisov, bool onebased = true)
     {
 		std::vector<IT1> tmpii, tmpjj;
         if(type == 0)   // real
@@ -196,21 +196,23 @@ public:
             std::cout << "COMBBLAS: Unrecognized matrix market scalar type" << std::endl;
         }
         lines.clear();
-        //FUAD
-        // ==============================
-        // all to all to exchange permuted ids
-        std::vector<IT1> vals_ii, vals_jj;
-		nonisov.GetElements(tmpii, vals_ii);
-		nonisov.GetElements(tmpjj, vals_jj);
-		rows.insert(rows.end(), vals_ii.begin(), vals_ii.end());
-		cols.insert(cols.end(), vals_jj.begin(), vals_jj.end());
-        // ==============================
-        
-        int myrank;
-		MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-        
-        assert(rows.size() == vals.size() && cols.size() == vals.size());
 
+		if (isPerm) {
+			//FUAD
+			// ==============================
+			// all to all to exchange permuted ids
+			std::vector<IT1> vals_ii, vals_jj;
+			nonisov.GetElements(tmpii, vals_ii);
+			nonisov.GetElements(tmpjj, vals_jj);
+			rows.insert(rows.end(), vals_ii.begin(), vals_ii.end());
+			cols.insert(cols.end(), vals_jj.begin(), vals_jj.end());
+			// ==============================
+			
+			int myrank;
+			MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+			
+			assert(rows.size() == vals.size() && cols.size() == vals.size());
+		}
     }
 
 

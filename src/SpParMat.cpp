@@ -3458,7 +3458,7 @@ FullyDistVec<IT,std::array<char, MAXVERTNAME> > SpParMat< IT,NT,DER >::ReadGener
 //! Replaces ReadDistribute for properly load balanced input in matrix market format
 template <class IT, class NT, class DER>
 template <typename _BinaryOperation>
-void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool onebased, _BinaryOperation BinOp, FullyDistVec<IT, IT> &nonisov)
+void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool onebased, _BinaryOperation BinOp, bool isPerm, FullyDistVec<IT, IT> &nonisov)
 {
     int32_t type = -1;
     int32_t symmetric = 0;
@@ -3522,14 +3522,16 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     MPI_Bcast(&nonzeros, 1, MPIType<int64_t>(), 0, commGrid->commWorld);
 
     // Permutation vector:
+	if (isPerm) {
 #ifdef MAGIQ_DEBUG
-	if(myrank == 0) std::cout << "---- permutation vector of size [" << nrows << "]..." << std::endl << std::flush;
+		if(myrank == 0) std::cout << "---- permutation vector of size [" << nrows << "]..." << std::endl << std::flush;
 #endif
-    nonisov.iota(nrows, 0);
-	nonisov.RandPerm();
+		nonisov.iota(nrows, 0);
+		nonisov.RandPerm();
 #ifdef MAGIQ_DEBUG
-	if(myrank == 0) std::cout << "---- Finished constructing the permutation vector" << std::endl << std::flush;
+		if(myrank == 0) std::cout << "---- Finished constructing the permutation vector" << std::endl << std::flush;
 #endif
+	}
 
     // Use fseek again to go backwards two bytes and check that byte with fgetc
     struct stat st;     // get file size
@@ -3572,7 +3574,7 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
 #ifdef MAGIQ_DEBUG
 	if(myrank == 0) {std::cout << "---- SpHelper::ProcessLines will be called first time..." << std::endl << std::flush;}
 #endif
-    SpHelper::ProcessLines(rows, cols, vals, lines, symmetric, type, nonisov, onebased);
+    SpHelper::ProcessLines(rows, cols, vals, lines, symmetric, type, isPerm, nonisov, onebased);
 #ifdef MAGIQ_DEBUG
 	if(myrank == 0) {std::cout << "---- First call to SpHelper::ProcessLines finished..." << std::endl << std::flush;}
 #endif
@@ -3586,7 +3588,7 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     {
         finished = SpParHelper::FetchBatch(mpi_fh, fpos, end_fpos, false, lines, myrank);
         entriesread += lines.size();
-        SpHelper::ProcessLines(rows, cols, vals, lines, symmetric, type, nonisov, onebased);
+        SpHelper::ProcessLines(rows, cols, vals, lines, symmetric, type, isPerm, nonisov, onebased);
 
 		//dbg_cnt += lines.size();
 		// bool do_it = false;

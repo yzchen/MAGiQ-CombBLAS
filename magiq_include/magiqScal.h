@@ -624,8 +624,8 @@ static const size_t lineSize = 100;
 
 void parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices, 
         map<string, FullyDistVec<IndexType, ElementType> > vectors,
-        PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm，
-        FullyDistVec<IndexType, IndexType> ＆nonisov) {
+        PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm,
+        bool isPerm, FullyDistVec<IndexType, IndexType> &nonisov) {
     
     // get common world
     auto commWorld = G.getcommgrid();
@@ -822,7 +822,7 @@ int parseSparql(const char* sparqlFile,
         map<string, PSpMat::MPI_DCCols> &matrices, 
         map<string, FullyDistVec<IndexType, ElementType> > &vectors,
         PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm,
-        FullyDistVec<IndexType, IndexType> ＆nonisov) {
+        bool isPerm, FullyDistVec<IndexType, IndexType> &nonisov) {
     // get common world
     auto commWorld = G.getcommgrid();
     int myrank;
@@ -856,7 +856,7 @@ int parseSparql(const char* sparqlFile,
             cout << "step " << cntLines << " : " << str << endl << flush;
 
         }
-        parseLine(str, matrices, vectors, G, dm);
+        parseLine(str, matrices, vectors, G, dm, isPerm, nonisov);
         if (myrank == 0) {
             cout << "---------------------------------------------------------------" << endl << flush;
         }
