@@ -692,13 +692,15 @@ int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
             afterTranspose = true;
         } else {
             // error, only G and G.T are accepted here
+            return -1;
         }
 
         // parse mult2
         if (mult2[0] == 'I') {
             int dimOp = mult2.find('^');
             if (dimOp == string::npos) {
-                // there must be ^ to indicate where the value is
+                // error, there must be ^ to indicate where the value is
+                return -1;
             }
             int scaleOp = mult2.find('*');
             int pos = atoi(mult2.substr(dimOp + 1, scaleOp - dimOp - 1).c_str());
@@ -730,6 +732,7 @@ int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
                     string snd = mult2.substr(dot2 + 1, scaleOp != string::npos?scaleOp - dot2 - 1:scaleOp);
                     if (fst.compare("T") != 0 || snd.compare("D") != 0) {
                         // error, m_x_x.T.D is only one acceptable
+                        return -1;
                     }
                     // m_x_x.T.D
                 } else {
@@ -737,11 +740,13 @@ int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
                     string fst = mult2.substr(dot1 + 1, scaleOp != string::npos?scaleOp - dot1 - 1:scaleOp);
                     if (fst.compare("T") == 0) {
                         // error, should be D always
+                        return -1;
                     } else
                         columnDiag = false;
                 }
             } else {
                 // error, there shoulw be dot1
+                return -1;
             }
 
             if (scaleOp != string::npos) {
@@ -756,6 +761,7 @@ int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
 
         } else {
             // error, only I^xxxx*xxxx and m_x_x(.T).D*xxxx are good
+            return -1;
         }
 
     } else if (mult1[0] == 'I') {   // I^xxxx*xxxx
@@ -767,6 +773,7 @@ int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
             int dimOp = mult1.find('^');
             if (dimOp == string::npos) {
                 // there must be ^ to indicate where the value is
+                return -1;
             }
             int scaleOp = mult1.find('*');
             int pos = atoi(mult1.substr(dimOp + 1, scaleOp - dimOp - 1).c_str());
@@ -786,6 +793,7 @@ int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
 
         } else {
             // error, if mult1 is I, then should have mult2 == interMat
+            return -1;
         }
 
     } else if (mult1[0] == 'm') {   // m_x_x, m_x_x.T, m_x_x.D*xxx or m_x_x.T.D*xxxx
@@ -800,11 +808,13 @@ int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
                 string snd = mult1.substr(dot2 + 1);
                 if (fst.compare("T") != 0 || snd.compare("D") != 0) {
                     // error, m_x_x.T.D is only one acceptable
+                    return -1;
                 }
             } else {
                 string fst = mult1.substr(dot1 + 1);
-                if (fst.compare("D") == 0) {
+                if (fst.compare("D") != 0) {
                     // error, if only one dot found, then it should be D
+                    return -1;
                 }
                 columnDiag = false;
             }
@@ -825,11 +835,13 @@ int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
                 string snd = mult2.substr(dot2 + 1);
                 if (fst.compare("T") != 0 || snd.compare("D") != 0) {
                     // error, m_x_x.T.D is only one acceptable
+                    return -1;
                 }
             } else {
                 string fst = mult2.substr(dot1 + 1);
-                if (fst.compare("D") == 0) {
+                if (fst.compare("D") != 0) {
                     // error, if only one dot found, then it should be D
+                    return -1;
                 }
                 columnDiag = false;
             }
@@ -843,9 +855,11 @@ int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
 
         } else {
             // error, mult1 = interMat or mult2 = interMat
+            return -1;
         }
     } else {
         // error, there should be one of (mult1, mult2) that equals to interMat
+        return -1;
     }
     // end of function call
 }
