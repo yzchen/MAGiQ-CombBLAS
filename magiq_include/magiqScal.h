@@ -239,10 +239,10 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
 
     total_dim_apply_time += (t2 - t1);
     total_prune_time += (t4 - t3);
-#ifdef MAGIQ_DEBUG
     // printInfo after each computation step
     A.PrintInfo();
 
+#ifdef MAGIQ_DEBUG
     if (myrank == 0) {
         cout << "\tdim-apply takes: " << (t2 - t1) << " s" << endl;
         cout << "\tprune takes: " << (t4 - t3) << " s" << endl;
@@ -308,6 +308,7 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
         }
         // if does not have same size, must be wrong
         // assert(I.size() == J.size() && "When get local indices, I and J should have same size.");
+        assert(indices.size() % 2 == 0 && "indices should have even size!");
     }
 
     double t2 = MPI_Wtime();
@@ -399,6 +400,9 @@ void put_tuple(vector<IndexType> &res, vector<IndexType> &source1, vector<IndexT
 }
 
 // local join with special tables, only processors in first row work
+// order : size * 2
+// 0 0 0 1 1 0 means in result, first column is col 0 in index 0, then col 1 in index 0, the last one is col 0 in index 1
+// this also means joining is based on col 0 in index 0 and col 0 in index 1
 void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
                 int pair_size2, int key1, int key2, vector<IndexType> &order, vector<IndexType> &res) {
     double t1 = MPI_Wtime();
@@ -625,7 +629,7 @@ void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
 // default line buffer size, 100
 static const size_t lineSize = 100;
 
-int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices, 
+int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices, 
         map<string, FullyDistVec<IndexType, ElementType> > vectors,
         PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm,
         bool isPerm, FullyDistVec<IndexType, IndexType> &nonisov) {
@@ -864,6 +868,11 @@ int parseLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
     // end of function call
 }
 
+int parseResGenLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices, 
+        map<string, FullyDistVec<IndexType, ElementType> > vectors) {
+    return 0;
+}
+
 int parseSparql(const char* sparqlFile, 
         map<string, PSpMat::MPI_DCCols> &matrices, 
         map<string, FullyDistVec<IndexType, ElementType> > &vectors,
@@ -890,34 +899,58 @@ int parseSparql(const char* sparqlFile,
         printf("Start reading sparql file ...\n");
     }
 
+    int results = 0;
     // line buffer
     char* line = (char *)malloc(lineSize);
-
-    int cntLines = 1;
-    while (fgets(line, lineSize, fh) != NULL) {
+    if (fgets(line, lineSize, fh) != NULL) {
         string str(line);
+        if (str.back() == '\n')
+        str.pop_back();
         if (myrank == 0) {
-            if (cntLines == 1) {
-                cout << "###############################################################" << endl << flush;
-                cout << "Start Running query..." << endl << flush;
-                cout << "###############################################################" << endl << flush;
-            }
-            cout << "---------------------------------------------------------------" << endl << flush;
-            cout << "step " << cntLines << " : " << str << endl << flush;
-        }
-        int ret = parseLine(str, matrices, vectors, G, dm, isPerm, nonisov);
-        if (myrank == 0) {
-            cout << "---------------------------------------------------------------" << endl << flush;
+            cout << "###############################################################" << endl << flush;
+            cout << "Start Running query " << str << "..." << endl << flush;
+            cout << "###############################################################" << endl << flush;
         }
 
-        if (ret == 0) {
-            // early stop
-            return 0;
-        } else if (ret < 0) {
-            // error happened
-            return -1;
+        bool execute = true;
+        int cntLines = 1;
+        while (fgets(line, lineSize, fh) != NULL) {
+            string str(line);
+            if (str.compare("query_execution\n") == 0) {
+                execute = true;
+            } else if (str.compare("result_generation\n") == 0) {
+                execute = false;
+            } else {
+                if (execute) {      // query execution
+                    if (myrank == 0) {
+                        cout << "---------------------------------------------------------------" << endl << flush;
+                        cout << "step " << cntLines << " : " << str << endl << flush;
+                    }
+                    int ret = parseQueryLine(str, matrices, vectors, G, dm, isPerm, nonisov);
+                    if (myrank == 0) {
+                        cout << "---------------------------------------------------------------" << endl << flush;
+                    }
+
+                    if (ret == 0) {
+                        // early stop
+                        return 0;
+                    } else if (ret < 0) {
+                        // error happened
+                        return -1;
+                    }
+
+                } else {    // result generation
+                    results = parseResGenLine(str, matrices, vectors);
+                }
+                cntLines++;
+            }
         }
-        cntLines++;
+
+    }
+
+    if (myrank == 0) {
+        cout << "final result : " << results << endl;
+        cout << "###############################################################" << endl << flush;
     }
 
     // free momery

@@ -3608,8 +3608,10 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     int64_t allentriesread;
     MPI_Reduce(&entriesread, &allentriesread, 1, MPIType<int64_t>(), MPI_SUM, 0, commGrid->commWorld);
 
+#ifdef MAGIQ_DEBUG
     if(myrank == 0)
         std::cout << "Reading finished. Total number of entries read across all processors is " << allentriesread << "\n" << std::flush;
+#endif
 
     std::vector< std::vector < std::tuple<LIT,LIT,NT> > > data(nprocs);
     
@@ -3624,9 +3626,11 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
     std::vector<LIT>().swap(cols);
     std::vector<NT>().swap(vals);	
 
+#ifdef MAGIQ_DEBUG
     if(myrank == 0)
         std::cout << "Packing to recepients finished, about to send...\n" << std::flush;
-    
+#endif
+
     if(spSeq)   delete spSeq;
     SparseCommon(data, locsize, nrows, ncols, BinOp);
 }
