@@ -519,6 +519,10 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     int rowneighs = commGrid->GetGridCols();
     IndexType coffset[rowneighs + 1];
 
+    // if (myrank == 0) {
+    //     cout << "+++> rowneighs = " << rowneighs << endl;
+    // }
+
     int rowrank = commGrid->GetRankInProcRow();
 
     IndexType *locncols = new IndexType[rowneighs];  // number of rows is calculated by a reduction among the processor column
@@ -531,6 +535,10 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     // magic number for flag, useless
     coffset[rowneighs] = UINT32_MAX;
 
+    // if (myrank == 0) {
+    //     cout << "+++> coffset initialize with " << UINT32_MAX << endl;
+    // }
+
     // sort based on pivot
     double t1_sort_start = MPI_Wtime();
     symmergesort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
@@ -539,6 +547,10 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     vector<int> lens;
     lens.reserve(rowneighs + 1);
     lens.push_back(0);
+
+    // if (myrank == 0) {
+    //     cout << "+++> lens initialize with " << 0 << endl;
+    // }
 
     // find partial sum of sorted indices to ensure correct range
     int prev = 0;
@@ -553,6 +565,10 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 
     vector<int> partial_sums(lens);
     partial_sum(lens.begin(), lens.end() - 1, partial_sums.begin());
+
+    // if (myrank == 0) {
+    //     cout << "+++> filled lens partial sum" << endl;
+    // }
 
     int *recvcount[rowneighs];
     vector<int> displs(rowneighs);
@@ -580,10 +596,18 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
         }
     }
 
+    // if (myrank == 0) {
+    //     cout << "+++> filled MPI_Gather(_v)" << endl;
+    // }
+
     // sort merged vector
     double t2_sort_start = MPI_Wtime();
     symmergesort(res.data(), res.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
     double t2_sort_end = MPI_Wtime();
+
+    // if (myrank == 0) {
+    //     cout << "+++> Pmergesort" << endl;
+    // }
 
     double t2 = MPI_Wtime();
     total_redistribution_time += (t2 - t1);
@@ -868,8 +892,147 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
     // end of function call
 }
 
-int parseResGenLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices, 
-        map<string, FullyDistVec<IndexType, ElementType> > vectors) {
+// labels should be ordered
+int parseResGenLine(shared_ptr<CommGrid> commGrid, string &line, 
+        map<string, PSpMat::MPI_DCCols> &matrices, 
+        map<string, FullyDistVec<IndexType, ElementType> > vectors,
+        vector<char> &labels, char &primary, vector<IndexType> &indl) {
+
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    if (line.back() == '\n')
+        line.pop_back();
+
+    int splitOp = line.find('%');
+    int eqOp = line.rfind('%');
+    if (splitOp != string::npos) {
+        string opType = line.substr(0, splitOp);
+        string mat;
+        bool isJoin = true && (opType.compare("join") == 0);
+
+        if (eqOp == splitOp)        // if it is join
+            mat = line.substr(splitOp + 1);
+        else {        // if it is filter
+            mat = line.substr(eqOp + 1);
+            if (opType.compare("filter") == 0)
+                isJoin = false;
+            else {
+                // error, only join and filter can be accepted
+                return 0;
+            }
+        }
+
+        int dash1 = mat.find('_');
+        int dash2 = mat.rfind('_');
+        if (dash1 == string::npos || dash1 == dash2) {
+            // error, mat name should be m_x_x
+            return 0;
+        }
+
+        if (labels.empty()) {   // first join, only one matrix is avaible now, use transpose of it, initialize labels
+            labels.push_back(mat[dash2 + 1]);
+            labels.push_back(mat[dash1 + 1]);
+
+            primary = mat[dash2 + 1];
+
+            matrices[mat].Transpose();
+            get_local_indices(matrices[mat], indl);
+            send_local_indices(commGrid, indl);
+            matrices[mat].FreeMemory();
+
+            send_local_results(commGrid, indl.size() / labels.size());
+        } else {
+            vector<IndexType> indj, indr, indw;
+
+            get_local_indices(matrices[mat], indj);
+            send_local_indices(commGrid, indj);
+
+            // send_local_results(commGrid, indj.size() / labels.size());
+
+            // determine which two columns are corresponded
+            // pivot2 should be always 1, use the second column to reduce
+            int pivot1 = -1, pivot2 = 1;
+            auto v2 = std::find(labels.begin(), labels.end(), mat[dash2 + 1]);
+            if (v2 != labels.end()) {
+                pivot1 = v2 - labels.begin();
+            } else {
+                // error, there should be key always
+                return 0;
+            }
+            // determine which two columns are corresponded
+            
+            if (myrank == 0) {
+                cout << "===> pivots : " << mat << "  " << pivot1 << "  " << pivot2 << endl;
+            }
+            if (labels.size() > 2 && primary != mat[dash2 + 1]) {
+                // local redistribution for second indices of current matrix
+                if (myrank == 0) {
+                    cout << "---> labels (" << labels.size() << ") : ";
+                    for (auto label : labels)
+                        cout << label << "  ";
+                    cout << endl;
+                }
+                local_redistribution(matrices[mat], indl, labels.size(), pivot1, indw);
+            } else
+                indw = indl;
+
+            if (myrank == 0) {
+                cout << "---> after local redistribution" << endl;
+            }
+            matrices[mat].FreeMemory();
+
+            vector<IndexType> orders(labels.size() * 2);
+            for (int i = 0; i < labels.size(); i++) {
+                orders[2 * i] = 0;
+                orders[2 * i + 1] = i;
+            }
+
+            int insert_pos = -1;
+            if (isJoin) {
+                for (int i = 0; i < labels.size(); i++)
+                    if (labels[i] > mat[dash1 + 1]) {
+                        insert_pos = i;
+                        break;
+                    }
+
+                if (myrank == 0) {
+                    cout << "===> insert_pos = " << insert_pos << endl;
+                }
+
+                orders.insert(orders.begin() + 2 * insert_pos, 1);
+                orders.insert(orders.begin() + 2 * insert_pos + 1, 0);
+            }
+
+            if (myrank == 0) {
+                cout << "---> itialized orders :";
+                for (auto oi : orders)
+                    cout << oi << "  ";
+                cout << endl;
+            }
+
+            if (isJoin) {
+                local_join(commGrid, indw, indj, labels.size(), 2, pivot1, 1, orders, indr);
+                if (myrank == 0) {
+                    cout << "===> after local join" << endl;
+                }
+                labels.insert(labels.begin() + insert_pos, mat[dash1 + 1]);
+                send_local_results(commGrid, indr.size() / labels.size());
+            } else {
+                int renameInd = std::find(labels.begin(), labels.end(), line[eqOp - 1]) - labels.begin();
+                if (myrank == 0) {
+                    cout << "---> before filter, renameId = " << renameInd << endl;
+                }
+                local_filter(commGrid, indw, indj, labels.size(), 2, pivot1, renameInd, 1, 0, orders, indr);
+                if (myrank == 0) {
+                    cout << "===> after local filter" << endl;
+                }
+                send_local_results(commGrid, indr.size() / labels.size());
+            }
+
+            indl = indr;
+        }
+    }
     return 0;
 }
 
@@ -899,7 +1062,7 @@ int parseSparql(const char* sparqlFile,
         printf("Start reading sparql file ...\n");
     }
 
-    int results = 0;
+    int qres = 0, rres = 0;
     // line buffer
     char* line = (char *)malloc(lineSize);
     if (fgets(line, lineSize, fh) != NULL) {
@@ -914,33 +1077,44 @@ int parseSparql(const char* sparqlFile,
 
         bool execute = true;
         int cntLines = 1;
+        vector<IndexType> indl;
+        char primary;
+        vector<char> labels;
         while (fgets(line, lineSize, fh) != NULL) {
             string str(line);
             if (str.compare("query_execution\n") == 0) {
                 execute = true;
             } else if (str.compare("result_generation\n") == 0) {
+                cntLines = 1;
                 execute = false;
             } else {
                 if (execute) {      // query execution
                     if (myrank == 0) {
                         cout << "---------------------------------------------------------------" << endl << flush;
-                        cout << "step " << cntLines << " : " << str << endl << flush;
+                        cout << "query execute step " << cntLines << " : " << str << endl << flush;
                     }
-                    int ret = parseQueryLine(str, matrices, vectors, G, dm, isPerm, nonisov);
+                    qres = parseQueryLine(str, matrices, vectors, G, dm, isPerm, nonisov);
                     if (myrank == 0) {
                         cout << "---------------------------------------------------------------" << endl << flush;
                     }
 
-                    if (ret == 0) {
+                    if (qres == 0) {
                         // early stop
                         return 0;
-                    } else if (ret < 0) {
+                    } else if (qres < 0) {
                         // error happened
                         return -1;
                     }
 
                 } else {    // result generation
-                    results = parseResGenLine(str, matrices, vectors);
+                    if (myrank == 0) {
+                        cout << "---------------------------------------------------------------" << endl << flush;
+                        cout << "result generate step " << cntLines << " : " << str << endl << flush;
+                    }
+                    rres = parseResGenLine(commWorld, str, matrices, vectors, labels, primary, indl);
+                    if (myrank == 0) {
+                        cout << "---------------------------------------------------------------" << endl << flush;
+                    }
                 }
                 cntLines++;
             }
@@ -949,7 +1123,7 @@ int parseSparql(const char* sparqlFile,
     }
 
     if (myrank == 0) {
-        cout << "final result : " << results << endl;
+        cout << "final result : " << rres << endl;
         cout << "###############################################################" << endl << flush;
     }
 
