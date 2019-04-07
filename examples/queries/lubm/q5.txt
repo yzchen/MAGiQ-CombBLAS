@@ -1,0 +1,9 @@
+LUBM_Q1
+query_execution
+m_2_0 = G ⊗ I^191176245*17
+m_1_2 = G.T ⊗ m_2_0.D*3
+m_1_2 = I^2808777 × m_1_2
+m_2_0 = m_1_2.T.D ⊗ m_2_0
+result_generation
+join%m_2_0
+join%m_1_2

@@ -1,0 +1,15 @@
+LUBM_Q4
+query_execution
+m_2_0 = G ⊗ I^2808777*7
+m_1_2 = G.T ⊗ m_2_0.D*17
+m_1_2 = I^291959481 × m_1_2
+m_3_2 = G.T ⊗ m_1_2.T.D*9
+m_4_2 = G.T ⊗ m_3_2.T.D*8
+m_5_2 = G.T ⊗ m_4_2.T.D*2
+m_2_0 = m_5_2.T.D ⊗ m_2_0
+result_generation
+join%m_2_0
+join%m_5_2
+join%m_4_2
+join%m_3_2
+join%m_1_2

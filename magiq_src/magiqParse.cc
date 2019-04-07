@@ -67,6 +67,9 @@ int main(int argc, char *argv[]) {
         G.ParallelReadMM(dataName, true, selectSecond, isPerm > 0, nonisov);
         double t2 = MPI_Wtime();
 
+        if (myrank == 0) {
+            cout << "---------------------------------------------------------------" << endl << flush << flush;;
+        }
         G.PrintInfo();
         float imG = G.LoadImbalance();
 

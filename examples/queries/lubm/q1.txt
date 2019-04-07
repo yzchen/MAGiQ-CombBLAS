@@ -1,0 +1,22 @@
+LUBM_Q1
+query_execution
+m_4_0 = G ⊗ I^103594630*17
+m_3_4 = G ⊗ m_4_0.D*12
+m_2_3 = G.T ⊗ m_3_4.D*17
+m_2_3 = I^139306106 × m_2_3
+m_5_3 = G.T ⊗ m_2_3.T.D*14
+m_1_5 = G.T ⊗ m_5_3.D*17
+m_1_5 = I^130768016 × m_1_5
+m_6_5 = G.T ⊗ m_1_5.T.D*3
+m_6_5 = m_3_4.T.D × m_6_5
+m_3_4 = m_3_4 × m_6_5.D
+m_5_3 = m_6_5.T.D × m_5_3
+m_3_4 = m_5_3.T.D × m_3_4
+m_4_0 = m_3_4.T.D × m_4_0
+result_generation
+join%m_4_0
+join%m_3_4
+join%m_5_3
+filter%6=4%m_6_5
+join%m_1_5
+join%m_2_3

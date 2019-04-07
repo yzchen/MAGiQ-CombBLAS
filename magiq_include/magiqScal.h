@@ -151,6 +151,8 @@ int compInt5E(const void *elem1, const void *elem2) {
 }
 
 // comparasion function pointer array
+// this comp function design will limit the maximum columns in the final table
+// currently 5 is supported
 int (*comp[15])(const void *, const void *);
 
 bool isZero(ElementType t) { return t == 0; }
@@ -163,12 +165,6 @@ ElementType rdf_multiply(ElementType a, ElementType b) {
 
 // handle duplicate in original loaded data
 ElementType selectSecond(ElementType a, ElementType b) { return b; }
-
-PSpMat::MPI_DCCols transpose(const PSpMat::MPI_DCCols &M) {
-    PSpMat::MPI_DCCols N(M);
-    N.Transpose();
-    return N;
-}
 
 // reset all time reslated to query execution
 void clear_query_time() {
@@ -519,10 +515,6 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     int rowneighs = commGrid->GetGridCols();
     IndexType coffset[rowneighs + 1];
 
-    // if (myrank == 0) {
-    //     cout << "+++> rowneighs = " << rowneighs << endl;
-    // }
-
     int rowrank = commGrid->GetRankInProcRow();
 
     IndexType *locncols = new IndexType[rowneighs];  // number of rows is calculated by a reduction among the processor column
@@ -535,10 +527,6 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     // magic number for flag, useless
     coffset[rowneighs] = UINT32_MAX;
 
-    // if (myrank == 0) {
-    //     cout << "+++> coffset initialize with " << UINT32_MAX << endl;
-    // }
-
     // sort based on pivot
     double t1_sort_start = MPI_Wtime();
     symmergesort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
@@ -547,10 +535,6 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
     vector<int> lens;
     lens.reserve(rowneighs + 1);
     lens.push_back(0);
-
-    // if (myrank == 0) {
-    //     cout << "+++> lens initialize with " << 0 << endl;
-    // }
 
     // find partial sum of sorted indices to ensure correct range
     int prev = 0;
@@ -565,10 +549,6 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 
     vector<int> partial_sums(lens);
     partial_sum(lens.begin(), lens.end() - 1, partial_sums.begin());
-
-    // if (myrank == 0) {
-    //     cout << "+++> filled lens partial sum" << endl;
-    // }
 
     int *recvcount[rowneighs];
     vector<int> displs(rowneighs);
@@ -596,18 +576,10 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
         }
     }
 
-    // if (myrank == 0) {
-    //     cout << "+++> filled MPI_Gather(_v)" << endl;
-    // }
-
     // sort merged vector
     double t2_sort_start = MPI_Wtime();
     symmergesort(res.data(), res.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
     double t2_sort_end = MPI_Wtime();
-
-    // if (myrank == 0) {
-    //     cout << "+++> Pmergesort" << endl;
-    // }
 
     double t2 = MPI_Wtime();
     total_redistribution_time += (t2 - t1);
@@ -620,7 +592,8 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 #endif
 }
 
-void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
+// rank 0 will have final correct result
+int send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
     int rowneighs = commGrid->GetGridRows();
 
     // process in first row
@@ -633,17 +606,18 @@ void send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
                 MPI_Recv(&recv_size, 1, MPIType<IndexType>(), i, 0, commGrid->GetRowWorld(), MPI_STATUS_IGNORE);
                 res_size += recv_size;
             }
-            cout << "final size : " << res_size << endl;
 #ifdef MAGIQ_DEBUG
-            cout << "total get local indices time : " << total_get_local_indices_time << " s" << endl;
-            cout << "total send local indices time : " << total_send_local_indices_time << " s" << endl;
-            cout << "total local join time : " << total_local_join_time << " s" << endl;
-            cout << "total local filter time : " << total_local_filter_time << " s" << endl;
-            cout << "total local redistribution time : " << total_redistribution_time << " s" << endl;
-            cout << "---------------------------------------------------------------" << endl;
+            cout << "step size : " << res_size << endl;
+            cout << "total accumulated get local indices time : " << total_get_local_indices_time << " s" << endl;
+            cout << "total accumulated send local indices time : " << total_send_local_indices_time << " s" << endl;
+            cout << "total accumulated local join time : " << total_local_join_time << " s" << endl;
+            cout << "total accumulated local filter time : " << total_local_filter_time << " s" << endl;
+            cout << "total accumulated local redistribution time : " << total_redistribution_time << " s" << endl;
 #endif
         }
     }
+
+    return res_size;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -656,10 +630,10 @@ static const size_t lineSize = 100;
 int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices, 
         map<string, FullyDistVec<IndexType, ElementType> > vectors,
         PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm,
-        bool isPerm, FullyDistVec<IndexType, IndexType> &nonisov) {
+        bool isPerm, FullyDistVec<IndexType, IndexType> &nonisov, int cntLines) {
     
     // get common world
-    auto commWorld = G.getcommgrid();
+    auto commGrid = G.getcommgrid();
     int myrank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     
@@ -668,13 +642,12 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
     // if the last character is new line, then remove it
     if (line.back() == '\n')
         line.pop_back();
-    // if (myrank == 0)
-    //     cout << line << endl;
 
     // find the assignment operation
     int eqOp = line.find('=');
     if (eqOp == string::npos) {
         // there is no '=', error
+        return -1;
     }
 
     // sermiring multiplication, by default is true
@@ -698,15 +671,9 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
         isSermiring = false;
     }
 
-    // cout << eqOp << "\t" << multOp << endl;
-
     string interMat = line.substr(0, eqOp);
     string mult1 = line.substr(eqOp + 1, multOp - eqOp - 1);
     string mult2 = line.substr(multOp + 2 + isSermiring);
-
-    // if (myrank == 0) {
-    //     cout << interMat << "\t" << mult1 << "\t" << mult2 << endl;
-    // }
 
     // interMat is always m_x_x, there is no need to parse it
 
@@ -737,14 +704,19 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
                 scale *= atoi(mult2.substr(scaleOp + 1).c_str());
             }
 
-            FullyDistVec<IndexType, ElementType> rt(commWorld, G.getnrow(), 0);
+            FullyDistVec<IndexType, ElementType> rt(commGrid, G.getnrow(), 0);
             IndexType ind = nonisov[pos];
             rt.SetElement(ind, scale);
 
+            double t_start = MPI_Wtime();
             // parameters : matrix *, fullyvec, columnApply, sermiring
             multDimApplyPrune(matrices[interMat], rt, columnApply ? Column : Row, isSermiring);
             if (afterTranspose)
                 matrices[interMat].Transpose();
+            double t_end = MPI_Wtime();
+            if (myrank == 0) {
+                cout << "query step time (" << cntLines << ") : " <<  (t_end - t_start) << " s" << endl;
+            }
             return matrices[interMat].getnnz();
 
         } else if (mult2[0] == 'm') {
@@ -781,10 +753,15 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
                 scale *= atoi(mult2.substr(scaleOp + 1).c_str());
             }
 
+            double t_start = MPI_Wtime();
             diagonalizeV(matrices[mat], dm, columnDiag ? Column : Row, scale);
             multDimApplyPrune(matrices[interMat], dm, columnApply ? Column : Row, isSermiring);
             if (afterTranspose)
                 matrices[interMat].Transpose();
+            double t_end = MPI_Wtime();
+            if (myrank == 0) {
+                cout << "query step time (" << cntLines << ") : " <<  (t_end - t_start) << " s" << endl;
+            }
             return matrices[interMat].getnnz();
 
         } else {
@@ -810,13 +787,18 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
                 scale *= atoi(mult1.substr(scaleOp + 1).c_str());
             }
 
-            FullyDistVec<IndexType, ElementType> rt(commWorld, G.getnrow(), 0);
+            FullyDistVec<IndexType, ElementType> rt(commGrid, G.getnrow(), 0);
             IndexType ind = nonisov[pos];
             rt.SetElement(ind, scale);
 
+            double t_start = MPI_Wtime();
             multDimApplyPrune(matrices[interMat], rt, columnApply ? Column : Row, isSermiring);
             if (afterTranspose)
                 matrices[interMat].Transpose();
+            double t_end = MPI_Wtime();
+            if (myrank == 0) {
+                cout << "query step time (" << cntLines << ") : " <<  (t_end - t_start) << " s" << endl;
+            }
             return matrices[interMat].getnnz();
 
         } else {
@@ -848,10 +830,15 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
             }
 
             string mat = mult1.substr(0, dot1);
+            double t_start = MPI_Wtime();
             diagonalizeV(matrices[mat], dm, columnDiag ? Column : Row, scale);
             multDimApplyPrune(matrices[interMat], dm, columnApply ? Column : Row, isSermiring);
             if (afterTranspose)
                 matrices[interMat].Transpose();
+            double t_end = MPI_Wtime();
+            if (myrank == 0) {
+                cout << "query step time (" << cntLines << ") : " <<  (t_end - t_start) << " s" << endl;
+            }
             return matrices[interMat].getnnz();
 
         } else if (mult1 == interMat) {
@@ -875,10 +862,15 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
             }
 
             string mat = mult2.substr(0, dot1);
+            double t_start = MPI_Wtime();
             diagonalizeV(matrices[mat], dm, columnDiag ? Column : Row, scale);
             multDimApplyPrune(matrices[interMat], dm, columnApply ? Column : Row, isSermiring);
             if (afterTranspose)
                 matrices[interMat].Transpose();
+            double t_end = MPI_Wtime();
+            if (myrank == 0) {
+                cout << "query step time (" << cntLines << ") : " <<  (t_end - t_start) << " s" << endl;
+            }
             return matrices[interMat].getnnz();
 
         } else {
@@ -896,7 +888,7 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
 int parseResGenLine(shared_ptr<CommGrid> commGrid, string &line, 
         map<string, PSpMat::MPI_DCCols> &matrices, 
         map<string, FullyDistVec<IndexType, ElementType> > vectors,
-        vector<char> &labels, char &primary, vector<IndexType> &indl) {
+        vector<char> &labels, char &primary, vector<IndexType> &indl, int cntLines) {
 
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -936,15 +928,23 @@ int parseResGenLine(shared_ptr<CommGrid> commGrid, string &line,
 
             primary = mat[dash2 + 1];
 
+            double t_start = MPI_Wtime();
             matrices[mat].Transpose();
             get_local_indices(matrices[mat], indl);
             send_local_indices(commGrid, indl);
             matrices[mat].FreeMemory();
+            double t_end = MPI_Wtime();
+            if (myrank == 0) {
+                cout << "result generation step (" << cntLines << ") : " << (t_end - t_start) << " s" << endl;
+            }
 
-            send_local_results(commGrid, indl.size() / labels.size());
+            return send_local_results(commGrid, indl.size() / labels.size());
         } else {
+            int nres;
+
             vector<IndexType> indj, indr, indw;
 
+            double t_start = MPI_Wtime();
             get_local_indices(matrices[mat], indj);
             send_local_indices(commGrid, indj);
 
@@ -962,24 +962,11 @@ int parseResGenLine(shared_ptr<CommGrid> commGrid, string &line,
             }
             // determine which two columns are corresponded
             
-            if (myrank == 0) {
-                cout << "===> pivots : " << mat << "  " << pivot1 << "  " << pivot2 << endl;
-            }
             if (labels.size() > 2 && primary != mat[dash2 + 1]) {
-                // local redistribution for second indices of current matrix
-                if (myrank == 0) {
-                    cout << "---> labels (" << labels.size() << ") : ";
-                    for (auto label : labels)
-                        cout << label << "  ";
-                    cout << endl;
-                }
                 local_redistribution(matrices[mat], indl, labels.size(), pivot1, indw);
             } else
                 indw = indl;
 
-            if (myrank == 0) {
-                cout << "---> after local redistribution" << endl;
-            }
             matrices[mat].FreeMemory();
 
             vector<IndexType> orders(labels.size() * 2);
@@ -988,7 +975,9 @@ int parseResGenLine(shared_ptr<CommGrid> commGrid, string &line,
                 orders[2 * i + 1] = i;
             }
 
-            int insert_pos = -1;
+            // default value is the end of labels vector
+            // so when you don't find any value larger then mat[dash1 + 1], that means should insert at the end
+            int insert_pos = labels.size();
             if (isJoin) {
                 for (int i = 0; i < labels.size(); i++)
                     if (labels[i] > mat[dash1 + 1]) {
@@ -996,41 +985,33 @@ int parseResGenLine(shared_ptr<CommGrid> commGrid, string &line,
                         break;
                     }
 
-                if (myrank == 0) {
-                    cout << "===> insert_pos = " << insert_pos << endl;
-                }
-
                 orders.insert(orders.begin() + 2 * insert_pos, 1);
                 orders.insert(orders.begin() + 2 * insert_pos + 1, 0);
             }
 
-            if (myrank == 0) {
-                cout << "---> itialized orders :";
-                for (auto oi : orders)
-                    cout << oi << "  ";
-                cout << endl;
-            }
-
             if (isJoin) {
                 local_join(commGrid, indw, indj, labels.size(), 2, pivot1, 1, orders, indr);
-                if (myrank == 0) {
-                    cout << "===> after local join" << endl;
-                }
                 labels.insert(labels.begin() + insert_pos, mat[dash1 + 1]);
-                send_local_results(commGrid, indr.size() / labels.size());
+                double t_end = MPI_Wtime();
+                if (myrank == 0) {
+                    cout << "result generation step (" << cntLines << ") : " << (t_end - t_start) << " s" << endl;
+                }
+                nres = send_local_results(commGrid, indr.size() / labels.size());
             } else {
                 int renameInd = std::find(labels.begin(), labels.end(), line[eqOp - 1]) - labels.begin();
-                if (myrank == 0) {
-                    cout << "---> before filter, renameId = " << renameInd << endl;
-                }
                 local_filter(commGrid, indw, indj, labels.size(), 2, pivot1, renameInd, 1, 0, orders, indr);
+                double t_end = MPI_Wtime();
                 if (myrank == 0) {
-                    cout << "===> after local filter" << endl;
+                    cout << "result generation step (" << cntLines << ") : " << (t_end - t_start) << " s" << endl;
                 }
-                send_local_results(commGrid, indr.size() / labels.size());
+                nres = send_local_results(commGrid, indr.size() / labels.size());
             }
 
             indl = indr;
+            if (myrank == 0) {
+                cout << "===> step result size : " << nres << endl;
+            }
+            return nres;
         }
     }
     return 0;
@@ -1065,6 +1046,7 @@ int parseSparql(const char* sparqlFile,
     int qres = 0, rres = 0;
     // line buffer
     char* line = (char *)malloc(lineSize);
+    double t_start = MPI_Wtime();
     if (fgets(line, lineSize, fh) != NULL) {
         string str(line);
         if (str.back() == '\n')
@@ -1093,10 +1075,7 @@ int parseSparql(const char* sparqlFile,
                         cout << "---------------------------------------------------------------" << endl << flush;
                         cout << "query execute step " << cntLines << " : " << str << endl << flush;
                     }
-                    qres = parseQueryLine(str, matrices, vectors, G, dm, isPerm, nonisov);
-                    if (myrank == 0) {
-                        cout << "---------------------------------------------------------------" << endl << flush;
-                    }
+                    qres = parseQueryLine(str, matrices, vectors, G, dm, isPerm, nonisov, cntLines);
 
                     if (qres == 0) {
                         // early stop
@@ -1111,19 +1090,18 @@ int parseSparql(const char* sparqlFile,
                         cout << "---------------------------------------------------------------" << endl << flush;
                         cout << "result generate step " << cntLines << " : " << str << endl << flush;
                     }
-                    rres = parseResGenLine(commWorld, str, matrices, vectors, labels, primary, indl);
-                    if (myrank == 0) {
-                        cout << "---------------------------------------------------------------" << endl << flush;
-                    }
+                    rres = parseResGenLine(commWorld, str, matrices, vectors, labels, primary, indl, cntLines);
                 }
                 cntLines++;
             }
         }
-
     }
+    double t_end = MPI_Wtime();
 
     if (myrank == 0) {
+        cout << "---------------------------------------------------------------" << endl << flush;
         cout << "final result : " << rres << endl;
+        cout << "total query time : " << (t_end - t_start) << " s" << endl;
         cout << "###############################################################" << endl << flush;
     }
 
