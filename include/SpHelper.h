@@ -166,21 +166,19 @@ public:
             }
         }
         else if(type == 1) // integer
-        {
+        {	// only integer matrix can be permuted, other types can be not permuted
             int64_t ii, jj, vv;
-				// int myrank;
-				// MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-				// if (myrank == 0) {
-				// 	std::cout << "in integer\n" << std::flush;
-				// }
             for (auto itr=lines.begin(); itr != lines.end(); ++itr)
             {
                 sscanf(itr->c_str(), "%lld %lld %lld", &ii, &jj, &vv);
-				tmpii.push_back(ii - 1);
-				tmpjj.push_back(jj - 1);
-				vals.push_back(vv);
-                // SpHelper::push_to_vectors(rows, cols, vals, nonisov[ii], nonisov[jj], vv, symmetric, onebased);
-            }
+				if (isPerm) {
+					tmpii.push_back(ii - onebased);
+					tmpjj.push_back(jj - onebased);
+					vals.push_back(vv);
+				} else {
+	                SpHelper::push_to_vectors(rows, cols, vals, ii, jj, vv, symmetric, onebased);
+            	}
+			}
         }
         else if(type == 2) // pattern
         {
@@ -207,9 +205,6 @@ public:
 			rows.insert(rows.end(), vals_ii.begin(), vals_ii.end());
 			cols.insert(cols.end(), vals_jj.begin(), vals_jj.end());
 			// ==============================
-			
-			int myrank;
-			MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 			
 			assert(rows.size() == vals.size() && cols.size() == vals.size());
 		}

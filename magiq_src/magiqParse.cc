@@ -63,7 +63,6 @@ int main(int argc, char *argv[]) {
         FullyDistVec<IndexType, IndexType> nonisov(commWorld);
 
         double t1 = MPI_Wtime();
-        // second true : isPerm
         G.ParallelReadMM(dataName, true, selectSecond, isPerm > 0, nonisov);
         double t2 = MPI_Wtime();
 
@@ -74,8 +73,8 @@ int main(int argc, char *argv[]) {
         float imG = G.LoadImbalance();
 
         if (myrank == 0) {
-            cout << "\tread and permute graph took : " << (t2 - t1) << " s" << endl << flush;
-            cout << "\timbalance of G (after random permutation) : " << imG << endl << flush;
+            cout << "\tread graph took : " << (t2 - t1) << " s" << endl << flush;
+            cout << "\timbalance of G : " << imG << endl << flush;
         }
         
         double t2_trans = MPI_Wtime();
@@ -88,7 +87,6 @@ int main(int argc, char *argv[]) {
         map<string, PSpMat::MPI_DCCols> matrices;
         map<string, FullyDistVec<IndexType, ElementType> > vectors;
         FullyDistVec<IndexType, ElementType> dm(commWorld);
-        // true : isPerm
         parseSparql(sparqlFile.c_str(), matrices, vectors, G, dm, isPerm > 0, nonisov);
     }
 

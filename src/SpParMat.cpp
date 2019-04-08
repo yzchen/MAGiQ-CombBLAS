@@ -2423,7 +2423,7 @@ bool SpParMat<IT,NT,DER>::operator== (const SpParMat<IT,NT,DER> & rhs) const
  **/
 template <class IT, class NT, class DER>
 template <typename _BinaryOperation, typename LIT>
-void SpParMat< IT,NT,DER >::SparseCommon(std::vector< std::vector < std::tuple<LIT,LIT,NT> > > & data, LIT locsize, IT total_m, IT total_n, _BinaryOperation BinOp)
+void SpParMat< IT,NT,DER >::SparseCommon(std::vector< std::vector < std::tuple<LIT,LIT,NT> > > & data, LIT locsize, IT total_m, IT total_n, _BinaryOperation BinOp, bool isPerm)
 {
 	int nprocs = commGrid->GetSize();
 	int * sendcnt = new int[nprocs];
@@ -2442,28 +2442,26 @@ void SpParMat< IT,NT,DER >::SparseCommon(std::vector< std::vector < std::tuple<L
 	assert((totsent < std::numeric_limits<int>::max()));	
 	assert((totrecv < std::numeric_limits<int>::max()));
 
+#ifdef MAGIQ_DEBUG
 	int myrank = commGrid->GetRank();
-#ifdef MAGIQ_DEBUG
-	if(myrank == 0) {std::cout << "---- All procs will exchange non-zeros..." << std::endl << std::flush;}
-#endif
-	int rpid1, rpid2, rpid3, rpid4;
-	rpid1 = std::rand() % nprocs; rpid2 = std::rand() % nprocs; rpid3 = std::rand() % nprocs; rpid4 = std::rand() % nprocs;
-#ifdef MAGIQ_DEBUG
-	if(myrank == 0 || myrank == rpid1 || myrank == rpid2 || myrank == rpid3 || myrank == rpid4  ) {
-		std::cout << "---- p" << myrank << " will receive [" << totrecv << "] non-zeros" << std::endl << std::flush;
-	}
-#endif
+	if (isPerm) {
+		if(myrank == 0) {std::cout << "---- All procs will exchange non-zeros..." << std::endl << std::flush;}
+		int rpid1, rpid2, rpid3, rpid4;
+		rpid1 = std::rand() % nprocs; rpid2 = std::rand() % nprocs; rpid3 = std::rand() % nprocs; rpid4 = std::rand() % nprocs;
+		if(myrank == 0 || myrank == rpid1 || myrank == rpid2 || myrank == rpid3 || myrank == rpid4  ) {
+			std::cout << "---- p" << myrank << " will receive [" << totrecv << "] non-zeros" << std::endl << std::flush;
+		}
 
-	IT max_recv_cnt, min_recv_cnt, avg_recv_cnt;
-    MPI_Reduce(&totrecv, &max_recv_cnt, 1, MPIType<IT>(), MPI_MAX, 0, commGrid->commWorld);
-	MPI_Reduce(&totrecv, &min_recv_cnt, 1, MPIType<IT>(), MPI_MIN, 0, commGrid->commWorld);
-	MPI_Reduce(&totrecv, &avg_recv_cnt, 1, MPIType<IT>(), MPI_SUM, 0, commGrid->commWorld);
-	avg_recv_cnt /= nprocs;
-#ifdef MAGIQ_DEBUG
-	if(myrank == 0) {
-		std::cout << "Max receive count [" << max_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
-		std::cout << "Min receive count [" << min_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
-		std::cout << "Avg receive count [" << avg_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
+		IT max_recv_cnt, min_recv_cnt, avg_recv_cnt;
+		MPI_Reduce(&totrecv, &max_recv_cnt, 1, MPIType<IT>(), MPI_MAX, 0, commGrid->commWorld);
+		MPI_Reduce(&totrecv, &min_recv_cnt, 1, MPIType<IT>(), MPI_MIN, 0, commGrid->commWorld);
+		MPI_Reduce(&totrecv, &avg_recv_cnt, 1, MPIType<IT>(), MPI_SUM, 0, commGrid->commWorld);
+		avg_recv_cnt /= nprocs;
+		if(myrank == 0) {
+			std::cout << "Max receive count [" << max_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
+			std::cout << "Min receive count [" << min_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
+			std::cout << "Avg receive count [" << avg_recv_cnt << "] non-zeroes across all procs" << std::endl << std::flush;
+		}
 	}
 #endif
 
@@ -3632,7 +3630,7 @@ void SpParMat< IT,NT,DER >::ParallelReadMM (const std::string & filename, bool o
 #endif
 
     if(spSeq)   delete spSeq;
-    SparseCommon(data, locsize, nrows, ncols, BinOp);
+    SparseCommon(data, locsize, nrows, ncols, BinOp, isPerm);
 }
 
 

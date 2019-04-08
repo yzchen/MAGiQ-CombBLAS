@@ -705,8 +705,12 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
             }
 
             FullyDistVec<IndexType, ElementType> rt(commGrid, G.getnrow(), 0);
-            IndexType ind = nonisov[pos];
-            rt.SetElement(ind, scale);
+            if (isPerm) {
+                IndexType ind = nonisov[pos];
+                rt.SetElement(ind, scale);
+            } else {
+                rt.SetElement(pos, scale);
+            }
 
             double t_start = MPI_Wtime();
             // parameters : matrix *, fullyvec, columnApply, sermiring
@@ -789,7 +793,12 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
 
             FullyDistVec<IndexType, ElementType> rt(commGrid, G.getnrow(), 0);
             IndexType ind = nonisov[pos];
-            rt.SetElement(ind, scale);
+            if (isPerm) {
+                IndexType ind = nonisov[pos];
+                rt.SetElement(ind, scale);
+            } else {
+                rt.SetElement(pos, scale);
+            }
 
             double t_start = MPI_Wtime();
             multDimApplyPrune(matrices[interMat], rt, columnApply ? Column : Row, isSermiring);
