@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 
     if (argc < 3) {
         if (myrank == 0) {
-            cout << "Usage: ./magiqParse dataFile sparqlFile isPerm" << endl << flush;
+            cout << "Usage: ./magiqParse dataFile sparqlFile isPerm=false repeat=1" << endl << flush;
         }
         MPI_Finalize();
         return -1;
@@ -86,7 +86,14 @@ int main(int argc, char *argv[]) {
 
         map<string, PSpMat::MPI_DCCols> matrices;
         FullyDistVec<IndexType, ElementType> dm(commWorld);
-        parseSparql(sparqlFile.c_str(), matrices, G, dm, isPerm > 0, nonisov);
+        
+        // run the same query several(repeat) times
+        int repeat = 1;
+        if (argc > 4)
+            repeat = atoi(argv[4]);
+        for (int i = 0; i < repeat; i++) {
+            parseSparql(sparqlFile.c_str(), matrices, G, dm, isPerm > 0, nonisov);
+        }
     }
 
     MPI_Finalize();

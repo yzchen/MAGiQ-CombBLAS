@@ -983,6 +983,9 @@ int parseSparql(const char* sparqlFile,
             cout << "###############################################################" << endl << flush;
         }
 
+        clear_query_time();
+        clear_result_time();
+
         bool execute = true;
         int cntLines = 1;
         vector<IndexType> indl;
