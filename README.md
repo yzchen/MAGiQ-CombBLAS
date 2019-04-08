@@ -105,6 +105,14 @@ contains header file for magiq(CombBLAS) implementation
 
 contains src file for magiq(CombBLAS) implementation
 
+- magiqScal.cpp
+
+    hard coded program for lubm queries
+
+- magiqParse.cc
+
+    automatic query translation and execution
+
 ### src
 
 CombBLAS source files

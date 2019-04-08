@@ -25,7 +25,7 @@ There are three lines just for notation,
 
     `I^xxxx(pos)*xxxx(val)` : sparse matrix only has value(`val`) in position(`(pos, pos)`), if `val` is not given, it's `1` 
 
-    `⊗` : sermiring multiplication (sermiring : `LOS.ISEQ`)
+    `⊗` : sermiring multiplication (sermiring : `LOR.ISEQ`)
 
     `×` : normal multiplication (sermiring : `TIMES.PLUS`)
 
