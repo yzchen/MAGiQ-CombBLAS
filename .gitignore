@@ -14,4 +14,4 @@ run/*
 magiq_run/*
 a.out
 examples/data/*
-query.txt
+!examples/data/poster.nt

@@ -1,0 +1,8 @@
+Simple_Query
+query_execution
+m_1_0 = G.T ⊗ I^1*2
+m_2_1 = G ⊗ m_1_0.D*3
+m_1_0 = m_2_1.T.D × m_1_0
+result_generation
+join%m_1_0
+join%m_2_1
