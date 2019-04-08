@@ -13,5 +13,5 @@ run/*
 .vscode/
 magiq_run/*
 a.out
-data/*
+examples/data/*
 query.txt

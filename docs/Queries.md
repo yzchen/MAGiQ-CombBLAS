@@ -2,6 +2,9 @@
 
 This document will show how the queries should look like.
 
+A very simple domain specific language for matrix algebra operations in this scenario is implemented.
+However, the functionalities are limited because it's only a simple string parser.
+
 There are three lines just for notation,
 
 - Line 1
