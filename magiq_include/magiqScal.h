@@ -12,14 +12,11 @@
 #include "../include/CombBLAS.h"
 #include "../external/pmergesort/src/pmergesort.h"
 
+// utility definitions 
+#include "utils.h"
+
 using namespace std;
 using namespace combblas;
-
-// IndexType is used for index in CombBLAS sparse matrix and dense vectors,
-// for dataset which has less than 2^32-1(= 4B) vertices, can change it to uint32_t,
-// starting from lubm13B, uint64_t is needed
-#define IndexType uint64_t
-#define ElementType uint8_t
 
 // Sparse matrix definition
 class PSpMat {
@@ -28,152 +25,14 @@ public:
     typedef SpParMat<IndexType, ElementType, DCCols> MPI_DCCols;
 };
 
-// time for running queries
-static double total_reduce_time = 0.0;
-static double total_prune_time = 0.0;
-static double total_mmul_scalar_time = 0.0;
-static double total_dim_apply_time = 0.0;
-
-// time for result generation
-static double total_get_local_indices_time = 0.0;
-static double total_send_local_indices_time = 0.0;
-static double total_local_join_time = 0.0;
-static double total_local_filter_time = 0.0;
-static double total_redistribution_time = 0.0;
-
-// comparasion struct for qsort in result generation
-typedef struct {
-    IndexType a, b, c;
-} Int3;
-
-int compInt3A(const void *elem1, const void *elem2) {
-    Int3 f = *((Int3 *) elem1);
-    Int3 s = *((Int3 *) elem2);
-    if (f.a > s.a) return 1;
-    if (f.a < s.a) return -1;
-    return 0;
-}
-
-int compInt3B(const void *elem1, const void *elem2) {
-    Int3 f = *((Int3 *) elem1);
-    Int3 s = *((Int3 *) elem2);
-    if (f.b > s.b) return 1;
-    if (f.b < s.b) return -1;
-    return 0;
-}
-
-int compInt3C(const void *elem1, const void *elem2) {
-    Int3 f = *((Int3 *) elem1);
-    Int3 s = *((Int3 *) elem2);
-    if (f.c > s.c) return 1;
-    if (f.c < s.c) return -1;
-    return 0;
-}
-
-typedef struct {
-    IndexType a, b, c, d;
-} Int4;
-
-int compInt4A(const void *elem1, const void *elem2) {
-    Int4 f = *((Int4 *) elem1);
-    Int4 s = *((Int4 *) elem2);
-    if (f.a > s.a) return 1;
-    if (f.a < s.a) return -1;
-    return 0;
-}
-
-int compInt4B(const void *elem1, const void *elem2) {
-    Int4 f = *((Int4 *) elem1);
-    Int4 s = *((Int4 *) elem2);
-    if (f.b > s.b) return 1;
-    if (f.b < s.b) return -1;
-    return 0;
-}
-
-int compInt4C(const void *elem1, const void *elem2) {
-    Int4 f = *((Int4 *) elem1);
-    Int4 s = *((Int4 *) elem2);
-    if (f.c > s.c) return 1;
-    if (f.c < s.c) return -1;
-    return 0;
-}
-
-int compInt4D(const void *elem1, const void *elem2) {
-    Int4 f = *((Int4 *) elem1);
-    Int4 s = *((Int4 *) elem2);
-    if (f.d > s.d) return 1;
-    if (f.d < s.d) return -1;
-    return 0;
-}
-
-typedef struct {
-    IndexType a, b, c, d, e;
-} Int5;
-
-int compInt5A(const void *elem1, const void *elem2) {
-    Int5 f = *((Int5 *) elem1);
-    Int5 s = *((Int5 *) elem2);
-    if (f.a > s.a) return 1;
-    if (f.a < s.a) return -1;
-    return 0;
-}
-
-int compInt5B(const void *elem1, const void *elem2) {
-    Int5 f = *((Int5 *) elem1);
-    Int5 s = *((Int5 *) elem2);
-    if (f.b > s.b) return 1;
-    if (f.b < s.b) return -1;
-    return 0;
-}
-
-int compInt5C(const void *elem1, const void *elem2) {
-    Int5 f = *((Int5 *) elem1);
-    Int5 s = *((Int5 *) elem2);
-    if (f.c > s.c) return 1;
-    if (f.c < s.c) return -1;
-    return 0;
-}
-
-int compInt5D(const void *elem1, const void *elem2) {
-    Int5 f = *((Int5 *) elem1);
-    Int5 s = *((Int5 *) elem2);
-    if (f.d > s.d) return 1;
-    if (f.d < s.d) return -1;
-    return 0;
-}
-
-int compInt5E(const void *elem1, const void *elem2) {
-    Int5 f = *((Int5 *) elem1);
-    Int5 s = *((Int5 *) elem2);
-    if (f.e > s.e) return 1;
-    if (f.e < s.e) return -1;
-    return 0;
-}
-
-// comparasion function pointer array
-// this comp function design will limit the maximum columns in the final table
-// currently 5 is supported
-int (*comp[15])(const void *, const void *);
-
-bool isZero(ElementType t) { return t == 0; }
-
-// special semiring for dimApply
-ElementType rdf_multiply(ElementType a, ElementType b) {
-    if (a != 0 && b != 0 && a == b) {   return static_cast<ElementType>(1);
-                            } else {    return static_cast<ElementType>(0);     }
-}
+//////////////////////////////////////////////////////////////////////////////////
+//                           Graph Loading Phase                                //
+//////////////////////////////////////////////////////////////////////////////////
 
 // handle duplicate in original loaded data
 ElementType selectSecond(ElementType a, ElementType b) { return b; }
 
-// reset all time reslated to query execution
-void clear_query_time() {
-    total_reduce_time = 0.0;
-    total_prune_time = 0.0;
-    total_mmul_scalar_time = 0.0;
-    total_dim_apply_time = 0.0;
-}
-
+// permute input matrix G randomly, permutation infotmation will be stored in nonisov
 void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -184,6 +43,7 @@ void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov)
     nonisov.iota(G.getnrow(), 0);
     nonisov.RandPerm();
 
+    // permute G in place
     G(nonisov, nonisov, true);
     double t_perm2 = MPI_Wtime();
 
@@ -196,7 +56,35 @@ void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov)
 #endif
 }
 
-// diagonalize based on Row/Column, then scale the FullyDistVec with scalar
+//////////////////////////////////////////////////////////////////////////////////
+//                          Query Execution Phase                               //
+//////////////////////////////////////////////////////////////////////////////////
+
+// time for running queries
+static double total_reduce_time = 0.0;
+static double total_prune_time = 0.0;
+static double total_mmul_scalar_time = 0.0;
+static double total_dim_apply_time = 0.0;
+
+// reset all time reslated to query execution
+void clear_query_time() {
+    total_reduce_time = 0.0;
+    total_prune_time = 0.0;
+    total_mmul_scalar_time = 0.0;
+    total_dim_apply_time = 0.0;
+}
+
+bool isZero(ElementType t) { return t == 0; }
+
+// special rdf semiring for dimApply
+ElementType rdf_multiply(ElementType a, ElementType b) {
+    if (a != 0 && b != 0 && a == b) {   return static_cast<ElementType>(1);
+                            } else {    return static_cast<ElementType>(0);     }
+}
+
+// diagonalize(reduce) based on dim(Row/Column, default is Row), 
+// then scale the FullyDistVec with scalar(default is 1)
+// output : diag
 void diagonalizeV(const PSpMat::MPI_DCCols &M, FullyDistVec<IndexType, ElementType> &diag, Dim dim = Row, ElementType scalar = 1) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -219,7 +107,8 @@ void diagonalizeV(const PSpMat::MPI_DCCols &M, FullyDistVec<IndexType, ElementTy
 #endif
 }
 
-// dimApply and prune, isRDF indicates the semiring
+// dimApply via dim(Row/Column) with sermiring(isRDF, only two sermirings) to matrix A, change matrix A in place
+// then prune 0s in the result matrix
 void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementType> &v, Dim dim, bool isRDF) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -246,6 +135,17 @@ void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementTyp
 #endif
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+//                          Result Generation Phase                             //
+//////////////////////////////////////////////////////////////////////////////////
+
+// time for result generation
+static double total_get_local_indices_time = 0.0;
+static double total_send_local_indices_time = 0.0;
+static double total_local_join_time = 0.0;
+static double total_local_filter_time = 0.0;
+static double total_redistribution_time = 0.0;
+
 // reset all time related to result generation
 void clear_result_time() {
     total_get_local_indices_time = 0.0;
@@ -255,15 +155,11 @@ void clear_result_time() {
     total_redistribution_time = 0.0;
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-//                          Result Generation Phase                             //
-//////////////////////////////////////////////////////////////////////////////////
-
 // M should have same rows and cols
-// before this function call, indices should be empty
-// after this function call, indices size should be even, I and J are together
+// after this function call, indices will be filled, 
+// indices will have size should be even, I and J are together
 void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
-    double t1 = MPI_Wtime();
+    double t_start = MPI_Wtime();
     assert(M.getnrow() == M.getncol());
 
     indices.clear();
@@ -303,23 +199,24 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
             }
         }
         // if does not have same size, must be wrong
-        // assert(I.size() == J.size() && "When get local indices, I and J should have same size.");
         assert(indices.size() % 2 == 0 && "indices should have even size!");
     }
 
-    double t2 = MPI_Wtime();
+    double t_end = MPI_Wtime();
 #ifdef MAGIQ_DEBUG
     if (commGrid->GetRank() == 0) {
-        cout << "\tget local indices takes : " << (t2 - t1) << " s" << endl;
+        cout << "\tget local indices takes : " << (t_start - t_end) << " s" << endl;
     }
 #endif
-    total_get_local_indices_time += (t2 - t1);
+    total_get_local_indices_time += (t_start - t_end);
 }
 
-// r1, r2 are not reachable
-// first should have enough size to contain the sorted data
+// first has range [l1, r1), step size pair_size1
+// second has range [l2, r2), step size pair_size2
+// merge sort should be based on pivot1 and pivot2(they are both offset, 0 - pair_size1/pair_size2)
+// output : first, so first should have enough space for merged vector
 void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, IndexType l1, IndexType l2, IndexType r1, IndexType r2, 
-                        int pair_size1, int pair_size2, int key1, int key2) {
+                        int pair_size1, int pair_size2, int pivot1, int pivot2) {
     IndexType i = l1, j = l2;
 
     vector<IndexType> res;
@@ -327,7 +224,7 @@ void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, In
 
     auto it1 = first.begin(), it2 = second.begin();
     while (i < r1 && j < r2) {
-        if (first[i + key1] <= second[j + key2]) {
+        if (first[i + pivot1] <= second[j + pivot2]) {
             res.insert(res.end(), it1 + i, it1 + i + pair_size1);   i += pair_size1;
         } else {
             res.insert(res.end(), it2 + j, it2 + j + pair_size2);   j += pair_size2;
@@ -345,6 +242,7 @@ void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, In
 }
 
 // each process send its local indices to first process in current column
+// (first row will work in the following)
 void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_indices) {
     double t1 = MPI_Wtime();
 
@@ -386,6 +284,10 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
 #endif
 }
 
+// push one entry to the vector res, 
+// entry information comes from source1 and source2, they are one of inner join results
+// index1 is the position of source1, index2 is the position of source2,
+// push should follow the order specified in vector order 
 void put_tuple(vector<IndexType> &res, vector<IndexType> &source1, vector<IndexType> &source2,
                IndexType index1, IndexType index2, vector<IndexType> &order) {
     for (IndexType oi = 0; oi < order.size(); oi += 2) {
@@ -395,12 +297,15 @@ void put_tuple(vector<IndexType> &res, vector<IndexType> &source1, vector<IndexT
     }
 }
 
-// local join with special tables, only processors in first row work
+// local join with special tables(indices1 and indices2), only processors in first row work
+// both indices1 and indices2 are seriliazed, have actual size n * pair_size
+// pivot1 and pivot2 are main keys for joining
 // order : size * 2
 // 0 0 0 1 1 0 means in result, first column is col 0 in index 0, then col 1 in index 0, the last one is col 0 in index 1
 // this also means joining is based on col 0 in index 0 and col 0 in index 1
+// output : res should be different from indices1 and indices2
 void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
-                int pair_size2, int key1, int key2, vector<IndexType> &order, vector<IndexType> &res) {
+                int pair_size2, int pivot1, int pivot2, vector<IndexType> &order, vector<IndexType> &res) {
     double t1 = MPI_Wtime();
 
     res.clear();
@@ -411,21 +316,21 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
         IndexType sz1 = indices1.size(), sz2 = indices2.size();
 
         while (i1 < sz1 && i2 < sz2) {
-            if (indices1[i1 + key1] < indices2[i2 + key2]) {
+            if (indices1[i1 + pivot1] < indices2[i2 + pivot2]) {
                 i1 += pair_size1;
-            } else if (indices1[i1 + key1] > indices2[i2 + key2]) {
+            } else if (indices1[i1 + pivot1] > indices2[i2 + pivot2]) {
                 i2 += pair_size2;
             } else {
                 put_tuple(res, indices1, indices2, i1, i2, order);
 
                 IndexType i22 = i2 + pair_size2;
-                while (i22 < sz2 && indices1[i1 + key1] == indices2[i22 + key2]) {
+                while (i22 < sz2 && indices1[i1 + pivot1] == indices2[i22 + pivot2]) {
                     put_tuple(res, indices1, indices2, i1, i22, order);
                     i22 += pair_size2;
                 }
 
                 IndexType i11 = i1 + pair_size1;
-                while (i11 < sz1 && indices1[i11 + key1] == indices2[i2 + key2]) {
+                while (i11 < sz1 && indices1[i11 + pivot1] == indices2[i2 + pivot2]) {
                     put_tuple(res, indices1, indices2, i11, i2, order);
                     i11 += pair_size1;
                 }
@@ -445,9 +350,13 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
 #endif
 }
 
-// key11 and key21 should be main keys, tables should be sorted based on them
+// local filter with special tables(indices1 and indices2), only processors in first row work
+// both indices1 and indices2 are seriliazed, have actual size n * pair_size
+// pivot11 and pivot21 are main keys for filter, tables should be sorted based on them
+// pivot12 and pivot22 are renaming equivalent
+// output : res should be different from indices1 and indices2
 void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
-                  int pair_size2, int key11, int key12, int key21, int key22, vector<IndexType> &order, vector<IndexType> &res) {
+                  int pair_size2, int pivot11, int pivot12, int pivot21, int pivot22, vector<IndexType> &order, vector<IndexType> &res) {
     double t1 = MPI_Wtime();
 
     res.clear();
@@ -458,26 +367,26 @@ void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, ve
         IndexType sz1 = indices1.size(), sz2 = indices2.size();
 
         while (i1 < sz1 && i2 < sz2) {
-            if (indices1[i1 + key11] < indices2[i2 + key21]) {
+            if (indices1[i1 + pivot11] < indices2[i2 + pivot21]) {
                 i1 += pair_size1;
-            } else if (indices1[i1 + key11] > indices2[i2 + key21]) {
+            } else if (indices1[i1 + pivot11] > indices2[i2 + pivot21]) {
                 i2 += pair_size2;
             } else {
-                if (indices1[i1 + key12] == indices2[i2 + key22]) {
+                if (indices1[i1 + pivot12] == indices2[i2 + pivot22]) {
                     put_tuple(res, indices1, indices2, i1, -1, order);
                 }
 
                 IndexType i22 = i2 + pair_size2;
-                while (i22 < sz2 && indices1[i1 + key11] == indices2[i22 + key21]) {
-                    if (indices1[i1 + key12] == indices2[i22 + key22]) {
+                while (i22 < sz2 && indices1[i1 + pivot11] == indices2[i22 + pivot21]) {
+                    if (indices1[i1 + pivot12] == indices2[i22 + pivot22]) {
                         put_tuple(res, indices1, indices2, i1, -1, order);
                     }
                     i22 += pair_size2;
                 }
 
                 IndexType i11 = i1 + pair_size1;
-                while (i11 < sz1 && indices1[i11 + key11] == indices2[i2 + key21]) {
-                    if (indices1[i11 + key12] == indices2[i2 + key22]) {
+                while (i11 < sz1 && indices1[i11 + pivot11] == indices2[i2 + pivot21]) {
+                    if (indices1[i11 + pivot12] == indices2[i2 + pivot22]) {
                         put_tuple(res, indices1, indices2, i11, -1, order);
                     }
                     i11 += pair_size1;
@@ -498,7 +407,9 @@ void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, ve
     }
 }
 
+// redistributed the table(range_table with pair_size) based on the matrix M
 // column based operation
+// output : res 
 void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table, int pair_size,
                           int pivot, vector<IndexType> &res) {
     double t1 = MPI_Wtime();
@@ -592,7 +503,7 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 #endif
 }
 
-// rank 0 will have final correct result
+// rank 0 will have final correct result, other ranks have 0
 int send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
     int rowneighs = commGrid->GetGridRows();
 
@@ -627,8 +538,11 @@ int send_local_results(shared_ptr<CommGrid> commGrid, IndexType res_size) {
 // default line buffer size, 100
 static const size_t lineSize = 100;
 
+// matrices have all the intermediate matrices
+// G is input data graph, dm will be reused for all cases
+// isPerm denotes if G is permutated, nonisov is permutation vector
+// output : nnz of the results
 int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices, 
-        map<string, FullyDistVec<IndexType, ElementType> > vectors,
         PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm,
         bool isPerm, FullyDistVec<IndexType, IndexType> &nonisov, int cntLines) {
     
@@ -894,9 +808,10 @@ int parseQueryLine(string &line, map<string, PSpMat::MPI_DCCols> &matrices,
 }
 
 // labels should be ordered
+// indl will be updated after this function call(join/filter)
+// output : nnz in the result vector
 int parseResGenLine(shared_ptr<CommGrid> commGrid, string &line, 
         map<string, PSpMat::MPI_DCCols> &matrices, 
-        map<string, FullyDistVec<IndexType, ElementType> > vectors,
         vector<char> &labels, char &primary, vector<IndexType> &indl, int cntLines) {
 
     int myrank;
@@ -1026,9 +941,11 @@ int parseResGenLine(shared_ptr<CommGrid> commGrid, string &line,
     return 0;
 }
 
+// matrices have all the intermediate matrices
+// G is input data graph, dm will be reused for all cases
+// isPerm denotes if G is permutated, nonisov is permutation vector
 int parseSparql(const char* sparqlFile, 
         map<string, PSpMat::MPI_DCCols> &matrices, 
-        map<string, FullyDistVec<IndexType, ElementType> > &vectors,
         PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, ElementType> &dm,
         bool isPerm, FullyDistVec<IndexType, IndexType> &nonisov) {
     // get common world
@@ -1084,7 +1001,7 @@ int parseSparql(const char* sparqlFile,
                         cout << "---------------------------------------------------------------" << endl << flush;
                         cout << "query execute step " << cntLines << " : " << str << endl << flush;
                     }
-                    qres = parseQueryLine(str, matrices, vectors, G, dm, isPerm, nonisov, cntLines);
+                    qres = parseQueryLine(str, matrices, G, dm, isPerm, nonisov, cntLines);
 
                     if (qres == 0) {
                         // early stop
@@ -1099,7 +1016,7 @@ int parseSparql(const char* sparqlFile,
                         cout << "---------------------------------------------------------------" << endl << flush;
                         cout << "result generate step " << cntLines << " : " << str << endl << flush;
                     }
-                    rres = parseResGenLine(commWorld, str, matrices, vectors, labels, primary, indl, cntLines);
+                    rres = parseResGenLine(commWorld, str, matrices, labels, primary, indl, cntLines);
                 }
                 cntLines++;
             }
