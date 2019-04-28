@@ -54,7 +54,3 @@ ADD_LIBRARY( mmiolib src/mmio.c)
 ADD_LIBRARY( pmergesort external/pmergesort/src/pmergesort.c)
 
 ADD_SUBDIRECTORY( magiq_src )
-# ADD_SUBDIRECTORY( usort )
-# ADD_SUBDIRECTORY( graph500-1.2/generator )
-# ADD_SUBDIRECTORY( Ordering )
-# ADD_SUBDIRECTORY( Applications/SpMSpV-IPDPS2017 )
