@@ -1668,21 +1668,8 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-    // set comparasion function pointer array, for qsort in result generation
-    comp[0] = compInt3A;
-    comp[1] = compInt3B;
-    comp[2] = compInt3C;
-
-    comp[5] = compInt4A;
-    comp[6] = compInt4B;
-    comp[7] = compInt4C;
-    comp[8] = compInt4D;
-
-    comp[10] = compInt5A;
-    comp[11] = compInt5B;
-    comp[12] = compInt5C;
-    comp[13] = compInt5D;
-    comp[14] = compInt5E;
+    // initialize comp function array
+    initComp();
 
     if (argc < 2) {
         if (myrank == 0) {

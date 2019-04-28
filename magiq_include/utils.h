@@ -114,8 +114,28 @@ int compInt5E(const void *elem1, const void *elem2) {
 // comparasion function pointer array
 // this comp function design will limit the maximum columns in the final table
 // currently maximum columns is 5
+// in order to get function pointers easily, the size of this array is (maxColumn - 3 + 1) * maxColumn, here maxColumn = 5
 // TODO : hard coded way to scale the comp is allowed but not efficient,
 // TODO : find a way to support in a scalable way
 int (*comp[15])(const void *, const void *);
+
+// set comparasion function pointer array, for qsort in result generation
+// should be called by main function at the begining always
+void initComp() {
+    comp[0] = compInt3A;
+    comp[1] = compInt3B;
+    comp[2] = compInt3C;
+
+    comp[5] = compInt4A;
+    comp[6] = compInt4B;
+    comp[7] = compInt4C;
+    comp[8] = compInt4D;
+
+    comp[10] = compInt5A;
+    comp[11] = compInt5B;
+    comp[12] = compInt5C;
+    comp[13] = compInt5D;
+    comp[14] = compInt5E;
+}
 
 #endif // MAGIQ_UTILS_H
