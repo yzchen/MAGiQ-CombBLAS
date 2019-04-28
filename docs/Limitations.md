@@ -49,3 +49,8 @@ void initComp() {
 ```
 
 This way is not efficient and scalable, needs to be improved in the future.
+
+#### Query parser
+
+As query parser is implemented just with string segmentation,
+so it should have exact form, everything out of this form will not be accepted and return 0.

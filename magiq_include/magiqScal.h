@@ -33,6 +33,7 @@ public:
 ElementType selectSecond(ElementType a, ElementType b) { return b; }
 
 // permute input matrix G randomly, permutation infotmation will be stored in nonisov
+// this function is never called because now permutation is implemented during data loading
 void permute(PSpMat::MPI_DCCols &G, FullyDistVec<IndexType, IndexType> &nonisov) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -85,7 +86,8 @@ ElementType rdf_multiply(ElementType a, ElementType b) {
 // diagonalize(reduce) based on dim(Row/Column, default is Row), 
 // then scale the FullyDistVec with scalar(default is 1)
 // output : diag
-void diagonalizeV(const PSpMat::MPI_DCCols &M, FullyDistVec<IndexType, ElementType> &diag, Dim dim = Row, ElementType scalar = 1) {
+void diagonalizeV(const PSpMat::MPI_DCCols &M, FullyDistVec<IndexType, ElementType> &diag, 
+                    Dim dim = Row, ElementType scalar = 1) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -107,9 +109,11 @@ void diagonalizeV(const PSpMat::MPI_DCCols &M, FullyDistVec<IndexType, ElementTy
 #endif
 }
 
-// dimApply via dim(Row/Column) with sermiring(isRDF, only two sermirings) to matrix A, change matrix A in place
+// dimApply via dim(Row/Column) with sermiring(isRDF, only two sermirings) to matrix A, 
+// change matrix A in place
 // then prune 0s in the result matrix
-void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementType> &v, Dim dim, bool isRDF) {
+void multDimApplyPrune(PSpMat::MPI_DCCols &A, FullyDistVec<IndexType, ElementType> &v, 
+                        Dim dim, bool isRDF) {
     int myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
@@ -170,7 +174,8 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
 
     // calculate row offset for each process
     int colneighs = commGrid->GetGridRows();
-    IndexType *locnrows = new IndexType[colneighs];  // number of rows is calculated by a reduction among the processor column
+    // number of rows is calculated by a reduction among the processor column
+    IndexType *locnrows = new IndexType[colneighs];  
     locnrows[colrank] = M.getlocalrows();
     MPI_Allgather(MPI_IN_PLACE, 0, MPIType<IndexType>(), locnrows, 1, MPIType<IndexType>(), commGrid->GetColWorld());
     IndexType roffset = std::accumulate(locnrows, locnrows + colrank, static_cast<IndexType>(0));
@@ -178,7 +183,8 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
 
     // calculate column offset for each process
     int rowneighs = commGrid->GetGridCols();
-    IndexType *locncols = new IndexType[rowneighs];  // number of columns is calculated by a reduction among the processor row
+    // number of columns is calculated by a reduction among the processor row
+    IndexType *locncols = new IndexType[rowneighs];  
     locncols[rowrank] = M.getlocalcols();
     MPI_Allgather(MPI_IN_PLACE, 0, MPIType<IndexType>(), locncols, 1, MPIType<IndexType>(), commGrid->GetRowWorld());
     IndexType coffset = std::accumulate(locncols, locncols + rowrank, static_cast<IndexType>(0));
@@ -215,7 +221,8 @@ void get_local_indices(PSpMat::MPI_DCCols &M, vector<IndexType> &indices) {
 // second has range [l2, r2), step size pair_size2
 // merge sort should be based on pivot1 and pivot2(they are both offset, 0 - pair_size1/pair_size2)
 // output : first, so first should have enough space for merged vector
-void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, IndexType l1, IndexType l2, IndexType r1, IndexType r2, 
+void merge_local_vectors(vector<IndexType> &first, vector<IndexType> &second, 
+                        IndexType l1, IndexType l2, IndexType r1, IndexType r2, 
                         int pair_size1, int pair_size2, int pivot1, int pivot2) {
     IndexType i = l1, j = l2;
 
@@ -267,7 +274,8 @@ void send_local_indices(shared_ptr<CommGrid> commGrid, vector<IndexType> &local_
             if (sender < colneighs) {
                 MPI_Recv(&number_count, 1, MPIType<int>(), sender, 0, commGrid->GetColWorld(), MPI_STATUS_IGNORE);
                 recv_I.resize(number_count);
-                MPI_Recv(recv_I.data(), number_count, MPIType<IndexType>(), sender, 0, commGrid->GetColWorld(), MPI_STATUS_IGNORE);
+                MPI_Recv(recv_I.data(), number_count, MPIType<IndexType>(), sender, 0, 
+                    commGrid->GetColWorld(), MPI_STATUS_IGNORE);
                 IndexType original_sz = local_indices.size();
                 local_indices.resize(original_sz + number_count);
                 merge_local_vectors(local_indices, recv_I, 0, 0, original_sz, number_count, 2, 2, 1, 1);
@@ -301,11 +309,13 @@ void put_tuple(vector<IndexType> &res, vector<IndexType> &source1, vector<IndexT
 // both indices1 and indices2 are seriliazed, have actual size n * pair_size
 // pivot1 and pivot2 are main keys for joining
 // order : size * 2
-// 0 0 0 1 1 0 means in result, first column is col 0 in index 0, then col 1 in index 0, the last one is col 0 in index 1
+// 0 0 0 1 1 0 means in result, first column is col 0 in index 0, then col 1 in index 0, 
+// the last one is col 0 in index 1
 // this also means joining is based on col 0 in index 0 and col 0 in index 1
 // output : res should be different from indices1 and indices2
-void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
-                int pair_size2, int pivot1, int pivot2, vector<IndexType> &order, vector<IndexType> &res) {
+void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, 
+                int pair_size1, int pair_size2, int pivot1, int pivot2, 
+                vector<IndexType> &order, vector<IndexType> &res) {
     double t1 = MPI_Wtime();
 
     res.clear();
@@ -355,8 +365,9 @@ void local_join(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vect
 // pivot11 and pivot21 are main keys for filter, tables should be sorted based on them
 // pivot12 and pivot22 are renaming equivalent
 // output : res should be different from indices1 and indices2
-void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, int pair_size1,
-                  int pair_size2, int pivot11, int pivot12, int pivot21, int pivot22, vector<IndexType> &order, vector<IndexType> &res) {
+void local_filter(shared_ptr<CommGrid> commGrid, vector<IndexType> &indices1, vector<IndexType> &indices2, 
+                    int pair_size1, int pair_size2, int pivot11, int pivot12, int pivot21, int pivot22, 
+                    vector<IndexType> &order, vector<IndexType> &res) {
     double t1 = MPI_Wtime();
 
     res.clear();
@@ -428,7 +439,8 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 
     int rowrank = commGrid->GetRankInProcRow();
 
-    IndexType *locncols = new IndexType[rowneighs];  // number of rows is calculated by a reduction among the processor column
+    // number of rows is calculated by a reduction among the processor column
+    IndexType *locncols = new IndexType[rowneighs];  
     locncols[rowrank] = M.getlocalcols();
     MPI_Allgather(MPI_IN_PLACE, 0, MPIType<IndexType>(), locncols, 1, MPIType<IndexType>(), commGrid->GetRowWorld());
     coffset[rowrank] = std::accumulate(locncols, locncols + rowrank, static_cast<IndexType>(0));
@@ -440,7 +452,8 @@ void local_redistribution(PSpMat::MPI_DCCols &M, vector<IndexType> &range_table,
 
     // sort based on pivot
     double t1_sort_start = MPI_Wtime();
-    symmergesort(range_table.data(), range_table.size() / pair_size, pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
+    symmergesort(range_table.data(), range_table.size() / pair_size, 
+        pair_size * sizeof(IndexType), comp[(pair_size - 3) * 5 + pivot]);
     double t1_sort_end = MPI_Wtime();
 
     vector<int> lens;
