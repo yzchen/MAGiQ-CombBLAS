@@ -9,115 +9,107 @@
 #define IndexType uint64_t
 #define ElementType uint8_t
 
-// // comparasion struct for qsort in result generation
-typedef struct {
-    IndexType a, b, c;
-} Int3;
+// comparasion struct for qsort in result generation
+typedef struct Int3 { IndexType x[3]; } Int3;
+typedef struct Int4 { IndexType x[4]; } Int4;
+typedef struct Int5 { IndexType x[5]; } Int5;
 
 int compInt3A(const void *elem1, const void *elem2) {
     Int3 f = *((Int3 *) elem1);
     Int3 s = *((Int3 *) elem2);
-    if (f.a > s.a) return 1;
-    if (f.a < s.a) return -1;
+    if (f.x[0] > s.x[0]) return 1;
+    if (f.x[0] < s.x[0]) return -1;
     return 0;
 }
 
 int compInt3B(const void *elem1, const void *elem2) {
     Int3 f = *((Int3 *) elem1);
     Int3 s = *((Int3 *) elem2);
-    if (f.b > s.b) return 1;
-    if (f.b < s.b) return -1;
+    if (f.x[1] > s.x[1]) return 1;
+    if (f.x[1] < s.x[1]) return -1;
     return 0;
 }
 
 int compInt3C(const void *elem1, const void *elem2) {
     Int3 f = *((Int3 *) elem1);
     Int3 s = *((Int3 *) elem2);
-    if (f.c > s.c) return 1;
-    if (f.c < s.c) return -1;
+    if (f.x[2] > s.x[2]) return 1;
+    if (f.x[2] < s.x[2]) return -1;
     return 0;
 }
-
-typedef struct {
-    IndexType a, b, c, d;
-} Int4;
 
 int compInt4A(const void *elem1, const void *elem2) {
     Int4 f = *((Int4 *) elem1);
     Int4 s = *((Int4 *) elem2);
-    if (f.a > s.a) return 1;
-    if (f.a < s.a) return -1;
+    if (f.x[0] > s.x[0]) return 1;
+    if (f.x[0] < s.x[0]) return -1;
     return 0;
 }
 
 int compInt4B(const void *elem1, const void *elem2) {
     Int4 f = *((Int4 *) elem1);
     Int4 s = *((Int4 *) elem2);
-    if (f.b > s.b) return 1;
-    if (f.b < s.b) return -1;
+    if (f.x[1] > s.x[1]) return 1;
+    if (f.x[1] < s.x[1]) return -1;
     return 0;
 }
 
 int compInt4C(const void *elem1, const void *elem2) {
     Int4 f = *((Int4 *) elem1);
     Int4 s = *((Int4 *) elem2);
-    if (f.c > s.c) return 1;
-    if (f.c < s.c) return -1;
+    if (f.x[2] > s.x[2]) return 1;
+    if (f.x[2] < s.x[2]) return -1;
     return 0;
 }
 
 int compInt4D(const void *elem1, const void *elem2) {
     Int4 f = *((Int4 *) elem1);
     Int4 s = *((Int4 *) elem2);
-    if (f.d > s.d) return 1;
-    if (f.d < s.d) return -1;
+    if (f.x[3] > s.x[3]) return 1;
+    if (f.x[3] < s.x[3]) return -1;
     return 0;
 }
-
-typedef struct {
-    IndexType a, b, c, d, e;
-} Int5;
 
 int compInt5A(const void *elem1, const void *elem2) {
     Int5 f = *((Int5 *) elem1);
     Int5 s = *((Int5 *) elem2);
-    if (f.a > s.a) return 1;
-    if (f.a < s.a) return -1;
+    if (f.x[0] > s.x[0]) return 1;
+    if (f.x[0] < s.x[0]) return -1;
     return 0;
 }
 
 int compInt5B(const void *elem1, const void *elem2) {
     Int5 f = *((Int5 *) elem1);
     Int5 s = *((Int5 *) elem2);
-    if (f.b > s.b) return 1;
-    if (f.b < s.b) return -1;
+    if (f.x[1] > s.x[1]) return 1;
+    if (f.x[1] < s.x[1]) return -1;
     return 0;
 }
 
 int compInt5C(const void *elem1, const void *elem2) {
     Int5 f = *((Int5 *) elem1);
     Int5 s = *((Int5 *) elem2);
-    if (f.c > s.c) return 1;
-    if (f.c < s.c) return -1;
+    if (f.x[2] > s.x[2]) return 1;
+    if (f.x[2] < s.x[2]) return -1;
     return 0;
 }
 
 int compInt5D(const void *elem1, const void *elem2) {
     Int5 f = *((Int5 *) elem1);
     Int5 s = *((Int5 *) elem2);
-    if (f.d > s.d) return 1;
-    if (f.d < s.d) return -1;
+    if (f.x[3] > s.x[3]) return 1;
+    if (f.x[3] < s.x[3]) return -1;
     return 0;
 }
 
 int compInt5E(const void *elem1, const void *elem2) {
     Int5 f = *((Int5 *) elem1);
     Int5 s = *((Int5 *) elem2);
-    if (f.e > s.e) return 1;
-    if (f.e < s.e) return -1;
+    if (f.x[4] > s.x[4]) return 1;
+    if (f.x[4] < s.x[4]) return -1;
     return 0;
 }
-// // comparasion struct for qsort in result generation
+// comparasion struct for qsort in result generation
 
 // comparasion function pointer array
 // this comp function design will limit the maximum columns in the final table
