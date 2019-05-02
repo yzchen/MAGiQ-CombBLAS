@@ -61,12 +61,12 @@ class FullyDist<IT, NT, typename combblas::disable_if< combblas::is_boolean<NT>:
 public:
 	explicit FullyDist():glen(0)
 	{
-        SpParHelper::Print("COMBBLAS Warning: It is dangerous to create (vector) objects without specifying the communicator, are you sure you want to create this object in MPI_COMM_WORLD?\n");
+        // SpParHelper::Print("COMBBLAS Warning: It is dangerous to create (vector) objects without specifying the communicator, are you sure you want to create this object in MPI_COMM_WORLD?\n");
 		commGrid.reset(new CommGrid(MPI_COMM_WORLD, 0, 0));
 	}
 	explicit FullyDist(IT globallen): glen(globallen)
 	{
-        SpParHelper::Print("COMBBLAS Warning: It is dangerous to create (vector) objects without specifying the communicator, are you sure you want to create this object in MPI_COMM_WORLD?\n");
+        // SpParHelper::Print("COMBBLAS Warning: It is dangerous to create (vector) objects without specifying the communicator, are you sure you want to create this object in MPI_COMM_WORLD?\n");
 		commGrid.reset(new CommGrid(MPI_COMM_WORLD, 0, 0));
 	}
     	/* ABAB: This clashes with FullyDist(IT globallen) signature on MPICH based systems that #define MPI_Comm to be an INT
