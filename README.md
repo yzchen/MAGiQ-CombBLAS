@@ -35,6 +35,25 @@
     cd ../build && cmake -D MAGIQ_DEBUG=ON .. && make -j
     ```
 
+4. build on Shaheen
+
+    first load proper modules:
+    ```
+    module swap PrgEnv-cray/6.0.4 PrgEnv-gnu
+    module load cray-mpich
+    ```
+
+    change the first two line of `CMakeLists.txt`, make following changes :
+
+    ```
+    -SET(CMAKE_CXX_COMPILER mpic++)
+    -SET(CMAKE_C_COMPILER mpicc)
+    +SET(CMAKE_CXX_COMPILER CC)
+    +SET(CMAKE_C_COMPILER cc)
+    ```
+
+    then do as above three sections suggested, by setting compiler to `CC/cc` you can only run the executable file with `srun`.
+
 #### Run
 
 1. run(in `$MAGiQ_ROOT/build`) hard coded program:
@@ -51,32 +70,26 @@
 
 3. run on Shaheen
 
-    modules needed on Shaheen
-
-    ```
-    module swap PrgEnv-cray/6.0.4 PrgEnv-gnu
-    module load cray-mpich
-    ```
-
     example job script on Shaheen:
 
     ```
     #!/bin/bash
     #SBATCH --account=k1210
-    #SBATCH --job-name=512B-N2k-C2
-    #SBATCH --output=/CombBLAS/magiq_run/logs/trill/lubm512B-N2k-C2.log
-    #SBATCH --error=/CombBLAS/magiq_run/logs/trill/lubm512B-N2k-C2.err
-    #SBATCH --time=02:24:00
-    #SBATCH --nodes=2048
-    #SBATCH --ntasks-per-node=2
-    #SBATCH --ntasks-per-socket=1
-    #SBATCH --cpus-per-task=32
+    #SBATCH --job-name=test
+    #SBATCH --output=otest
+    #SBATCH --error=etest
+    #SBATCH --nodes=1
+    #SBATCH --time=10:00
+    #SBATCH --hint=nomultithread
+    #SBATCH --ntasks-per-node=1
+    #SBATCH --ntasks=1
     #SBATCH --exclusive
 
     module swap PrgEnv-cray/6.0.4 PrgEnv-gnu
     module load cray-mpich
 
-    srun --cpu_bind=threads /CombBLAS/build/magiq_src/magiqScal /trill_exp/data_striped_144/lubm512B/paracoder_lubm512B.nt
+    cd /project/k1285/CombBLAS/
+    srun ./build/magiq_src/magiqParse ./examples/data/poster.nt ./examples/queries/poster/query.txt
     ```
 
 ## Project Structure
