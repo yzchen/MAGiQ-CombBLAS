@@ -133,3 +133,9 @@ CombBLAS source files
 ### build
 
 not shown on github, all things are compiled here
+
+## Proceeding && Link
+
+EuroSys'19: [Matrix Algebra Framework for Portable, Scalable and Efficient Query Engines for RDF Graphs](https://dl.acm.org/citation.cfm?id=3303962)
+
+Sparsql Parser Repository: [GitHub](https://github.com/fjamour/MAGiQ)
